@@ -5,6 +5,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  LabelList,
   ResponsiveContainer,
   Cell,
 } from "recharts";
@@ -76,14 +77,15 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
     <ChartCard title="Mest skippede artister" color="#ff6b35">
       <div style={{ height: chartHeight + 80 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 140 }}>
-            <XAxis type="number" tick={TICK_STYLE} axisLine={false} tickLine={false} />
+          <BarChart data={data} layout="vertical" margin={{ top: 20, right: 40, bottom: 20, left: 180 }}>
+            <XAxis hide />
             <YAxis
               type="category"
               dataKey="name"
-              tick={TICK_STYLE}
+              tick={{ fontSize: 16, fill: "#d0d0d0" }}
               axisLine={false}
               tickLine={false}
+              width={180}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
             <Bar dataKey="skip" radius={[0, 4, 4, 0]}>
@@ -93,6 +95,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
                   fill={`hsl(${20 + i * 6}, 90%, ${65 - i * 2}%)`}
                 />
               ))}
+              <LabelList dataKey="skip" position="right" style={{ fill: "#fff", fontSize: 15 }} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
