@@ -62,15 +62,18 @@ function ChartCard({ title, color, children }: { title: string; color: string; c
 // ---------------------------------------------------------------------------
 
 export function ArtistChart({ artists }: { artists: Artist[] }) {
-  const data = artists.slice(0, 10).map((a) => ({
-    name: a.artists.split(",")[0].trim(),
-    skip: a.skip_count,
-  }));
+  const data = artists.slice(0, 10).map((a) => {
+    const first = a.artists.split(",")[0].trim();
+    return {
+      name: a.artists.includes(",") ? first + " m.fl." : first,
+      skip: a.skip_count,
+    };
+  });
 
   return (
     <ChartCard title="Mest skippede artister" color="#ff6b35">
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} layout="vertical" margin={{ left: 10, right: 16 }}>
+        <BarChart data={data} layout="vertical" margin={{ left: 140, right: 16 }}>
           <XAxis type="number" tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <YAxis
             type="category"
@@ -78,8 +81,6 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
             tick={TICK_STYLE}
             axisLine={false}
             tickLine={false}
-            width={130}
-            tickFormatter={(v: string) => v.length > 16 ? v.slice(0, 15) + "…" : v}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
           <Bar dataKey="skip" radius={[0, 4, 4, 0]}>
