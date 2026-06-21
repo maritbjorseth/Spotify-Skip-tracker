@@ -54,7 +54,6 @@ import argparse
 import csv
 import json
 import os
-import sqlite3
 import sys
 import threading
 import time
@@ -63,11 +62,18 @@ import webbrowser
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+import psycopg2
 import requests
+from dotenv import load_dotenv
+
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(_SCRIPT_DIR, ".env.local"))
+load_dotenv(os.path.join(_SCRIPT_DIR, ".env"))
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 APP_DIR = os.path.join(os.path.expanduser("~"), ".spotify_skip_tracker")
 CREDS_PATH = os.path.join(APP_DIR, "credentials.json")
-DB_PATH = os.path.join(APP_DIR, "data.db")
 WRAPPED_PATH = os.path.join(APP_DIR, "wrapped.html")
 REDIRECT_URI = "http://127.0.0.1:8888/callback"
 SCOPE = "user-read-currently-playing user-read-playback-state"
@@ -80,13 +86,39 @@ def ensure_app_dir():
     os.makedirs(APP_DIR, exist_ok=True)
 
 
+class _CursorProxy:
+    """Mimics sqlite3's conn.execute(...).fetchall() chaining for psycopg2."""
+
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def fetchall(self):
+        return self._cursor.fetchall()
+
+    def fetchone(self):
+        return self._cursor.fetchone()
+
+    def __iter__(self):
+        return iter(self._cursor)
+
+
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL)
+
+
+def db_execute(conn, sql, params=()):
+    cur = conn.cursor()
+    cur.execute(sql.replace("?", "%s"), params)
+    return _CursorProxy(cur)
+
+
 def init_db():
-    ensure_app_dir()
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute(
+    conn = get_db_connection()
+    db_execute(
+        conn,
         """
         CREATE TABLE IF NOT EXISTS plays (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             uri TEXT NOT NULL,
             title TEXT,
             album TEXT,
@@ -96,15 +128,16 @@ def init_db():
             progress_ratio REAL,
             timestamp TEXT NOT NULL
         )
-        """
+        """,
     )
-    conn.execute(
+    db_execute(
+        conn,
         """
         CREATE TABLE IF NOT EXISTS contexts (
             uri TEXT PRIMARY KEY,
             name TEXT
         )
-        """
+        """,
     )
     conn.commit()
     return conn
@@ -235,7 +268,7 @@ def get_access_token(creds):
 def get_context_name(conn, token, context_uri):
     if not context_uri:
         return None
-    row = conn.execute("SELECT name FROM contexts WHERE uri = ?", (context_uri,)).fetchone()
+    row = db_execute(conn, "SELECT name FROM contexts WHERE uri = ?", (context_uri,)).fetchone()
     if row:
         return row[0]
 
@@ -249,7 +282,11 @@ def get_context_name(conn, token, context_uri):
         if resp.status_code != 200:
             return None
         name = resp.json().get("name")
-        conn.execute("INSERT OR REPLACE INTO contexts (uri, name) VALUES (?, ?)", (context_uri, name))
+        db_execute(
+            conn,
+            "INSERT INTO contexts (uri, name) VALUES (?, ?) ON CONFLICT (uri) DO UPDATE SET name = EXCLUDED.name",
+            (context_uri, name),
+        )
         conn.commit()
         return name
     except Exception:
@@ -261,7 +298,7 @@ def get_context_name(conn, token, context_uri):
 # ---------------------------------------------------------------------------
 
 def log_play(conn, uri, title, album, artists, context_uri, skipped, ratio):
-    conn.execute(
+    db_execute(conn, 
         "INSERT INTO plays (uri, title, album, artists, context_uri, skipped, progress_ratio, timestamp) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (uri, title, album, artists, context_uri, int(skipped), ratio, datetime.now(timezone.utc).isoformat()),
@@ -641,18 +678,18 @@ setInterval(load, 10000);
 
 
 def compute_stats():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
-    track_rows = conn.execute(
+    track_rows = db_execute(conn,
         """
-        SELECT p.uri, p.title, p.artists,
+        SELECT p.uri, MAX(p.title) as title, MAX(p.artists) as artists,
                COALESCE(c.name, p.context_uri) as context_name,
                SUM(p.skipped) as skip_count,
                COUNT(*) as play_count
         FROM plays p
         LEFT JOIN contexts c ON c.uri = p.context_uri
         GROUP BY p.uri, context_name
-        HAVING skip_count > 0
+        HAVING SUM(p.skipped) > 0
         ORDER BY skip_count DESC
         """
     ).fetchall()
@@ -674,13 +711,13 @@ def compute_stats():
         if context_name:
             contexts.add(context_name)
 
-    artist_rows = conn.execute(
+    artist_rows = db_execute(conn, 
         """
         SELECT artists, SUM(skipped) as skip_count, COUNT(*) as play_count
         FROM plays
         WHERE artists IS NOT NULL AND artists != ''
         GROUP BY artists
-        HAVING skip_count > 0
+        HAVING SUM(skipped) > 0
         ORDER BY skip_count DESC
         LIMIT 10
         """
@@ -695,7 +732,7 @@ def compute_stats():
         for artists, skip_count, play_count in artist_rows
     ]
 
-    listened_artist_rows = conn.execute(
+    listened_artist_rows = db_execute(conn, 
         """
         SELECT artists, SUM(skipped) as skip_count, COUNT(*) as play_count
         FROM plays
@@ -715,7 +752,7 @@ def compute_stats():
         for artists, skip_count, play_count in listened_artist_rows
     ]
 
-    context_rows = conn.execute(
+    context_rows = db_execute(conn, 
         """
         SELECT COALESCE(c.name, p.context_uri) as context_name,
                SUM(p.skipped) as skip_count,
@@ -724,8 +761,8 @@ def compute_stats():
         LEFT JOIN contexts c ON c.uri = p.context_uri
         WHERE p.context_uri IS NOT NULL
         GROUP BY context_name
-        HAVING play_count >= 2
-        ORDER BY (CAST(skip_count AS REAL) / play_count) DESC
+        HAVING COUNT(*) >= 2
+        ORDER BY (CAST(SUM(p.skipped) AS REAL) / COUNT(*)) DESC
         LIMIT 10
         """
     ).fetchall()
@@ -739,9 +776,9 @@ def compute_stats():
         for context_name, skip_count, play_count in context_rows
     ]
 
-    most_played_rows = conn.execute(
+    most_played_rows = db_execute(conn, 
         """
-        SELECT title, artists, SUM(skipped) as skip_count, COUNT(*) as play_count
+        SELECT MAX(title) as title, MAX(artists) as artists, SUM(skipped) as skip_count, COUNT(*) as play_count
         FROM plays
         GROUP BY uri
         ORDER BY play_count DESC
@@ -759,13 +796,13 @@ def compute_stats():
         for title, artists, skip_count, play_count in most_played_rows
     ]
 
-    most_completed_rows = conn.execute(
+    most_completed_rows = db_execute(conn, 
         """
-        SELECT title, artists, SUM(skipped) as skip_count, COUNT(*) as play_count
+        SELECT MAX(title) as title, MAX(artists) as artists, SUM(skipped) as skip_count, COUNT(*) as play_count
         FROM plays
         GROUP BY uri
-        HAVING play_count >= 2
-        ORDER BY (CAST(skip_count AS REAL) / play_count) ASC, play_count DESC
+        HAVING COUNT(*) >= 2
+        ORDER BY (CAST(SUM(skipped) AS REAL) / COUNT(*)) ASC, play_count DESC
         LIMIT 10
         """
     ).fetchall()
@@ -782,7 +819,7 @@ def compute_stats():
 
     hourly = [{"skips": 0, "plays": 0} for _ in range(24)]
     weekday = [{"skips": 0, "plays": 0} for _ in range(7)]  # 0 = Monday
-    for skipped, timestamp in conn.execute("SELECT skipped, timestamp FROM plays"):
+    for skipped, timestamp in db_execute(conn, "SELECT skipped, timestamp FROM plays"):
         try:
             ts = datetime.fromisoformat(timestamp).astimezone()
         except ValueError:
@@ -792,8 +829,8 @@ def compute_stats():
         weekday[ts.weekday()]["plays"] += 1
         weekday[ts.weekday()]["skips"] += skipped
 
-    total_skips = conn.execute("SELECT COALESCE(SUM(skipped),0) FROM plays").fetchone()[0]
-    total_plays = conn.execute("SELECT COUNT(*) FROM plays").fetchone()[0]
+    total_skips = db_execute(conn, "SELECT COALESCE(SUM(skipped),0) FROM plays").fetchone()[0]
+    total_plays = db_execute(conn, "SELECT COUNT(*) FROM plays").fetchone()[0]
     unique_tracks = len(tracks)
     conn.close()
 
@@ -843,8 +880,8 @@ def run_tracker():
 # ---------------------------------------------------------------------------
 
 def run_export(output_path):
-    conn = sqlite3.connect(DB_PATH)
-    rows = conn.execute(
+    conn = get_db_connection()
+    rows = db_execute(conn,
         """
         SELECT p.timestamp, p.title, p.artists, p.album,
                COALESCE(c.name, p.context_uri) as context_name,
@@ -873,20 +910,20 @@ def run_export(output_path):
 # ---------------------------------------------------------------------------
 
 def build_wrapped_data():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
 
-    total_skips = conn.execute("SELECT COALESCE(SUM(skipped),0) FROM plays").fetchone()[0]
-    total_plays = conn.execute("SELECT COUNT(*) FROM plays").fetchone()[0]
+    total_skips = db_execute(conn, "SELECT COALESCE(SUM(skipped),0) FROM plays").fetchone()[0]
+    total_plays = db_execute(conn, "SELECT COUNT(*) FROM plays").fetchone()[0]
 
-    top_track = conn.execute(
+    top_track = db_execute(conn,
         """
-        SELECT title, artists, SUM(skipped) as skip_count, COUNT(*) as play_count
-        FROM plays GROUP BY uri HAVING skip_count > 0
+        SELECT MAX(title) as title, MAX(artists) as artists, SUM(skipped) as skip_count, COUNT(*) as play_count
+        FROM plays GROUP BY uri HAVING SUM(skipped) > 0
         ORDER BY skip_count DESC LIMIT 1
         """
     ).fetchone()
 
-    top_listened_artist = conn.execute(
+    top_listened_artist = db_execute(conn,
         """
         SELECT artists, COUNT(*) as play_count
         FROM plays WHERE artists IS NOT NULL AND artists != ''
@@ -894,16 +931,16 @@ def build_wrapped_data():
         """
     ).fetchone()
 
-    most_loyal_artist = conn.execute(
+    most_loyal_artist = db_execute(conn,
         """
         SELECT artists, SUM(skipped) as skip_count, COUNT(*) as play_count
         FROM plays WHERE artists IS NOT NULL AND artists != ''
-        GROUP BY artists HAVING play_count >= 2
-        ORDER BY (CAST(skip_count AS REAL) / play_count) ASC, play_count DESC LIMIT 1
+        GROUP BY artists HAVING COUNT(*) >= 2
+        ORDER BY (CAST(SUM(skipped) AS REAL) / COUNT(*)) ASC, play_count DESC LIMIT 1
         """
     ).fetchone()
 
-    top_context = conn.execute(
+    top_context = db_execute(conn,
         """
         SELECT COALESCE(c.name, p.context_uri) as context_name, COUNT(*) as play_count
         FROM plays p LEFT JOIN contexts c ON c.uri = p.context_uri
@@ -912,11 +949,11 @@ def build_wrapped_data():
         """
     ).fetchone()
 
-    most_completed_track = conn.execute(
+    most_completed_track = db_execute(conn,
         """
-        SELECT title, artists, COUNT(*) as play_count
+        SELECT MAX(title) as title, MAX(artists) as artists, COUNT(*) as play_count
         FROM plays GROUP BY uri
-        HAVING SUM(skipped) = 0 AND play_count >= 2
+        HAVING SUM(skipped) = 0 AND COUNT(*) >= 2
         ORDER BY play_count DESC LIMIT 1
         """
     ).fetchone()

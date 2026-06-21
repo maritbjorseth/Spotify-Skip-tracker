@@ -5,3 +5,5 @@ data.db
 wrapped.html
 skips_export.csv
 *.csv
+.vercel
+.env*
