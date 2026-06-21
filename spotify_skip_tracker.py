@@ -518,6 +518,7 @@ DASHBOARD_HTML = """
         <thead><tr><th>Tittel</th><th>Artist</th><th>Totalt spilt</th><th>Skip-rate</th></tr></thead>
         <tbody id="mostPlayedRows"></tbody>
       </table>
+      <div class="pagination" id="mostPlayedPagination"></div>
     </div>
     <div class="section" id="block-mostCompleted">
       <h2 class="accent-green">Sanger du nesten aldri skipper</h2>
@@ -543,6 +544,8 @@ let sortDir = -1;
 let charts = {};
 let currentPage = 1;
 const PAGE_SIZE = 20;
+let mostPlayedData = [];
+let mostPlayedPage = 1;
 
 const HOURS = Array.from({length: 24}, (_, i) => i + ":00");
 const WEEKDAYS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
@@ -559,6 +562,27 @@ function rateColor(rate) {
 
 function emptyRow(colspan) {
   return `<tr><td class="empty-row" colspan="${colspan}">Ingen data ennå</td></tr>`;
+}
+
+function renderPaginated(rows, page, pageSize, bodyId, paginationId, rowFn, colspan, onPageChange) {
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  if (page > totalPages) page = totalPages;
+  const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
+
+  document.getElementById(bodyId).innerHTML = pageRows.length ? pageRows.map(rowFn).join("") : emptyRow(colspan);
+
+  const pagEl = document.getElementById(paginationId);
+  pagEl.innerHTML = rows.length > pageSize ? `
+    <button class="prevBtn" ${page <= 1 ? "disabled" : ""}>← Forrige</button>
+    <span>Side ${page} av ${totalPages} (${rows.length})</span>
+    <button class="nextBtn" ${page >= totalPages ? "disabled" : ""}>Neste →</button>
+  ` : "";
+  const prevBtn = pagEl.querySelector(".prevBtn");
+  const nextBtn = pagEl.querySelector(".nextBtn");
+  if (prevBtn) prevBtn.addEventListener("click", () => onPageChange(page - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => onPageChange(page + 1));
+
+  return page;
 }
 
 function barChart(canvasId, labels, data, label, color, yMax, horizontal) {
@@ -619,14 +643,8 @@ async function load() {
   barChart("hourChart", HOURS, data.hourly.map(h => h.skips), "Skip", "#9b59b6");
   barChart("weekdayChart", WEEKDAYS, data.weekday.map(w => w.skips), "Skip", "#9b59b6");
 
-  document.getElementById("mostPlayedRows").innerHTML = data.most_played.length ? data.most_played.map(t => `
-    <tr>
-      <td>${t.title || ""}</td>
-      <td>${t.artists || ""}</td>
-      <td>${t.play_count}</td>
-      <td style="color: ${rateColor(t.skip_rate)}">${Math.round(t.skip_rate * 100)}%</td>
-    </tr>
-  `).join("") : emptyRow(4);
+  mostPlayedData = data.most_played;
+  renderMostPlayed();
 
   document.getElementById("mostCompletedRows").innerHTML = data.most_completed.length ? data.most_completed.map(t => `
     <tr>
@@ -648,6 +666,22 @@ async function load() {
   render();
 }
 
+function renderMostPlayed() {
+  mostPlayedPage = renderPaginated(
+    mostPlayedData, mostPlayedPage, PAGE_SIZE, "mostPlayedRows", "mostPlayedPagination",
+    t => `
+      <tr>
+        <td>${t.title || ""}</td>
+        <td>${t.artists || ""}</td>
+        <td>${t.play_count}</td>
+        <td style="color: ${rateColor(t.skip_rate)}">${Math.round(t.skip_rate * 100)}%</td>
+      </tr>
+    `,
+    4,
+    (newPage) => { mostPlayedPage = newPage; renderMostPlayed(); }
+  );
+}
+
 function render() {
   const filterCtx = document.getElementById("contextFilter").value;
   const search = document.getElementById("search").value.toLowerCase();
@@ -660,31 +694,21 @@ function render() {
 
   rows.sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : -1) * sortDir);
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  if (currentPage > totalPages) currentPage = totalPages;
-  const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  document.getElementById("rows").innerHTML = pageRows.length ? pageRows.map(t => `
-    <tr>
-      <td>${t.title || ""}</td>
-      <td>${t.artists || ""}</td>
-      <td>${t.context_name || "-"}</td>
-      <td class="skip-count">${t.skip_count}</td>
-      <td>${t.play_count}</td>
-      <td>${Math.round(t.skip_rate * 100)}%</td>
-    </tr>
-  `).join("") : emptyRow(6);
-
-  document.getElementById("pagination").innerHTML = rows.length > PAGE_SIZE ? `
-    <button id="prevPage" ${currentPage <= 1 ? "disabled" : ""}>← Forrige</button>
-    <span>Side ${currentPage} av ${totalPages} (${rows.length} sanger)</span>
-    <button id="nextPage" ${currentPage >= totalPages ? "disabled" : ""}>Neste →</button>
-  ` : "";
-
-  const prevBtn = document.getElementById("prevPage");
-  const nextBtn = document.getElementById("nextPage");
-  if (prevBtn) prevBtn.addEventListener("click", () => { currentPage--; render(); });
-  if (nextBtn) nextBtn.addEventListener("click", () => { currentPage++; render(); });
+  currentPage = renderPaginated(
+    rows, currentPage, PAGE_SIZE, "rows", "pagination",
+    t => `
+      <tr>
+        <td>${t.title || ""}</td>
+        <td>${t.artists || ""}</td>
+        <td>${t.context_name || "-"}</td>
+        <td class="skip-count">${t.skip_count}</td>
+        <td>${t.play_count}</td>
+        <td>${Math.round(t.skip_rate * 100)}%</td>
+      </tr>
+    `,
+    6,
+    (newPage) => { currentPage = newPage; render(); }
+  );
 }
 
 document.querySelectorAll("th").forEach(th => {
@@ -827,7 +851,6 @@ def compute_stats():
         FROM plays
         GROUP BY uri
         ORDER BY play_count DESC
-        LIMIT 10
         """
     ).fetchall()
     most_played = [
