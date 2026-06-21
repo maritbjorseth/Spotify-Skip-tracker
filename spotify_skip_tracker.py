@@ -11,17 +11,25 @@ How it works
 Spotify's public Web API exposes what is "currently playing" on your account,
 regardless of which device is playing it. This script polls that endpoint
 every few seconds. When the playing track changes, it checks how far the
-previous track got (progress / duration). If it changed before ~95%
-completion, it's logged as a skip. Everything is stored locally in a SQLite
-database, and a small dashboard at http://localhost:5000 shows the stats.
+previous track got (progress / duration). If it changed before 90%
+completion AND more than 30 seconds remained, it's logged as a skip.
+Everything is stored in a shared Postgres database (Neon).
+
+Deployment
+----------
+- Railway runs `python3 spotify_skip_tracker.py track` continuously 24/7,
+  polling Spotify and writing skips to the database.
+- Vercel hosts the read-only dashboard (app.py) at
+  spotify-skip-tracker.vercel.app, reading from the same database.
+- Credentials for Spotify and the database are set as environment variables
+  on Railway/Vercel (not stored in files in the cloud).
 
 IMPORTANT LIMITATION: this can only see what happens *while the script is
-running*. Leave it running on a machine that's usually on (this Mac, your
-desktop PC) to catch as much as possible. It cannot retroactively see skips
-that happened before you started it, or while it wasn't running.
+running on Railway*. It cannot retroactively see skips that happened before
+the tracker was started, or during any downtime.
 
 ------------------------------------------------------------------------
-SETUP (one-time)
+SETUP (one-time, local)
 ------------------------------------------------------------------------
 1. Go to https://developer.spotify.com/dashboard and log in with your normal
    Spotify account. Click "Create app".
@@ -32,7 +40,7 @@ SETUP (one-time)
    "Client secret".
 
 2. Install dependencies (Python 3.9+):
-     pip install requests flask
+     pip install requests flask psycopg2-binary python-dotenv
 
 3. Run the one-time login (replace with your own values):
      python spotify_skip_tracker.py setup --client-id YOUR_ID --client-secret YOUR_SECRET
@@ -42,12 +50,12 @@ SETUP (one-time)
    computer, never sent anywhere else).
 
 ------------------------------------------------------------------------
-RUNNING
+RUNNING LOCALLY (tracker + dashboard together)
 ------------------------------------------------------------------------
     python spotify_skip_tracker.py run
 
-Then open http://localhost:5000 in your browser. Leave the terminal window
-running in the background while you listen to music on any device.
+Then open http://localhost:5000 in your browser. Requires DATABASE_URL in
+.env.local pointing at the Neon Postgres database.
 """
 
 import argparse
@@ -327,6 +335,15 @@ def log_play(conn, uri, title, album, artists, context_uri, skipped, ratio):
     conn.commit()
 
 
+def _db_reconnect():
+    """Prøver å opprette en ny DB-tilkobling. Returnerer None ved feil."""
+    try:
+        return get_db_connection()
+    except Exception as e:
+        print(f"[tracker] Kunne ikke koble til databasen: {e}")
+        return None
+
+
 def polling_loop():
     creds = load_creds()
     conn = init_db()
@@ -340,7 +357,7 @@ def polling_loop():
     last_context = None
     last_shuffle_state = None
 
-    print(f"Tracker startet. Poller hvert {POLL_SECONDS}s. Dashboard: http://localhost:5000")
+    print(f"Tracker startet. Poller hvert {POLL_SECONDS}s.")
 
     while True:
         try:
@@ -388,9 +405,23 @@ def polling_loop():
                         and not shuffle_toggled
                         and not context_switched
                     )
-                    log_play(conn, last_uri, last_title, last_album, last_artists, last_context, skipped, ratio)
-                    if last_context:
-                        get_context_name(conn, token, last_context)
+                    try:
+                        log_play(conn, last_uri, last_title, last_album, last_artists, last_context, skipped, ratio)
+                        if last_context:
+                            get_context_name(conn, token, last_context)
+                    except psycopg2.Error as e:
+                        # DB-tilkoblingen kan ha falt ut (f.eks. Neon inaktivitetstimeout).
+                        # Logg feilen, prøv å koble til på nytt og fortsett — vi mister
+                        # dette ene datapunktet, men trackeren holder seg i live.
+                        print(f"[tracker] DB-feil ved skriving: {e}")
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                        new_conn = _db_reconnect()
+                        if new_conn is not None:
+                            conn = new_conn
+                            print("[tracker] Koblet til databasen på nytt.")
 
                 last_uri = uri
                 last_title = title
@@ -748,7 +779,13 @@ setInterval(load, 10000);
 
 def compute_stats():
     conn = get_db_connection()
+    try:
+        return _compute_stats_inner(conn)
+    finally:
+        conn.close()
 
+
+def _compute_stats_inner(conn):
     track_rows = db_execute(conn,
         """
         SELECT p.uri, MAX(p.title) as title, MAX(p.artists) as artists,
@@ -900,7 +937,6 @@ def compute_stats():
     total_skips = db_execute(conn, "SELECT COALESCE(SUM(skipped),0) FROM plays").fetchone()[0]
     total_plays = db_execute(conn, "SELECT COUNT(*) FROM plays").fetchone()[0]
     unique_tracks = len(tracks)
-    conn.close()
 
     return {
         "tracks": tracks,
@@ -956,17 +992,19 @@ def run_track_only():
 
 def run_export(output_path):
     conn = get_db_connection()
-    rows = db_execute(conn,
-        """
-        SELECT p.timestamp, p.title, p.artists, p.album,
-               COALESCE(c.name, p.context_uri) as context_name,
-               p.skipped, p.progress_ratio
-        FROM plays p
-        LEFT JOIN contexts c ON c.uri = p.context_uri
-        ORDER BY p.timestamp
-        """
-    ).fetchall()
-    conn.close()
+    try:
+        rows = db_execute(conn,
+            """
+            SELECT p.timestamp, p.title, p.artists, p.album,
+                   COALESCE(c.name, p.context_uri) as context_name,
+                   p.skipped, p.progress_ratio
+            FROM plays p
+            LEFT JOIN contexts c ON c.uri = p.context_uri
+            ORDER BY p.timestamp
+            """
+        ).fetchall()
+    finally:
+        conn.close()
 
     if not rows:
         print("Ingen data å eksportere ennå. Kjør 'run' og hør på musikk en stund først.")
@@ -986,7 +1024,13 @@ def run_export(output_path):
 
 def build_wrapped_data():
     conn = get_db_connection()
+    try:
+        return _build_wrapped_data_inner(conn)
+    finally:
+        conn.close()
 
+
+def _build_wrapped_data_inner(conn):
     total_skips = db_execute(conn, "SELECT COALESCE(SUM(skipped),0) FROM plays").fetchone()[0]
     total_plays = db_execute(conn, "SELECT COUNT(*) FROM plays").fetchone()[0]
 
@@ -1032,8 +1076,6 @@ def build_wrapped_data():
         ORDER BY play_count DESC LIMIT 1
         """
     ).fetchone()
-
-    conn.close()
 
     return {
         "total_skips": total_skips,
