@@ -543,7 +543,7 @@ let sortKey = "skip_count";
 let sortDir = -1;
 let charts = {};
 let currentPage = 1;
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 let mostPlayedData = [];
 let mostPlayedPage = 1;
 
