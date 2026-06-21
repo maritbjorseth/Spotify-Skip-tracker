@@ -62,7 +62,7 @@ function ChartCard({ title, color, children }: { title: string; color: string; c
 // ---------------------------------------------------------------------------
 
 export function ArtistChart({ artists }: { artists: Artist[] }) {
-  const data = artists.slice(0, 10).map((a) => {
+  const data = artists.map((a) => {
     const first = a.artists.split(",")[0].trim();
     return {
       name: a.artists.includes(",") ? first + " m.fl." : first,
@@ -70,29 +70,33 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
     };
   });
 
+  const chartHeight = Math.max(300, data.length * 40);
+
   return (
     <ChartCard title="Mest skippede artister" color="#ff6b35">
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} layout="vertical" margin={{ left: 140, right: 16 }}>
-          <XAxis type="number" tick={TICK_STYLE} axisLine={false} tickLine={false} />
-          <YAxis
-            type="category"
-            dataKey="name"
-            tick={TICK_STYLE}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
-          <Bar dataKey="skip" radius={[0, 4, 4, 0]}>
-            {data.map((_, i) => (
-              <Cell
-                key={i}
-                fill={`hsl(${20 + i * 6}, 90%, ${65 - i * 2}%)`}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+      <div style={{ height: chartHeight + 80 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 140 }}>
+            <XAxis type="number" tick={TICK_STYLE} axisLine={false} tickLine={false} />
+            <YAxis
+              type="category"
+              dataKey="name"
+              tick={TICK_STYLE}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
+            <Bar dataKey="skip" radius={[0, 4, 4, 0]}>
+              {data.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={`hsl(${20 + i * 6}, 90%, ${65 - i * 2}%)`}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </ChartCard>
   );
 }
