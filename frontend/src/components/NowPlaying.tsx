@@ -35,7 +35,11 @@ export function NowPlaying() {
                 className="h-16 w-16 rounded-lg object-cover shadow-lg"
               />
             ) : (
-              <div className="h-16 w-16 rounded-lg bg-[#2a2a2a]" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-[#2a2a2a]">
+                <svg className="h-8 w-8 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
+                </svg>
+              </div>
             )}
             {/* Pulserende grønn ring */}
             <motion.span

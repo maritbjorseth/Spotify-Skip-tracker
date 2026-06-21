@@ -62,6 +62,12 @@ def main() -> None:
         help="Filtrer på år (f.eks. --year 2026)",
     )
 
+    # backfill
+    sub.add_parser(
+        "backfill",
+        help="Fyll inn manglende albumcover for historiske avspillinger",
+    )
+
     # export
     export_p = sub.add_parser(
         "export",
@@ -106,6 +112,10 @@ def main() -> None:
     elif args.command == "wrapped":
         from .wrapped import run_wrapped
         run_wrapped(month=args.month, year=args.year)
+
+    elif args.command == "backfill":
+        from .spotify_api import backfill_covers
+        backfill_covers()
 
     elif args.command == "export":
         from .export import run_export

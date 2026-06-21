@@ -23,7 +23,14 @@ function SkipBadge({ rate }: { rate: number }) {
 }
 
 function AlbumThumb({ url, title }: { url: string | null; title: string | null }) {
-  if (!url) return <div className="h-9 w-9 rounded bg-[#2a2a2a] flex-shrink-0" />;
+  if (!url)
+    return (
+      <div className="flex h-9 w-9 items-center justify-center rounded bg-[#2a2a2a] flex-shrink-0">
+        <svg className="h-4 w-4 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
+        </svg>
+      </div>
+    );
   return (
     <img
       src={url}

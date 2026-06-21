@@ -229,3 +229,97 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
     except Exception as exc:
         logger.warning("Kunne ikke hente kontekstnavn for %s: %s", context_uri, exc)
         return None
+
+
+# ---------------------------------------------------------------------------
+# Tilbakefylling av manglende albumcover
+# ---------------------------------------------------------------------------
+
+def backfill_covers() -> int:
+    """
+    Går gjennom alle avspillinger med NULL image_url, slår opp albumcover
+    fra Spotify APIet og oppdaterer databasen.
+
+    Returnerer antall unike spor som ble oppdatert.
+    """
+    from .database import connect, execute, init_db
+
+    creds = load_creds()
+    token = get_access_token(creds)
+    conn = connect()
+    init_db(conn)
+
+    # Hent unike URI-er som mangler image_url
+    rows = execute(
+        conn,
+        """
+        SELECT DISTINCT p.uri, MAX(p.title) AS title
+        FROM plays p
+        WHERE p.image_url IS NULL
+        GROUP BY p.uri
+        """,
+    ).fetchall()
+
+    if not rows:
+        logger.info("Ingen manglende albumcover funnet.")
+        conn.close()
+        return 0
+
+    logger.info("Fant %d spor som mangler albumcover. Starter oppslag …", len(rows))
+
+    updated = 0
+    for uri, title in rows:
+        try:
+            # spotify:track:ABC123 → track ID = ABC123
+            parts = uri.split(":")
+            if len(parts) < 3 or parts[1] != "track":
+                continue
+            track_id = parts[2]
+
+            resp = requests.get(
+                f"https://api.spotify.com/v1/tracks/{track_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                logger.warning("Kunne ikke hente info for %s (status %d)", uri, resp.status_code)
+                time.sleep(0.5)
+                continue
+
+            item = resp.json()
+            images = (item.get("album") or {}).get("images") or []
+            if not images:
+                time.sleep(0.5)
+                continue
+
+            image_url = images[1]["url"] if len(images) > 1 else images[0]["url"]
+
+            execute(
+                conn,
+                "UPDATE plays SET image_url = %s WHERE uri = %s AND image_url IS NULL",
+                (image_url, uri),
+            )
+
+            # Oppdater også now_playing hvis dette er det aktuelle sporet
+            execute(
+                conn,
+                "UPDATE now_playing SET image_url = %s WHERE uri = %s",
+                (image_url, uri),
+            )
+
+            conn.commit()
+            updated += 1
+            logger.info("  ✓ %s — %s", title or uri, image_url)
+
+            # Liten pause for å unngå rate limits
+            time.sleep(0.25)
+
+        except requests.RequestException as exc:
+            logger.warning("Nettverksfeil for %s: %s", uri, exc)
+            time.sleep(1)
+        except Exception as exc:
+            logger.warning("Uventet feil for %s: %s", uri, exc)
+
+    logger.info("Ferdig! Oppdaterte %d spor med albumcover.", updated)
+    conn.close()
+    return updated
