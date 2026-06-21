@@ -11,10 +11,14 @@ For å kjøre lokalt:
 import os
 import pytest
 
+# OBS: disse testene kjører DELETE FROM plays/contexts mot databasen
+# DATABASE_URL peker til. Det er i dag SAMME database som Railway/Vercel
+# bruker i produksjon - kjør IKKE disse testene før de er endret til å
+# bruke en egen test-database (f.eks. en TEST_DATABASE_URL).
+#
 # Hopp over alle tester i denne filen dersom DATABASE_URL mangler
-pytestmark = pytest.mark.skipif(
-    not os.environ.get("DATABASE_URL"),
-    reason="DATABASE_URL ikke satt — hopper over DB-tester",
+pytestmark = pytest.mark.skip(
+    reason="Disse testene sletter ekte data i delt database - må bruke egen testdatabase først",
 )
 
 

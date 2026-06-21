@@ -162,6 +162,7 @@ def _migrate(conn) -> None:
     """Kjører inkrementelle skjema-migrasjoner."""
     _migrate_timestamp_to_timestamptz(conn)
     _migrate_add_image_url(conn)
+    _migrate_skipped_to_boolean(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -208,3 +209,23 @@ def _migrate_add_image_url(conn) -> None:
     if cur.fetchone() is None:
         logger.info("Legger til image_url-kolonne i plays-tabellen …")
         execute(conn, "ALTER TABLE plays ADD COLUMN image_url TEXT")
+
+
+def _migrate_skipped_to_boolean(conn) -> None:
+    """
+    Konverterer skipped-kolonnen fra INTEGER til BOOLEAN dersom den fortsatt
+    er av typen INTEGER (fra den opprinnelige enkeltfil-baserte designen).
+    """
+    cur = execute(
+        conn,
+        """
+        SELECT data_type
+        FROM information_schema.columns
+        WHERE table_name = 'plays' AND column_name = 'skipped'
+        """,
+    )
+    row = cur.fetchone()
+    if row is not None and row[0].lower() != "boolean":
+        logger.info("Migrerer skipped-kolonne fra INTEGER til BOOLEAN …")
+        execute(conn, "ALTER TABLE plays ALTER COLUMN skipped TYPE BOOLEAN USING (skipped <> 0)")
+        logger.info("Migrasjon fullført: skipped er nå BOOLEAN.")
