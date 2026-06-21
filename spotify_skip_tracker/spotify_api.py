@@ -117,9 +117,16 @@ def load_creds() -> dict:
     import os
 
     if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
+        client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+        client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+        if not client_id or not client_secret:
+            raise RuntimeError(
+                "SPOTIFY_REFRESH_TOKEN er satt, men SPOTIFY_CLIENT_ID og/eller "
+                "SPOTIFY_CLIENT_SECRET mangler som miljøvariabler."
+            )
         return {
-            "client_id": os.environ["SPOTIFY_CLIENT_ID"],
-            "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
+            "client_id": client_id,
+            "client_secret": client_secret,
             "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
             "access_token": "",
             "expires_at": 0,
@@ -195,6 +202,8 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
 
     try:
         parts = context_uri.split(":")
+        if len(parts) < 3:
+            return None
         kind, id_ = parts[1], parts[2]
         if kind not in ("playlist", "album"):
             return None

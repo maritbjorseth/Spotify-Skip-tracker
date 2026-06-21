@@ -1,54 +1,55 @@
 """
 Tester for statistikkberegning i stats.py.
 
-Disse testene bruker en ekte in-memory Postgres-tilkobling (via psycopg2)
-hvis DATABASE_URL er tilgjengelig, ellers hoppes de over.
+VIKTIG: Disse testene krever en separat testdatabase. Sett TEST_DATABASE_URL
+til en tom Postgres-database som kan slettes fritt.
 
-For å kjøre lokalt:
-    DATABASE_URL=... pytest tests/test_stats.py
+    TEST_DATABASE_URL=postgresql://... pytest tests/test_stats.py -v
+
+Testene er hoppet over (skip) dersom TEST_DATABASE_URL ikke er satt.
+De kjøres ALDRI mot produksjonsdatabasen (DATABASE_URL).
 """
 
 import os
 import pytest
 
-# OBS: disse testene kjører DELETE FROM plays/contexts mot databasen
-# DATABASE_URL peker til. Det er i dag SAMME database som Railway/Vercel
-# bruker i produksjon - kjør IKKE disse testene før de er endret til å
-# bruke en egen test-database (f.eks. en TEST_DATABASE_URL).
-#
-# Hopp over alle tester i denne filen dersom DATABASE_URL mangler
-pytestmark = pytest.mark.skip(
-    reason="Disse testene sletter ekte data i delt database - må bruke egen testdatabase først",
+TEST_DB_URL = os.environ.get("TEST_DATABASE_URL")
+
+pytestmark = pytest.mark.skipif(
+    not TEST_DB_URL,
+    reason="TEST_DATABASE_URL ikke satt — sett en separat testdatabase for å kjøre disse",
 )
 
 
 @pytest.fixture()
 def db_conn():
-    """Oppretter en isolert testtilkobling med en midlertidig skjema."""
-    from spotify_skip_tracker.database import connect, init_db
+    """
+    Isolert DB-tilkobling via savepoints.
 
-    conn = connect()
-    # Bruk en midlertidig tabell-prefiks for å isolere testdata
+    Alle endringer rulles tilbake etter hver test — ingen data
+    blir liggende i testdatabasen.
+    """
+    import psycopg2
+    from spotify_skip_tracker.database import _clean_dsn, init_db
+
+    conn = psycopg2.connect(_clean_dsn(TEST_DB_URL))
     conn.autocommit = False
 
-    # Sett opp tabeller
     init_db(conn)
-
-    # Rydd opp testdata fra forrige kjøring
-    cur = conn.cursor()
-    cur.execute("DELETE FROM plays")
-    cur.execute("DELETE FROM contexts")
     conn.commit()
+
+    # Savepoint som vi ruller tilbake til etter testen
+    cur = conn.cursor()
+    cur.execute("SAVEPOINT test_isolation")
 
     yield conn
 
-    # Rull tilbake all testdata
-    conn.rollback()
+    conn.rollback()  # ruller tilbake til savepoint (effektivt: ROLLBACK TO SAVEPOINT)
     conn.close()
 
 
 def _insert_play(conn, *, uri, title, artists, skipped, context_uri=None, image_url=None):
-    """Hjelpefunksjon for å sette inn en testrad."""
+    """Setter inn en testrad uten å committe (for å holde savepoint-isolasjonen intakt)."""
     from datetime import datetime, timezone
     from spotify_skip_tracker.database import execute
 
@@ -65,7 +66,7 @@ def _insert_play(conn, *, uri, title, artists, skipped, context_uri=None, image_
             datetime.now(timezone.utc), image_url,
         ),
     )
-    conn.commit()
+    # Ingen conn.commit() — savepoint håndterer isolasjonen
 
 
 class TestComputeStats:
@@ -119,7 +120,6 @@ class TestComputeStats:
     def test_most_completed_krever_minst_to_avspillinger(self, db_conn):
         from spotify_skip_tracker.stats import _compute
 
-        # Bare én avspilling — skal ikke vises i most_completed
         _insert_play(db_conn, uri="spotify:track:E", title="E", artists="Z", skipped=False)
 
         result = _compute(db_conn)
@@ -147,6 +147,18 @@ class TestComputeStats:
         result = _compute(db_conn)
         track = next(t for t in result["tracks"] if t["uri"] == "spotify:track:G")
         assert track["image_url"] == "https://i.scdn.co/image/test"
+
+    def test_unique_tracks_teller_distinkte_uri(self, db_conn):
+        from spotify_skip_tracker.stats import _compute
+
+        # Samme sang i to spillelister — skal bare telle som 1 unik sang
+        _insert_play(db_conn, uri="spotify:track:H", title="H", artists="A",
+                     skipped=True, context_uri="spotify:playlist:P1")
+        _insert_play(db_conn, uri="spotify:track:H", title="H", artists="A",
+                     skipped=True, context_uri="spotify:playlist:P2")
+
+        result = _compute(db_conn)
+        assert result["unique_tracks"] == 1
 
     def test_hourly_har_24_elementer(self, db_conn):
         from spotify_skip_tracker.stats import _compute

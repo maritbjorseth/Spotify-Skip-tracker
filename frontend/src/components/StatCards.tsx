@@ -27,7 +27,7 @@ function AnimatedNumber({
       onUpdate: (v) => mv.set(v),
     });
     prevRef.current = value;
-    return ctrl.stop;
+    return () => ctrl.stop();
   }, [value, mv]);
 
   return <motion.span>{display}</motion.span>;

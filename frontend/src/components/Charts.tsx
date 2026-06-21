@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   BarChart,
   Bar,
@@ -45,7 +46,7 @@ function CustomTooltip({
   );
 }
 
-function ChartCard({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
+function ChartCard({ title, color, children }: { title: string; color: string; children: ReactNode }) {
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-6">
       <h2 className="text-sm font-semibold uppercase tracking-widest mb-5" style={{ color }}>

@@ -52,7 +52,7 @@ function Pagination({
       <button
         disabled={page <= 1}
         onClick={() => onPage(page - 1)}
-        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 hover:not-disabled:border-[#444] transition-colors"
+        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 enabled:hover:border-[#444] transition-colors"
       >
         ← Forrige
       </button>
@@ -62,7 +62,7 @@ function Pagination({
       <button
         disabled={page >= totalPages}
         onClick={() => onPage(page + 1)}
-        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 hover:not-disabled:border-[#444] transition-colors"
+        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 enabled:hover:border-[#444] transition-colors"
       >
         Neste →
       </button>

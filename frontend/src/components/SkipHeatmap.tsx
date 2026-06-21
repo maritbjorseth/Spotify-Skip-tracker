@@ -67,7 +67,8 @@ export function SkipHeatmap({ daily }: Props) {
         date.setDate(startDay.getDate() + w * 7 + d);
         if (date > today) continue;
 
-        const key = date.toISOString().slice(0, 10);
+        // Bruk Oslo-tidssone for å matche backend sin DATE(...AT TIME ZONE 'Europe/Oslo')
+        const key = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Oslo" }).format(date);
         const stats = daily[key] ?? { skips: 0, plays: 0 };
         if (stats.skips > maxSkips) maxSkips = stats.skips;
 
@@ -145,8 +146,8 @@ export function SkipHeatmap({ daily }: Props) {
                       .closest("svg")!
                       .getBoundingClientRect();
                     setTooltip({
-                      x: c.col * STEP + rect.left + 28,
-                      y: c.row * STEP + rect.top,
+                      x: rect.left + c.col * STEP,
+                      y: rect.top + c.row * STEP,
                       date: c.date,
                       skips: c.skips,
                       plays: c.plays,

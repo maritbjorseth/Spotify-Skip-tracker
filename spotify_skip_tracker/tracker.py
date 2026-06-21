@@ -144,6 +144,7 @@ def polling_loop() -> None:
             uri: str = item["uri"]
             duration_ms: float = item.get("duration_ms") or 1
             progress_ms: float = data.get("progress_ms") or 0
+            is_playing: bool = bool(data.get("is_playing", True))
             title: str | None = item.get("name")
             album: str | None = (item.get("album") or {}).get("name")
             artists: str = ", ".join(a.get("name", "") for a in item.get("artists", []))
@@ -157,7 +158,7 @@ def polling_loop() -> None:
                 image_url = images[1]["url"] if len(images) > 1 else images[0]["url"]
 
             # Oppdater now_playing-tabellen på hver poll
-            _upsert_now_playing(conn, uri, title, album, artists, image_url, int(progress_ms), int(duration_ms))
+            _upsert_now_playing(conn, uri, title, album, artists, image_url, int(progress_ms), int(duration_ms), is_playing)
 
             if uri != last_uri:
                 if last_uri is not None:
@@ -227,6 +228,7 @@ def _upsert_now_playing(
     image_url: str | None,
     progress_ms: int,
     duration_ms: int,
+    is_playing: bool,
 ) -> None:
     """Oppdaterer now_playing-tabellen med nåværende avspilling (upsert på rad 1)."""
     try:
@@ -235,7 +237,7 @@ def _upsert_now_playing(
             """
             INSERT INTO now_playing
                 (id, uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at)
-            VALUES (1, %s, %s, %s, %s, %s, %s, %s, TRUE, NOW())
+            VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
             ON CONFLICT (id) DO UPDATE SET
                 uri         = EXCLUDED.uri,
                 title       = EXCLUDED.title,
@@ -244,10 +246,10 @@ def _upsert_now_playing(
                 image_url   = EXCLUDED.image_url,
                 progress_ms = EXCLUDED.progress_ms,
                 duration_ms = EXCLUDED.duration_ms,
-                is_playing  = TRUE,
+                is_playing  = EXCLUDED.is_playing,
                 updated_at  = NOW()
             """,
-            (uri, title, artists, album, image_url, progress_ms, duration_ms),
+            (uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing),
         )
         conn.commit()
     except Exception as exc:

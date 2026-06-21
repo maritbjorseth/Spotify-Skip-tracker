@@ -17,7 +17,11 @@ from .database import pooled_connection, execute
 
 _HERE = Path(__file__).parent
 _DIST_DIR = _HERE.parent / "frontend" / "dist"
-_DASHBOARD_HTML = (_HERE / "dashboard.html").read_text(encoding="utf-8")
+
+try:
+    _DASHBOARD_HTML = (_HERE / "dashboard.html").read_text(encoding="utf-8")
+except FileNotFoundError:
+    _DASHBOARD_HTML = "<h1>Dashboard ikke funnet</h1>"
 
 
 def create_flask_app() -> Flask:
@@ -49,23 +53,19 @@ def create_flask_app() -> Flask:
                     WHERE id = 1
                     """,
                 ).fetchone()
-        except Exception:
-            return jsonify({"is_playing": False}), 200
 
-        if row is None:
-            return jsonify({"is_playing": False}), 200
+                if row is None:
+                    return jsonify({"is_playing": False}), 200
 
-        uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at = row
+                uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at = row
 
-        # Stale-sjekk: hvis updated_at er eldre enn 30 s → ikke spilt
-        if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=30):
-            is_playing = False
+                # Stale-sjekk: hvis updated_at er eldre enn 30 s → ikke spilt
+                if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=30):
+                    is_playing = False
 
-        # Historisk skip-rate for dette sporet
-        skip_rate = None
-        if uri:
-            try:
-                with pooled_connection() as conn:
+                # Historisk skip-rate — samme tilkobling
+                skip_rate = None
+                if uri:
                     result = execute(
                         conn,
                         """
@@ -75,10 +75,11 @@ def create_flask_app() -> Flask:
                         """,
                         (uri,),
                     ).fetchone()
-                if result and result[0] is not None:
-                    skip_rate = round(float(result[0]), 3)
-            except Exception:
-                pass
+                    if result and result[0] is not None:
+                        skip_rate = round(float(result[0]), 3)
+
+        except Exception:
+            return jsonify({"is_playing": False}), 200
 
         return jsonify({
             "is_playing": bool(is_playing),

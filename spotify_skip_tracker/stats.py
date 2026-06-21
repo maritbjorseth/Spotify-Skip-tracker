@@ -157,6 +157,7 @@ def _compute(conn) -> dict:
         conn,
         """
         SELECT
+            uri,
             MAX(title)                                          AS title,
             MAX(artists)                                        AS artists,
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)           AS skip_count,
@@ -169,14 +170,16 @@ def _compute(conn) -> dict:
     ).fetchall()
     most_played = [
         {
+            "uri": uri,
             "title": t,
             "artists": a,
+            "context_name": None,
             "skip_count": int(sc),
             "play_count": int(pc),
             "skip_rate": sc / pc if pc else 0,
             "image_url": img,
         }
-        for t, a, sc, pc, img in played_rows
+        for uri, t, a, sc, pc, img in played_rows
     ]
 
     # ------------------------------------------------------------------
@@ -186,6 +189,7 @@ def _compute(conn) -> dict:
         conn,
         """
         SELECT
+            uri,
             MAX(title)                                          AS title,
             MAX(artists)                                        AS artists,
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)           AS skip_count,
@@ -202,14 +206,16 @@ def _compute(conn) -> dict:
     ).fetchall()
     most_completed = [
         {
+            "uri": uri,
             "title": t,
             "artists": a,
+            "context_name": None,
             "skip_count": int(sc),
             "play_count": int(pc),
             "skip_rate": sc / pc if pc else 0,
             "image_url": img,
         }
-        for t, a, sc, pc, img in completed_rows
+        for uri, t, a, sc, pc, img in completed_rows
     ]
 
     # ------------------------------------------------------------------
@@ -261,6 +267,10 @@ def _compute(conn) -> dict:
         "SELECT COALESCE(SUM(CASE WHEN skipped THEN 1 ELSE 0 END), 0) FROM plays",
     ).fetchone()[0]
     total_plays = execute(conn, "SELECT COUNT(*) FROM plays").fetchone()[0]
+    unique_tracks = execute(
+        conn,
+        "SELECT COUNT(DISTINCT uri) FROM plays WHERE skipped = TRUE",
+    ).fetchone()[0]
 
     # ------------------------------------------------------------------
     # Daglig aktivitet for heatmap (siste 365 dager)
@@ -296,5 +306,5 @@ def _compute(conn) -> dict:
         "daily": daily,
         "total_skips": int(total_skips),
         "total_plays": int(total_plays),
-        "unique_tracks": len(tracks),
+        "unique_tracks": int(unique_tracks),
     }
