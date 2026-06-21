@@ -11,5 +11,5 @@ skips_export.csv
 
 # Frontend
 frontend/node_modules/
-frontend/dist/
+# frontend/dist/ er committet med vilje - Vercel kjører ikke npm, kun pip install
 .DS_Store

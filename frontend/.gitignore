@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist er committet med vilje - Vercel kjører ikke npm, kun pip install
 dist-ssr
 *.local
 
