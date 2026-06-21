@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+credentials.json
+data.db
+wrapped.html
+skips_export.csv
+*.csv
