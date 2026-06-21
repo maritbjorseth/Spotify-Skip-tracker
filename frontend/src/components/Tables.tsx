@@ -25,7 +25,7 @@ function SkipBadge({ rate }: { rate: number }) {
 function AlbumThumb({ url, title }: { url: string | null; title: string | null }) {
   if (!url)
     return (
-      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#2a2a2a] flex-shrink-0">
+      <div className="flex aspect-square size-12 items-center justify-center rounded-md bg-[#2a2a2a] flex-shrink-0">
         <svg className="h-5 w-5 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
         </svg>
@@ -36,7 +36,7 @@ function AlbumThumb({ url, title }: { url: string | null; title: string | null }
       src={url}
       alt={title ?? ""}
       loading="lazy"
-      className="size-12 rounded-md object-cover flex-shrink-0"
+      className="aspect-square size-12 rounded-md object-cover flex-shrink-0"
     />
   );
 }
