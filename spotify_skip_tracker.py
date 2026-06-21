@@ -435,6 +435,11 @@ DASHBOARD_HTML = """
   .toggle-bar input { margin: 0; }
   .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
   .empty-row { color: var(--muted); font-style: italic; }
+  .pagination { display: flex; align-items: center; gap: 12px; margin-top: 14px; justify-content: center; }
+  .pagination button { background: var(--card2); color: #eee; border: 1px solid #333; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .pagination button:disabled { opacity: 0.4; cursor: default; }
+  .pagination button:not(:disabled):hover { border-color: #555; }
+  .pagination span { color: var(--muted); font-size: 0.9em; }
 </style>
 </head>
 <body>
@@ -475,6 +480,7 @@ DASHBOARD_HTML = """
       </thead>
       <tbody id="rows"></tbody>
     </table>
+    <div class="pagination" id="pagination"></div>
   </div>
 
   <div class="grid">
@@ -514,6 +520,8 @@ let allData = [];
 let sortKey = "skip_count";
 let sortDir = -1;
 let charts = {};
+let currentPage = 1;
+const PAGE_SIZE = 20;
 
 const HOURS = Array.from({length: 24}, (_, i) => i + ":00");
 const WEEKDAYS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
@@ -631,7 +639,11 @@ function render() {
 
   rows.sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : -1) * sortDir);
 
-  document.getElementById("rows").innerHTML = rows.length ? rows.map(t => `
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  document.getElementById("rows").innerHTML = pageRows.length ? pageRows.map(t => `
     <tr>
       <td>${t.title || ""}</td>
       <td>${t.artists || ""}</td>
@@ -641,18 +653,30 @@ function render() {
       <td>${Math.round(t.skip_rate * 100)}%</td>
     </tr>
   `).join("") : emptyRow(6);
+
+  document.getElementById("pagination").innerHTML = rows.length > PAGE_SIZE ? `
+    <button id="prevPage" ${currentPage <= 1 ? "disabled" : ""}>← Forrige</button>
+    <span>Side ${currentPage} av ${totalPages} (${rows.length} sanger)</span>
+    <button id="nextPage" ${currentPage >= totalPages ? "disabled" : ""}>Neste →</button>
+  ` : "";
+
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage");
+  if (prevBtn) prevBtn.addEventListener("click", () => { currentPage--; render(); });
+  if (nextBtn) nextBtn.addEventListener("click", () => { currentPage++; render(); });
 }
 
 document.querySelectorAll("th").forEach(th => {
   th.addEventListener("click", () => {
     const key = th.dataset.key;
     if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = -1; }
+    currentPage = 1;
     render();
   });
 });
 
-document.getElementById("contextFilter").addEventListener("change", render);
-document.getElementById("search").addEventListener("input", render);
+document.getElementById("contextFilter").addEventListener("change", () => { currentPage = 1; render(); });
+document.getElementById("search").addEventListener("input", () => { currentPage = 1; render(); });
 
 document.querySelectorAll(".vis-toggle").forEach(cb => {
   const target = document.getElementById(cb.dataset.target);
