@@ -7,3 +7,4 @@ skips_export.csv
 *.csv
 .vercel
 .env*
+.claude/

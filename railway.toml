@@ -1,0 +1,3 @@
+[deploy]
+startCommand = "python3 spotify_skip_tracker.py track"
+restartPolicyType = "ALWAYS"

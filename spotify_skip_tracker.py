@@ -103,7 +103,15 @@ class _CursorProxy:
 
 
 def get_db_connection():
-    return psycopg2.connect(DATABASE_URL)
+    # some platforms bundle an older libpq that rejects the "channel_binding"
+    # param Neon adds to its connection strings - sslmode=require already
+    # covers encryption, so it's safe to drop
+    dsn = DATABASE_URL
+    if dsn:
+        parts = urllib.parse.urlsplit(dsn)
+        query = [(k, v) for k, v in urllib.parse.parse_qsl(parts.query) if k != "channel_binding"]
+        dsn = urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(query)))
+    return psycopg2.connect(dsn)
 
 
 def db_execute(conn, sql, params=()):
@@ -226,6 +234,15 @@ def run_setup(client_id, client_secret):
 # ---------------------------------------------------------------------------
 
 def load_creds():
+    # cloud deployments (no local credentials.json) configure these via env vars instead
+    if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
+        return {
+            "client_id": os.environ["SPOTIFY_CLIENT_ID"],
+            "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
+            "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
+            "access_token": "",
+            "expires_at": 0,
+        }
     if not os.path.exists(CREDS_PATH):
         print("Ingen innlogging funnet. Kjør 'setup' først (se -h for hjelp).")
         sys.exit(1)
@@ -234,6 +251,10 @@ def load_creds():
 
 
 def save_creds(creds):
+    # cloud deployments have no local file to persist to (and don't need one - the
+    # refresh token doesn't rotate, so re-reading it from the env var on restart is fine)
+    if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
+        return
     with open(CREDS_PATH, "w") as f:
         json.dump(creds, f, indent=2)
 
@@ -899,6 +920,13 @@ def run_tracker():
     app.run(host="127.0.0.1", port=5000, debug=False)
 
 
+def run_track_only():
+    """Tracking only, no dashboard - for cloud deployments (e.g. Railway) where
+    the dashboard is already hosted separately (e.g. on Vercel)."""
+    init_db()
+    polling_loop()
+
+
 # ---------------------------------------------------------------------------
 # CSV export
 # ---------------------------------------------------------------------------
@@ -1094,6 +1122,7 @@ def main():
     setup_parser.add_argument("--client-secret", required=True)
 
     sub.add_parser("run", help="Start tracking + dashboard på http://localhost:5000")
+    sub.add_parser("track", help="Start kun tracking, uten dashboard (for skydeploy, f.eks. Railway)")
     sub.add_parser("wrapped", help="Generer en personlig 'wrapped'-rapport som HTML")
 
     export_parser = sub.add_parser("export", help="Eksporter alle loggede avspillinger til en CSV-fil")
@@ -1108,6 +1137,8 @@ def main():
         run_setup(args.client_id, args.client_secret)
     elif args.command == "run":
         run_tracker()
+    elif args.command == "track":
+        run_track_only()
     elif args.command == "wrapped":
         run_wrapped()
     elif args.command == "export":
