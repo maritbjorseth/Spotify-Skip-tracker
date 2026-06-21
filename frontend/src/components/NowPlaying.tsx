@@ -32,10 +32,10 @@ export function NowPlaying() {
               <img
                 src={data.image_url}
                 alt={data.album ?? ""}
-                className="h-16 w-16 rounded-lg object-cover shadow-lg"
+                className="size-16 rounded-md object-cover shadow-lg"
               />
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-[#2a2a2a]">
+              <div className="flex size-16 items-center justify-center rounded-md bg-[#2a2a2a]">
                 <svg className="h-8 w-8 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
                 </svg>
@@ -43,7 +43,7 @@ export function NowPlaying() {
             )}
             {/* Pulserende grønn ring */}
             <motion.span
-              className="absolute -inset-1 rounded-xl border-2 border-[#1db954]"
+              className="absolute -inset-1 rounded-lg border-2 border-[#1db954]"
               animate={{ opacity: [0.6, 0.15, 0.6] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             />

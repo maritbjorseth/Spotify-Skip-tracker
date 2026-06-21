@@ -25,8 +25,8 @@ function SkipBadge({ rate }: { rate: number }) {
 function AlbumThumb({ url, title }: { url: string | null; title: string | null }) {
   if (!url)
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded bg-[#2a2a2a] flex-shrink-0">
-        <svg className="h-4 w-4 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#2a2a2a] flex-shrink-0">
+        <svg className="h-5 w-5 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
         </svg>
       </div>
@@ -36,7 +36,7 @@ function AlbumThumb({ url, title }: { url: string | null; title: string | null }
       src={url}
       alt={title ?? ""}
       loading="lazy"
-      className="h-9 w-9 rounded object-cover flex-shrink-0"
+      className="size-12 rounded-md object-cover flex-shrink-0"
     />
   );
 }
@@ -164,7 +164,7 @@ export function SkippedTable({
         <table className="w-full">
           <thead className="bg-[#161616]">
             <tr>
-              <th className="w-12 px-4 py-3" />
+              <th className="px-4 py-3" />
               <Th k="title" label="Tittel" />
               <Th k="artists" label="Artist" />
               <Th k="context_name" label="Spilleliste/album" />
@@ -239,7 +239,7 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
         <table className="w-full">
           <thead className="bg-[#161616]">
             <tr>
-              <th className="w-12 px-4 py-3" />
+              <th className="px-4 py-3" />
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Spilt</th>
@@ -276,7 +276,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
         <table className="w-full">
           <thead className="bg-[#161616]">
             <tr>
-              <th className="w-12 px-4 py-3" />
+              <th className="px-4 py-3" />
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Spilt</th>
