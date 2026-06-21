@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "./api";
 import { NowPlaying } from "./components/NowPlaying";
 import { StatCardsRow } from "./components/StatCards";
 import { SkipHeatmap } from "./components/SkipHeatmap";
 import { SkippedTable, MostPlayedTable, MostCompletedTable, TopArtistsTable } from "./components/Tables";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayChart } from "./components/Charts";
+import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
 function SectionDivider({ label }: { label: string }) {
   return (
@@ -25,6 +26,11 @@ export default function App() {
     staleTime: 5_000,
   });
 
+  const { visible, toggle } = useSectionVisibility();
+
+  const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayChart"].some((id) => visible[id]);
+  const hasMore = ["mostPlayed", "mostCompleted", "topArtists"].some((id) => visible[id]);
+
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-[#eee]">
       <div className="max-w-6xl mx-auto px-6 py-10">
@@ -34,14 +40,17 @@ export default function App() {
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8"
+          className="mb-8 flex items-start justify-between"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-[#1db954]">
-            Skip Stats
-          </h1>
-          <p className="text-sm text-[#555] mt-1">
-            Hva skipper du egentlig?
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-[#1db954]">
+              Skip Stats
+            </h1>
+            <p className="text-sm text-[#555] mt-1">
+              Hva skipper du egentlig?
+            </p>
+          </div>
+          <SectionToggle visible={visible} onToggle={toggle} />
         </motion.div>
 
         {/* Spiller nå */}
@@ -76,27 +85,47 @@ export default function App() {
             <SkipHeatmap daily={data.daily} />
 
             {/* Mest skippede sanger */}
-            <SkippedTable tracks={data.tracks} contexts={data.contexts} />
+            {visible.skipped && (
+              <SkippedTable tracks={data.tracks} contexts={data.contexts} />
+            )}
 
-            <SectionDivider label="Grafer" />
+            {hasGraphs && <SectionDivider label="Grafer" />}
 
             {/* Graf-grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-              <ArtistChart artists={data.top_artists} />
-              <ContextChart contexts={data.top_contexts} />
-              <HourlyChart hourly={data.hourly} />
-              <WeekdayChart weekday={data.weekday} />
-            </div>
+            <AnimatePresence mode="sync">
+              {(visible.artistChart || visible.contextChart || visible.hourChart || visible.weekdayChart) && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
+                >
+                  {visible.artistChart && <ArtistChart artists={data.top_artists} />}
+                  {visible.contextChart && <ContextChart contexts={data.top_contexts} />}
+                  {visible.hourChart && <HourlyChart hourly={data.hourly} />}
+                  {visible.weekdayChart && <WeekdayChart weekday={data.weekday} />}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <SectionDivider label="Mer statistikk" />
+            {hasMore && <SectionDivider label="Mer statistikk" />}
 
             {/* Nedre tabeller — to kolonner */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-              <MostPlayedTable tracks={data.most_played} />
-              <MostCompletedTable tracks={data.most_completed} />
-            </div>
+            <AnimatePresence mode="sync">
+              {(visible.mostPlayed || visible.mostCompleted) && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10"
+                >
+                  {visible.mostPlayed && <MostPlayedTable tracks={data.most_played} />}
+                  {visible.mostCompleted && <MostCompletedTable tracks={data.most_completed} />}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <TopArtistsTable artists={data.top_listened_artists} />
+            {visible.topArtists && <TopArtistsTable artists={data.top_listened_artists} />}
           </motion.div>
         )}
       </div>

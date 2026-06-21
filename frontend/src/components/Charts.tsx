@@ -70,16 +70,16 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
   return (
     <ChartCard title="Mest skippede artister" color="#ff6b35">
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} layout="vertical" margin={{ left: 20, right: 16 }}>
+        <BarChart data={data} layout="vertical" margin={{ left: 10, right: 16 }}>
           <XAxis type="number" tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ ...TICK_STYLE, textAnchor: "start" }}
+            tick={TICK_STYLE}
             axisLine={false}
             tickLine={false}
-            width={120}
-            tickFormatter={(v: string) => v.length > 14 ? v.slice(0, 13) + "…" : v}
+            width={130}
+            tickFormatter={(v: string) => v.length > 16 ? v.slice(0, 15) + "…" : v}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
           <Bar dataKey="skip" radius={[0, 4, 4, 0]}>
