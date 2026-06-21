@@ -1,7 +1,6 @@
-"""Vercel entry point: hosts only the read-only dashboard, backed by the
-shared Postgres database. The actual tracking (polling Spotify, writing
-plays) keeps running locally on a machine that's usually on, via the
-`run` command - see spotify_skip_tracker.py.
+"""Vercel-inngang: serverer kun det skrivebeskyttede dashbordet, lest fra
+den delte Postgres-databasen. Selve trackingen (polling av Spotify, skriving
+av avspillinger) kjører separat på Railway via 'python -m spotify_skip_tracker track'.
 """
 
 from spotify_skip_tracker import create_flask_app

@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<title>Spotify Skip Stats</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --green: #1db954; --orange: #ff6b35; --blue: #4a9eff; --purple: #9b59b6;
+    --bg: #0d0d0d; --card: #181818; --card2: #1c1c1c; --border: #2a2a2a; --muted: #999;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: #eee; margin: 0; padding: 28px; }
+  h1 { color: var(--green); margin-top: 0; letter-spacing: -0.5px; }
+  h2 { font-size: 1.05em; color: #ddd; margin: 0 0 12px; font-weight: 600; }
+  .summary { display: flex; gap: 18px; margin-bottom: 36px; flex-wrap: wrap; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px 28px; min-width: 170px; }
+  .card .icon { font-size: 1.3em; margin-bottom: 8px; }
+  .card .num { font-size: 2.3em; font-weight: bold; color: var(--green); }
+  .card .label { font-size: 0.88em; color: var(--muted); margin-top: 2px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 36px; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .panel canvas { max-height: 260px; }
+  .panel h2.accent-orange, .section h2.accent-orange { color: var(--orange); }
+  .panel h2.accent-purple, .section h2.accent-purple { color: var(--purple); }
+  .panel h2.accent-blue, .section h2.accent-blue { color: var(--blue); }
+  .panel h2.accent-green, .section h2.accent-green { color: var(--green); }
+  table { width: 100%; border-collapse: collapse; background: var(--card2); border-radius: 10px; overflow: hidden; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.92em; }
+  th { background: #161616; color: var(--muted); cursor: pointer; user-select: none; font-weight: 600; }
+  tr:hover { background: #232323; }
+  .skip-count { font-weight: bold; color: var(--orange); text-align: center; }
+  .album-thumb { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; vertical-align: middle; }
+  .album-thumb-placeholder { width: 36px; height: 36px; border-radius: 4px; background: #2a2a2a; display: inline-block; vertical-align: middle; }
+  select, input[type="text"] { background: var(--card2); color: #eee; border: 1px solid #333; border-radius: 6px; padding: 6px 10px; margin-right: 10px; }
+  .controls { margin-bottom: 16px; }
+  .section { margin-bottom: 40px; }
+  .toggle-box { position: fixed; top: 22px; right: 24px; z-index: 100; }
+  .toggle-box summary { display: inline-block; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.88em; color: #ccc; cursor: pointer; user-select: none; list-style: none; }
+  .toggle-box summary::-webkit-details-marker { display: none; }
+  .toggle-box summary:hover { color: #eee; border-color: #444; }
+  .toggle-bar { position: absolute; top: 40px; right: 0; display: flex; flex-direction: column; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 0.88em; width: max-content; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .toggle-bar label { display: flex; align-items: center; gap: 6px; color: #ccc; cursor: pointer; }
+  .toggle-bar input { margin: 0; }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .empty-row { color: var(--muted); font-style: italic; }
+  .pagination { display: flex; align-items: center; gap: 12px; margin-top: 14px; justify-content: center; }
+  .pagination button { background: var(--card2); color: #eee; border: 1px solid #333; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .pagination button:disabled { opacity: 0.4; cursor: default; }
+  .pagination button:not(:disabled):hover { border-color: #555; }
+  .pagination span { color: var(--muted); font-size: 0.9em; }
+</style>
+</head>
+<body>
+  <div class="header-row">
+    <h1>Skip Stats</h1>
+    <details class="toggle-box">
+      <summary>&#9881; Vis/skjul paneler</summary>
+      <div class="toggle-bar">
+        <label><input type="checkbox" class="vis-toggle" data-target="block-skipped" checked> Mest skippede sanger</label>
+        <label><input type="checkbox" class="vis-toggle" data-target="block-artistChart" checked> Mest skippede artister</label>
+        <label><input type="checkbox" class="vis-toggle" data-target="block-contextChart" checked> Skip-rate per spilleliste/album</label>
+        <label><input type="checkbox" class="vis-toggle" data-target="block-hourChart" checked> Skip etter tidspunkt</label>
+        <label><input type="checkbox" class="vis-toggle" data-target="block-weekdayChart" checked> Skip etter ukedag</label>
+        <label><input type="checkbox" class="vis-toggle" data-target="block-mostPlayed" checked> Mest spilt totalt</label>
+        <label><input type="checkbox" class="vis-toggle" data-target="block-mostCompleted" checked> Nesten aldri skippet</label>
+        <label><input type="checkbox" class="vis-toggle" data-target="block-topArtists" checked> Mest hørte artister</label>
+      </div>
+    </details>
+  </div>
+  <div class="summary" id="summary"></div>
+
+  <div class="section" id="block-skipped">
+    <h2 class="accent-orange">Mest skippede sanger</h2>
+    <div class="controls">
+      <select id="contextFilter"><option value="">Alle spillelister/album</option></select>
+      <input type="text" id="search" placeholder="Søk etter tittel/artist...">
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:44px"></th>
+          <th data-key="title">Tittel</th>
+          <th data-key="artists">Artist</th>
+          <th data-key="context_name">Spilleliste/album</th>
+          <th data-key="skip_count">Antall skip</th>
+          <th data-key="play_count">Totalt spilt</th>
+          <th data-key="skip_rate">Skip-rate</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel" id="block-artistChart"><h2 class="accent-orange">Mest skippede artister</h2><canvas id="artistChart"></canvas></div>
+    <div class="panel" id="block-contextChart"><h2 class="accent-orange">Høyest skip-rate per spilleliste/album</h2><canvas id="contextChart"></canvas></div>
+    <div class="panel" id="block-hourChart"><h2 class="accent-purple">Skip etter tidspunkt på døgnet</h2><canvas id="hourChart"></canvas></div>
+    <div class="panel" id="block-weekdayChart"><h2 class="accent-purple">Skip etter ukedag</h2><canvas id="weekdayChart"></canvas></div>
+  </div>
+
+  <div class="grid">
+    <div class="section" id="block-mostPlayed">
+      <h2 class="accent-blue">Mest spilt totalt</h2>
+      <table>
+        <thead><tr><th style="width:44px"></th><th>Tittel</th><th>Artist</th><th>Totalt spilt</th><th>Skip-rate</th></tr></thead>
+        <tbody id="mostPlayedRows"></tbody>
+      </table>
+      <div class="pagination" id="mostPlayedPagination"></div>
+    </div>
+    <div class="section" id="block-mostCompleted">
+      <h2 class="accent-green">Sanger du nesten aldri skipper</h2>
+      <table>
+        <thead><tr><th style="width:44px"></th><th>Tittel</th><th>Artist</th><th>Totalt spilt</th><th>Skip-rate</th></tr></thead>
+        <tbody id="mostCompletedRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="block-topArtists">
+    <h2 class="accent-blue">Artister du hører mest på</h2>
+    <table>
+      <thead><tr><th>Artist</th><th>Totalt spilt</th><th>Skip-rate</th></tr></thead>
+      <tbody id="topListenedArtistRows"></tbody>
+    </table>
+  </div>
+
+<script>
+/* -------------------------------------------------------------------------
+ * Hjelpefunksjoner
+ * ---------------------------------------------------------------------- */
+
+/** Escaper HTML-spesialtegn for å forhindre XSS. */
+function esc(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function shortLabel(text) {
+  if (!text) return text;
+  const first = text.split(",")[0].trim();
+  return text.includes(",") ? first + " m.fl." : first;
+}
+
+function rateColor(rate) {
+  return rate >= 0.5 ? "#ff6b35" : "#1db954";
+}
+
+function emptyRow(colspan) {
+  return `<tr><td class="empty-row" colspan="${colspan}">Ingen data ennå</td></tr>`;
+}
+
+function thumbHtml(imageUrl) {
+  if (imageUrl) {
+    return `<td><img class="album-thumb" src="${esc(imageUrl)}" alt="" loading="lazy"></td>`;
+  }
+  return `<td><span class="album-thumb-placeholder"></span></td>`;
+}
+
+/* -------------------------------------------------------------------------
+ * Paginering
+ * ---------------------------------------------------------------------- */
+
+function renderPaginated(rows, page, pageSize, bodyId, paginationId, rowFn, colspan, onPageChange) {
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  if (page > totalPages) page = totalPages;
+  const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
+
+  document.getElementById(bodyId).innerHTML =
+    pageRows.length ? pageRows.map(rowFn).join("") : emptyRow(colspan);
+
+  const pagEl = document.getElementById(paginationId);
+  pagEl.innerHTML = rows.length > pageSize ? `
+    <button class="prevBtn" ${page <= 1 ? "disabled" : ""}>&#8592; Forrige</button>
+    <span>Side ${page} av ${totalPages} (${rows.length})</span>
+    <button class="nextBtn" ${page >= totalPages ? "disabled" : ""}>Neste &#8594;</button>
+  ` : "";
+  const prevBtn = pagEl.querySelector(".prevBtn");
+  const nextBtn = pagEl.querySelector(".nextBtn");
+  if (prevBtn) prevBtn.addEventListener("click", () => onPageChange(page - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => onPageChange(page + 1));
+  return page;
+}
+
+/* -------------------------------------------------------------------------
+ * Grafer (Chart.js)
+ * ---------------------------------------------------------------------- */
+
+const charts = {};
+
+function barChart(canvasId, labels, data, label, color, yMax, horizontal) {
+  if (charts[canvasId]) {
+    const chart = charts[canvasId];
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.data.datasets[0].backgroundColor = color;
+    chart.update();
+    return;
+  }
+  const ctx = document.getElementById(canvasId);
+  const categoryScale = { ticks: { color: "#999" }, grid: { color: "#2a2a2a" } };
+  const valueScale = {
+    ticks: { color: "#999", precision: 0 },
+    grid: { color: "#2a2a2a" },
+    beginAtZero: true,
+  };
+  if (yMax !== undefined) {
+    valueScale.max = yMax;
+    valueScale.ticks.callback = (v) => v + "%";
+  }
+  const scales = horizontal
+    ? { x: valueScale, y: categoryScale }
+    : { x: categoryScale, y: valueScale };
+  charts[canvasId] = new Chart(ctx, {
+    type: "bar",
+    data: { labels, datasets: [{ label, data, backgroundColor: color }] },
+    options: {
+      indexAxis: horizontal ? "y" : "x",
+      animation: false,
+      plugins: { legend: { display: false } },
+      scales,
+    },
+  });
+}
+
+/* -------------------------------------------------------------------------
+ * Tilstand
+ * ---------------------------------------------------------------------- */
+
+let allData = [];
+let sortKey = "skip_count";
+let sortDir = -1;
+let currentPage = 1;
+const PAGE_SIZE = 15;
+let mostPlayedData = [];
+let mostPlayedPage = 1;
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i + ":00");
+const WEEKDAYS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
+
+/* -------------------------------------------------------------------------
+ * Rendering
+ * ---------------------------------------------------------------------- */
+
+function render() {
+  const filterCtx = document.getElementById("contextFilter").value;
+  const search = document.getElementById("search").value.toLowerCase();
+
+  let rows = allData.filter((t) => {
+    if (filterCtx && t.context_name !== filterCtx) return false;
+    if (search && !(esc(t.title) + esc(t.artists)).toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  rows.sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : -1) * sortDir);
+
+  currentPage = renderPaginated(
+    rows, currentPage, PAGE_SIZE, "rows", "pagination",
+    (t) => `
+      <tr>
+        ${thumbHtml(t.image_url)}
+        <td>${esc(t.title)}</td>
+        <td>${esc(t.artists)}</td>
+        <td>${esc(t.context_name) || "-"}</td>
+        <td class="skip-count">${t.skip_count}</td>
+        <td>${t.play_count}</td>
+        <td style="color:${rateColor(t.skip_rate)}">${Math.round(t.skip_rate * 100)}%</td>
+      </tr>`,
+    7,
+    (newPage) => { currentPage = newPage; render(); },
+  );
+}
+
+function renderMostPlayed() {
+  mostPlayedPage = renderPaginated(
+    mostPlayedData, mostPlayedPage, PAGE_SIZE, "mostPlayedRows", "mostPlayedPagination",
+    (t) => `
+      <tr>
+        ${thumbHtml(t.image_url)}
+        <td>${esc(t.title)}</td>
+        <td>${esc(t.artists)}</td>
+        <td>${t.play_count}</td>
+        <td style="color:${rateColor(t.skip_rate)}">${Math.round(t.skip_rate * 100)}%</td>
+      </tr>`,
+    5,
+    (newPage) => { mostPlayedPage = newPage; renderMostPlayed(); },
+  );
+}
+
+/* -------------------------------------------------------------------------
+ * Datainnlasting
+ * ---------------------------------------------------------------------- */
+
+async function load() {
+  const res = await fetch("/api/stats");
+  const data = await res.json();
+  allData = data.tracks;
+
+  const skipRate = data.total_plays
+    ? Math.round(100 * data.total_skips / data.total_plays)
+    : 0;
+
+  document.getElementById("summary").innerHTML = `
+    <div class="card"><div class="icon">&#9197;</div><div class="num">${data.total_skips}</div><div class="label">Totalt skippet</div></div>
+    <div class="card"><div class="icon">&#128202;</div><div class="num">${skipRate}%</div><div class="label">Skip-rate</div></div>
+    <div class="card"><div class="icon">&#127925;</div><div class="num">${data.total_plays}</div><div class="label">Sporavspillinger logget</div></div>
+    <div class="card"><div class="icon">&#127926;</div><div class="num">${data.unique_tracks}</div><div class="label">Unike sanger skippet</div></div>
+  `;
+
+  // Oppdater kontekst-filter uten å resette valget
+  const select = document.getElementById("contextFilter");
+  const existing = new Set(Array.from(select.options).map((o) => o.value));
+  data.contexts.forEach((c) => {
+    if (!existing.has(c)) {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      select.appendChild(opt);
+    }
+  });
+
+  barChart("artistChart",
+    data.top_artists.map((a) => shortLabel(a.artists)),
+    data.top_artists.map((a) => a.skip_count),
+    "Skip", "#ff6b35");
+  barChart("contextChart",
+    data.top_contexts.map((c) => c.context_name),
+    data.top_contexts.map((c) => Math.round(c.skip_rate * 100)),
+    "Skip-rate %", "#ff6b35", 100);
+  barChart("hourChart", HOURS, data.hourly.map((h) => h.skips), "Skip", "#9b59b6");
+  barChart("weekdayChart", WEEKDAYS, data.weekday.map((w) => w.skips), "Skip", "#9b59b6");
+
+  mostPlayedData = data.most_played;
+  renderMostPlayed();
+
+  document.getElementById("mostCompletedRows").innerHTML = data.most_completed.length
+    ? data.most_completed.map((t) => `
+        <tr>
+          ${thumbHtml(t.image_url)}
+          <td>${esc(t.title)}</td>
+          <td>${esc(t.artists)}</td>
+          <td>${t.play_count}</td>
+          <td style="color:${rateColor(t.skip_rate)}">${Math.round(t.skip_rate * 100)}%</td>
+        </tr>`).join("")
+    : emptyRow(5);
+
+  document.getElementById("topListenedArtistRows").innerHTML = data.top_listened_artists.length
+    ? data.top_listened_artists.map((a) => `
+        <tr>
+          <td>${esc(a.artists)}</td>
+          <td>${a.play_count}</td>
+          <td style="color:${rateColor(a.skip_rate)}">${Math.round(a.skip_rate * 100)}%</td>
+        </tr>`).join("")
+    : emptyRow(3);
+
+  render();
+}
+
+/* -------------------------------------------------------------------------
+ * Hendelseslyttere
+ * ---------------------------------------------------------------------- */
+
+document.querySelectorAll("th[data-key]").forEach((th) => {
+  th.addEventListener("click", () => {
+    const key = th.dataset.key;
+    if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = -1; }
+    currentPage = 1;
+    render();
+  });
+});
+
+document.getElementById("contextFilter").addEventListener("change", () => {
+  currentPage = 1;
+  render();
+});
+document.getElementById("search").addEventListener("input", () => {
+  currentPage = 1;
+  render();
+});
+
+document.querySelectorAll(".vis-toggle").forEach((cb) => {
+  const target = document.getElementById(cb.dataset.target);
+  const saved = localStorage.getItem("vis_" + cb.dataset.target);
+  if (saved === "0") {
+    cb.checked = false;
+    target.style.display = "none";
+  }
+  cb.addEventListener("change", () => {
+    target.style.display = cb.checked ? "" : "none";
+    localStorage.setItem("vis_" + cb.dataset.target, cb.checked ? "1" : "0");
+    const canvas = target.querySelector("canvas");
+    if (cb.checked && canvas && charts[canvas.id]) charts[canvas.id].resize();
+  });
+});
+
+load();
+setInterval(load, 10000);
+</script>
+</body>
+</html>

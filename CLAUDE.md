@@ -1,73 +1,135 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Denne filen gir veiledning til Claude Code når det jobbes med koden i dette repoet.
 
-## Overview
+## Oversikt
 
-Single-file Python script (`spotify_skip_tracker.py`) that polls the Spotify Web API's "currently playing" endpoint to detect skips across all of a user's devices, stores plays in a shared Postgres database (Neon), and serves a Flask dashboard. There is no test suite, build system, or linter configured — it's a personal utility script.
+Python-pakke (`spotify_skip_tracker/`) som poller Spotify Web APIets
+«currently playing»-endepunkt for å oppdage skip på tvers av alle enheter,
+lagrer avspillinger i en delt Postgres-database (Neon), og serverer et
+Flask-dashboard. Ingen testoppsett utover pytest.
 
-## Deployment architecture
+## Deployment-arkitektur
 
-- **Railway** runs `python3 spotify_skip_tracker.py track` continuously 24/7 via `railway.toml`. It polls Spotify and writes to the database. No dashboard here.
-- **Vercel** hosts the read-only dashboard at `spotify-skip-tracker.vercel.app` via `app.py`. It only reads from the database.
-- **Neon** (managed Postgres) is the shared database, connected via the `DATABASE_URL` environment variable set on both Railway and Vercel.
-- Credentials (`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`, `DATABASE_URL`) are environment variables on Railway/Vercel. Locally they live in `.env.local` (not in git).
+- **Railway** kjører `python3 -m spotify_skip_tracker track` kontinuerlig 24/7 via `railway.toml`.
+  Den poller Spotify og skriver til databasen. Ingen dashboard her.
+- **Vercel** hoster det skrivebeskyttede dashbordet via `app.py`. Leser kun fra databasen.
+- **Neon** (managed Postgres) er den delte databasen, koblet til via `DATABASE_URL`.
+- Legitimasjon (`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`, `DATABASE_URL`)
+  er miljøvariabler på Railway/Vercel. Lokalt ligger de i `.env.local` (ikke i git).
 
-## Commands
+## Pakkestruktur
 
-```bash
-# Install dependencies
-pip install requests flask psycopg2-binary python-dotenv
+```
+spotify_skip_tracker/
+├── __init__.py       eksporterer create_flask_app (for Vercel-kompatibilitet)
+├── __main__.py       CLI-inngang (argparse); kjøres via python -m spotify_skip_tracker
+├── config.py         konstanter og env-innlasting
+├── database.py       tilkoblingspool, init_db, migrasjoner
+├── spotify_api.py    OAuth-flyt, token-oppdatering, kontekstnavn-cache
+├── tracker.py        is_skip() (ren funksjon), polling_loop, log_play
+├── stats.py          compute_stats() → JSON for /api/stats
+├── wrapped.py        build_wrapped_data, build_wrapped_html, run_wrapped
+├── export.py         CSV-eksport
+├── web.py            create_flask_app(), Flask-ruter
+└── dashboard.html    dashbord-HTML (separat fil, lastes av web.py)
 
-# One-time OAuth login (requires a Spotify Developer app, see module docstring)
-python spotify_skip_tracker.py setup --client-id YOUR_ID --client-secret YOUR_SECRET
-
-# Run the tracker + dashboard locally (http://localhost:5000) — useful for testing
-python spotify_skip_tracker.py run
-
-# Run tracking only (no dashboard) — what Railway runs
-python spotify_skip_tracker.py track
-
-# Generate a static "wrapped" HTML report from logged data
-python spotify_skip_tracker.py wrapped
-
-# Export all logged plays to CSV
-python spotify_skip_tracker.py export --output skips.csv
+tests/
+├── test_tracker.py   14 tester for is_skip() (ingen DB nødvendig)
+└── test_stats.py     DB-tester for compute_stats (krever DATABASE_URL)
 ```
 
-There are no automated tests. Verify changes by running `run` locally and checking the dashboard, or by querying the Neon database directly.
+## Kommandoer
 
-## Architecture
+```bash
+# Installer avhengigheter
+pip install requests flask psycopg2-binary python-dotenv
 
-All local OAuth state lives under `~/.spotify_skip_tracker/`: `credentials.json` (OAuth tokens), `wrapped.html` (generated report). In cloud deployments credentials come from environment variables instead.
+# Engangs-innlogging (krever en Spotify Developer-app, se modulens docstring)
+python3 -m spotify_skip_tracker setup --client-id DIN_ID --client-secret DIN_SECRET
 
-The script has five entry points (`main()` dispatches via argparse subcommands):
+# Kjør tracker + dashboard lokalt (http://localhost:5000)
+python3 -m spotify_skip_tracker run
 
-- **`setup`** (`run_setup`) — one-time OAuth code flow. Spins up a throwaway `HTTPServer`/`_CallbackHandler` on `127.0.0.1:8888` to catch the redirect, exchanges the code for tokens, writes `credentials.json`.
-- **`run`** (`run_tracker`) — starts `polling_loop()` in a background daemon thread and runs the Flask app (`create_flask_app`) in the foreground on port 5000.
-- **`track`** (`run_track_only`) — tracking only, no Flask app. This is what Railway runs.
-  - `polling_loop()` hits `/v1/me/player` every `POLL_SECONDS` (7s). Skip detection works by tracking the *previous* track's last-seen `progress_ms`/`duration_ms`: when the URI changes, if the previous track's completion ratio is below `SKIP_THRESHOLD` (0.9) *and* more than `MIN_REMAINING_MS` (30s) was left, it's logged as a skip (`log_play`). This means a skip is only recorded for the prior track, one poll cycle late — by design, since you can't know a track was skipped until something else starts playing.
-  - If the DB connection drops (e.g. Neon idle timeout), `polling_loop()` catches the `psycopg2.Error`, closes the old connection, reconnects, and continues — losing at most one data point rather than crashing.
-  - `get_access_token()` transparently refreshes the OAuth token when it's within 30s of expiry.
-  - Playlist/album context names are resolved lazily and cached in the `contexts` table (`get_context_name`) to avoid repeated API calls.
-- **`wrapped`** (`run_wrapped`) — runs `build_wrapped_data()` through `build_wrapped_html()` to produce a static HTML report, written to disk and opened in the browser.
-- **`export`** (`run_export`) — dumps all plays to a CSV file.
+# Kjør kun tracking (ingen dashboard) — det Railway kjører
+python3 -m spotify_skip_tracker track
 
-The dashboard (`DASHBOARD_HTML`) is a single static page that polls `/api/stats` (backed by `compute_stats()`) every 10s and renders entirely client-side with vanilla JS + Chart.js.
+# Generer en statisk "Wrapped"-rapport (valgfritt: filtrer på måned/år)
+python3 -m spotify_skip_tracker wrapped
+python3 -m spotify_skip_tracker wrapped --month 6 --year 2026
 
-`compute_stats()` and `build_wrapped_data()` independently re-derive overlapping aggregates via separate SQL queries — there's no shared aggregation layer, so changes to skip/play semantics need to be applied in both places.
+# Eksporter alle loggede avspillinger til CSV
+python3 -m spotify_skip_tracker export --output skips.csv
 
-All three functions that open DB connections (`compute_stats`, `build_wrapped_data`, `run_export`) use `try/finally` to ensure the connection is always closed, even if an error occurs mid-query.
+# Kjør tester (skip-deteksjon krever ikke DB)
+pytest tests/test_tracker.py -v
 
-## Database schema
+# Kjør DB-tester (krever DATABASE_URL)
+DATABASE_URL=... pytest tests/test_stats.py -v
+```
 
-- `plays`: one row per finished track (uri, title, album, artists, context_uri, skipped, progress_ratio, timestamp). Append-only.
-- `contexts`: cache of playlist/album URI → display name.
+## Arkitektur
 
-All queries must be Postgres-compatible (stricter `GROUP BY`/`HAVING` rules than SQLite, use `%s` placeholders — handled automatically by `db_execute()`).
+### Skip-deteksjon (`tracker.py`)
 
-## Notes for changes
+`is_skip(ratio, remaining_ms, shuffle_toggled, context_switched) → bool`
+er en ren funksjon uten bivirkninger. Skip-logikken er:
+- `ratio < SKIP_THRESHOLD (0.9)` — sporet ble forlatt før 90 % ble spilt
+- `remaining_ms >= MIN_REMAINING_MS (30 000)` — minst 30 s gjenstod
+- `not shuffle_toggled` — shuffle-bytte regnes ikke som skip
+- `not context_switched` — kontekstbytte regnes ikke som skip
 
-- User-facing strings (CLI help text, setup prompts, dashboard UI) are in Norwegian; keep new user-facing text consistent with that.
-- The OAuth redirect URI (`http://127.0.0.1:8888/callback`) and scopes (`SCOPE`) must match what's registered in the Spotify Developer dashboard — changing `SCOPE` requires re-running `setup`.
-- `compute_stats()` and `build_wrapped_data()` share no code but cover overlapping logic — update both when changing aggregation behavior.
+Et skip kan bare oppdages retroaktivt: når neste spor starter, sjekker vi
+det *forrige* sporets fremgang.
+
+### Databaselag (`database.py`)
+
+- `connect()` — direkte tilkobling (brukes av tracker-loopen og CLI)
+- `pooled_connection()` — kontekstbehandler over `ThreadedConnectionPool` (brukes av stats/web)
+- `init_db(conn)` — oppretter tabeller + kjører migrasjoner ved oppstart
+- Migrasjoner: konverterer `timestamp TEXT → TIMESTAMPTZ`, legger til `image_url`
+
+### Statistikk (`stats.py`)
+
+`compute_stats()` bruker connection-poolen og henter all statistikk i
+separate SQL-spørringer. Hourly/weekday-aggregering gjøres i SQL med
+`EXTRACT(HOUR/ISODOW FROM timestamp AT TIME ZONE 'Europe/Oslo')`.
+
+### Dashboard (`web.py` + `dashboard.html`)
+
+`dashboard.html` er en separat fil som leses inn av `web.py` ved import.
+Dashbordet bruker `esc()`-funksjonen i JavaScript for å forhindre XSS,
+og viser albumcover fra `image_url`-kolonnen i `plays`-tabellen.
+
+## Databaseskjema
+
+```sql
+plays (
+  id             SERIAL PRIMARY KEY,
+  uri            TEXT NOT NULL,
+  title          TEXT,
+  album          TEXT,
+  artists        TEXT,
+  context_uri    TEXT,
+  skipped        BOOLEAN NOT NULL,
+  progress_ratio REAL,
+  timestamp      TIMESTAMPTZ NOT NULL,
+  image_url      TEXT
+)
+
+contexts (
+  uri  TEXT PRIMARY KEY,
+  name TEXT
+)
+```
+
+Alle spørringer bruker psycopg2-stil (`%s`-plassholdere) direkte.
+
+## Notater for endringer
+
+- Brukervendte tekster (CLI, dashboard, meldinger) er på norsk — hold nye tekster konsistente.
+- OAuth redirect-URI (`http://127.0.0.1:8888/callback`) og `SCOPE` må stemme overens med
+  hva som er registrert i Spotify Developer Dashboard. Endring av `SCOPE` krever ny `setup`.
+- `compute_stats()` og `build_wrapped_data()` dekker overlappende logikk i separate spørringer.
+  Endre begge ved endring av aggregeringslogikk.
+- `app.py` (Vercel) og `railway.toml` er allerede oppdatert til å bruke den nye pakkestrukturen.

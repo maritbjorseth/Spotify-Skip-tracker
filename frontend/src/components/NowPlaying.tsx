@@ -1,0 +1,102 @@
+import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
+import { api } from "../api";
+
+function formatMs(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+export function NowPlaying() {
+  const { data } = useQuery({
+    queryKey: ["now"],
+    queryFn: api.nowPlaying,
+    refetchInterval: 5000,
+    staleTime: 0,
+  });
+
+  return (
+    <AnimatePresence mode="wait">
+      {data?.is_playing ? (
+        <motion.div
+          key="playing"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center gap-4 rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-8"
+        >
+          {/* Albumcover med pulserende ring */}
+          <div className="relative flex-shrink-0">
+            {data.image_url ? (
+              <img
+                src={data.image_url}
+                alt={data.album ?? ""}
+                className="h-16 w-16 rounded-lg object-cover shadow-lg"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-lg bg-[#2a2a2a]" />
+            )}
+            {/* Pulserende grønn ring */}
+            <motion.span
+              className="absolute -inset-1 rounded-xl border-2 border-[#1db954]"
+              animate={{ opacity: [0.6, 0.15, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+
+          {/* Sporinfo og fremgangslinje */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              {/* Pulserende grønn prikk */}
+              <motion.span
+                className="inline-block h-2 w-2 rounded-full bg-[#1db954] flex-shrink-0"
+                animate={{ scale: [1, 1.4, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <span className="text-xs font-medium text-[#1db954] uppercase tracking-widest">
+                Spiller nå
+              </span>
+              {data.skip_rate !== null && (
+                <span
+                  className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full"
+                  style={{
+                    background: data.skip_rate >= 0.5 ? "#ff6b3520" : "#1db95420",
+                    color: data.skip_rate >= 0.5 ? "#ff6b35" : "#1db954",
+                  }}
+                >
+                  {Math.round(data.skip_rate * 100)}% skip-rate
+                </span>
+              )}
+            </div>
+
+            <p className="text-base font-semibold truncate leading-tight">
+              {data.title ?? "Ukjent spor"}
+            </p>
+            <p className="text-sm text-[#999] truncate">{data.artists ?? ""}</p>
+
+            {/* Fremgangslinje */}
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs text-[#666] tabular-nums w-9 text-right">
+                {formatMs(data.progress_ms)}
+              </span>
+              <div className="flex-1 h-1 rounded-full bg-[#2a2a2a] overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-[#1db954]"
+                  initial={false}
+                  animate={{
+                    width: `${Math.min(100, (data.progress_ms / data.duration_ms) * 100)}%`,
+                  }}
+                  transition={{ duration: 0.5, ease: "linear" }}
+                />
+              </div>
+              <span className="text-xs text-[#666] tabular-nums w-9">
+                {formatMs(data.duration_ms)}
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
