@@ -36,7 +36,13 @@ def _compute(conn) -> dict:
             p.uri,
             MAX(p.title)                                        AS title,
             MAX(p.artists)                                      AS artists,
-            COALESCE(c.name, p.context_uri)                     AS context_name,
+            COALESCE(
+                c.name,
+                CASE WHEN p.context_uri LIKE 'spotify:user:%:collection'
+                     THEN 'Liked Songs'
+                     ELSE p.context_uri
+                END
+            )                                                   AS context_name,
             SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END)         AS skip_count,
             COUNT(*)                                            AS play_count,
             MAX(p.image_url)                                    AS image_url
@@ -128,7 +134,13 @@ def _compute(conn) -> dict:
         conn,
         """
         SELECT
-            COALESCE(c.name, p.context_uri)                     AS context_name,
+            COALESCE(
+                c.name,
+                CASE WHEN p.context_uri LIKE 'spotify:user:%:collection'
+                     THEN 'Liked Songs'
+                     ELSE p.context_uri
+                END
+            )                                                   AS context_name,
             SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END)         AS skip_count,
             COUNT(*)                                            AS play_count
         FROM plays p

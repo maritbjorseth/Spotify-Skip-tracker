@@ -195,6 +195,10 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
     """
     Slår opp visningsnavnet for en Spotify-kontekst (spilleliste eller album).
     Resultatet caches i contexts-tabellen for å unngå gjentatte API-kall.
+
+    Spesialtilfelle: spotify:user:<id>:collection er «Liked Songs» / Likte sanger.
+    Spotify eksponerer ikke dette som et vanlig API-endepunkt, så vi hardkoder
+    visningsnavnet og lagrer det i contexts-tabellen med én gang.
     """
     if not context_uri:
         return None
@@ -205,8 +209,20 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
     if row:
         return row[0]
 
+    # spotify:user:<bruker-id>:collection → «Liked Songs»
+    parts = context_uri.split(":")
+    if len(parts) == 4 and parts[1] == "user" and parts[3] == "collection":
+        name = "Liked Songs"
+        execute(
+            conn,
+            "INSERT INTO contexts (uri, name) VALUES (%s, %s) "
+            "ON CONFLICT (uri) DO UPDATE SET name = EXCLUDED.name",
+            (context_uri, name),
+        )
+        conn.commit()
+        return name
+
     try:
-        parts = context_uri.split(":")
         if len(parts) < 3:
             return None
         # Eldre spillelistelenker har formatet spotify:user:<bruker>:playlist:<id>
