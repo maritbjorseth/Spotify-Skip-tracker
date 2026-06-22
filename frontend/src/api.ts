@@ -1,6 +1,9 @@
 import type { StatsResponse, NowPlayingResponse } from "./types";
 
-const BASE = "";
+const BASE =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? ""
+    : "https://spotify-skip-tracker-production.up.railway.app";
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(BASE + path);

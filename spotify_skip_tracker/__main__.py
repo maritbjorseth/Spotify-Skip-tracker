@@ -85,6 +85,7 @@ def main() -> None:
         run_setup(args.client_id, args.client_secret)
 
     elif args.command == "run":
+        import os
         from .database import connect, init_db
         from .tracker import polling_loop
         from .web import create_flask_app
@@ -96,8 +97,9 @@ def main() -> None:
         t = threading.Thread(target=polling_loop, daemon=True)
         t.start()
 
+        port = int(os.environ.get("PORT", 5000))
         app = create_flask_app()
-        app.run(host="127.0.0.1", port=5000, debug=False)
+        app.run(host="0.0.0.0", port=port, debug=False)
 
     elif args.command == "track":
         from .database import connect, init_db

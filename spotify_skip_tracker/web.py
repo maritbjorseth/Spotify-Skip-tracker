@@ -13,6 +13,7 @@ from pathlib import Path
 import logging
 
 from flask import Flask, Response, jsonify, send_from_directory
+from flask_cors import CORS
 
 from .stats import compute_stats
 from .database import pooled_connection, execute
@@ -30,6 +31,7 @@ except FileNotFoundError:
 
 def create_flask_app() -> Flask:
     app = Flask(__name__, static_folder=None)
+    CORS(app, origins=["https://spotify-skip-tracker.vercel.app", "http://localhost:5173", "http://localhost:5000"])
 
     # ------------------------------------------------------------------
     # API-endepunkter
