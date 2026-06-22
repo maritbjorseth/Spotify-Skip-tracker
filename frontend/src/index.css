@@ -51,8 +51,10 @@ img[src*="scdn.co"], img[src*="spotify"] {
   height: 56px !important;
 }
 
-/* Force Vercel cache bust */
-img {
-  max-width: 100%;
-  height: auto;
+.album-cover-fixed {
+  width: 56px !important;
+  height: 56px !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  border-radius: 0.375rem !important;
 }
