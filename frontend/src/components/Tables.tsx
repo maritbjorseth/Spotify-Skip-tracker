@@ -42,6 +42,7 @@ function AlbumThumb({ url, title }: { url: string | null; title: string | null }
       alt={title ?? ""}
       loading="lazy"
       className="w-14 h-14 aspect-square object-cover rounded-md block min-w-[56px] min-h-[56px] shrink-0"
+      style={{ width: '56px', height: '56px', aspectRatio: '1/1', objectFit: 'cover' }}
     />
   );
 }
