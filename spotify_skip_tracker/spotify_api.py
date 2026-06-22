@@ -204,7 +204,11 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
         parts = context_uri.split(":")
         if len(parts) < 3:
             return None
-        kind, id_ = parts[1], parts[2]
+        # Eldre spillelistelenker har formatet spotify:user:<bruker>:playlist:<id>
+        if parts[1] == "user" and len(parts) >= 5:
+            kind, id_ = parts[3], parts[4]
+        else:
+            kind, id_ = parts[1], parts[2]
         if kind not in ("playlist", "album"):
             return None
 

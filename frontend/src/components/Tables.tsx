@@ -30,7 +30,7 @@ function SkipBadge({ rate }: { rate: number }) {
 function AlbumThumb({ url, title }: { url: string | null; title: string | null }) {
   if (!url)
     return (
-      <div className="flex aspect-square size-12 items-center justify-center rounded-md bg-[#2a2a2a] flex-shrink-0">
+      <div className="flex w-12 h-12 shrink-0 items-center justify-center rounded-md bg-[#2a2a2a]">
         <svg className="h-5 w-5 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
         </svg>
@@ -41,7 +41,7 @@ function AlbumThumb({ url, title }: { url: string | null; title: string | null }
       src={url}
       alt={title ?? ""}
       loading="lazy"
-      className="aspect-square size-12 rounded-md object-cover flex-shrink-0"
+      className="block w-12 h-12 shrink-0 rounded-md object-cover"
     />
   );
 }
@@ -196,7 +196,7 @@ export function SkippedTable({
                     transition={{ duration: 0.15, delay: i * 0.02 }}
                     className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors"
                   >
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 w-12">
                       <AlbumThumb url={t.image_url} title={t.title} />
                     </td>
                     <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>
@@ -254,7 +254,7 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
           <tbody>
             {rows.map((t, i) => (
               <tr key={t.uri + i} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
-                <td className="px-4 py-3.5"><AlbumThumb url={t.image_url} title={t.title} /></td>
+                <td className="px-4 py-3.5 w-12"><AlbumThumb url={t.image_url} title={t.title} /></td>
                 <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-3.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
                 <td className="px-4 py-3.5 text-sm text-[#4a9eff] font-semibold text-right">{t.play_count}</td>
@@ -291,7 +291,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
           <tbody>
             {tracks.map((t, i) => (
               <tr key={t.uri + i} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
-                <td className="px-4 py-3.5"><AlbumThumb url={t.image_url} title={t.title} /></td>
+                <td className="px-4 py-3.5 w-12"><AlbumThumb url={t.image_url} title={t.title} /></td>
                 <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-3.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
                 <td className="px-4 py-3.5 text-sm text-[#1db954] font-semibold text-right">{t.play_count}</td>
