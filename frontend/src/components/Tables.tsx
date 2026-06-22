@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Track, Artist } from "../types";
 
@@ -27,22 +27,47 @@ function SkipBadge({ rate }: { rate: number }) {
   );
 }
 
+// Inline-stil-beholder garanterer 56×56 px uavhengig av CSS-cascade og
+// Tailwinds preflight (img,video { height: auto }). Beholderen kan ikke
+// overstyres av eksternt CSS uten !important, og overflow:hidden klipper
+// eventuell overflow fra bildet inni.
+const THUMB_SIZE = 56;
+const thumbBoxStyle: React.CSSProperties = {
+  width: THUMB_SIZE,
+  height: THUMB_SIZE,
+  minWidth: THUMB_SIZE,
+  minHeight: THUMB_SIZE,
+  flexShrink: 0,
+  overflow: 'hidden',
+  borderRadius: '0.375rem',
+  display: 'block',
+  backgroundColor: '#2a2a2a',
+};
+const thumbImgStyle: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+};
+
 function AlbumThumb({ url, title }: { url: string | null; title: string | null }) {
   if (!url)
     return (
-      <div className="flex w-14 h-14 shrink-0 items-center justify-center rounded-md bg-[#2a2a2a]">
+      <div style={thumbBoxStyle} className="flex items-center justify-center">
         <svg className="h-5 w-5 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
         </svg>
       </div>
     );
   return (
-    <img
-      src={url}
-      alt={title ?? ""}
-      loading="lazy"
-      className="album-cover-fixed"
-    />
+    <div style={thumbBoxStyle}>
+      <img
+        src={url}
+        alt={title ?? ""}
+        loading="lazy"
+        style={thumbImgStyle}
+      />
+    </div>
   );
 }
 

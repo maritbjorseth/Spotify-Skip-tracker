@@ -44,6 +44,9 @@ body {
   background: var(--color-muted);
 }
 
+/* Backup: klassen brukes ikke lenger direkte på <img>, men beholdes for
+   eventuelle fremtidige brukstilfeller. Beholderen (.album-thumb-box)
+   styres nå utelukkende via inline-stiler i Tables.tsx. */
 .album-cover-fixed {
   width: 56px !important;
   height: 56px !important;
