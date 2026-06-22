@@ -44,13 +44,6 @@ body {
   background: var(--color-muted);
 }
 
-img[src*="scdn.co"], img[src*="spotify"] {
-  aspect-ratio: 1 / 1 !important;
-  object-fit: cover !important;
-  width: 56px !important;
-  height: 56px !important;
-}
-
 .album-cover-fixed {
   width: 56px !important;
   height: 56px !important;
