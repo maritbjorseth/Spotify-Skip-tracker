@@ -67,7 +67,12 @@ def run_setup(client_id: str, client_secret: str) -> None:
     print(f"Hvis nettleseren ikke åpner automatisk, gå til:\n{auth_url}\n")
 
     server = HTTPServer(("127.0.0.1", 8888), _CallbackHandler)
-    threading.Thread(target=server.handle_request, daemon=True).start()
+
+    def _serve_until_code():
+        while "code" not in _auth_code:
+            server.handle_request()
+
+    threading.Thread(target=_serve_until_code, daemon=True).start()
     webbrowser.open(auth_url)
 
     deadline = time.time() + 120
@@ -274,6 +279,9 @@ def backfill_covers() -> int:
     updated = 0
     for uri, title in rows:
         try:
+            # Oppdater token ved behov — tokens utløper etter 1 time
+            token = get_access_token(creds)
+
             # spotify:track:ABC123 → track ID = ABC123
             parts = uri.split(":")
             if len(parts) < 3 or parts[1] != "track":

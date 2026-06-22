@@ -271,4 +271,9 @@ def _upsert_now_playing(
         if new_conn is not None:
             logger.info("Koblet til databasen på nytt (now_playing).")
             return new_conn
+        logger.critical(
+            "Kunne ikke koble til databasen på nytt. "
+            "Hopper over poll-syklus og prøver igjen om %ds.", POLL_SECONDS
+        )
+        time.sleep(POLL_SECONDS)
         return conn

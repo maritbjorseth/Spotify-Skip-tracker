@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
@@ -8,15 +9,37 @@ function formatMs(ms: number): string {
 }
 
 export function NowPlaying() {
-  const { data } = useQuery({
+  const { data, error } = useQuery({
     queryKey: ["now"],
     queryFn: api.nowPlaying,
     refetchInterval: 5000,
     staleTime: 0,
   });
 
+  // Lokal progress som tikker fremover hvert sekund mellom polls
+  const [localProgress, setLocalProgress] = useState(0);
+  useEffect(() => {
+    if (!data?.is_playing) return;
+    setLocalProgress(data.progress_ms);
+    const id = setInterval(() => {
+      setLocalProgress((p) => Math.min(p + 1000, data.duration_ms));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [data?.progress_ms, data?.is_playing, data?.duration_ms]);
+
   return (
     <AnimatePresence mode="wait">
+      {error && (
+        <motion.div
+          key="offline"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="mb-4 rounded-lg border border-[#2a2a2a] px-4 py-2 text-xs text-[#555]"
+        >
+          Kan ikke nå serveren — viser sist kjente data.
+        </motion.div>
+      )}
       {data?.is_playing ? (
         <motion.div
           key="playing"
@@ -32,7 +55,7 @@ export function NowPlaying() {
               <img
                 src={data.image_url}
                 alt={data.album ?? ""}
-                className="size-16 rounded-md object-cover shadow-lg"
+                className="size-16 aspect-square rounded-md object-cover shadow-lg"
               />
             ) : (
               <div className="flex size-16 items-center justify-center rounded-md bg-[#2a2a2a]">
@@ -82,16 +105,16 @@ export function NowPlaying() {
             {/* Fremgangslinje */}
             <div className="mt-2 flex items-center gap-2">
               <span className="text-xs text-[#666] tabular-nums w-9 text-right">
-                {formatMs(data.progress_ms)}
+                {formatMs(localProgress)}
               </span>
               <div className="flex-1 h-1 rounded-full bg-[#2a2a2a] overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-[#1db954]"
                   initial={false}
                   animate={{
-                    width: `${Math.min(100, (data.progress_ms / data.duration_ms) * 100)}%`,
+                    width: `${Math.min(100, (localProgress / data.duration_ms) * 100)}%`,
                   }}
-                  transition={{ duration: 0.5, ease: "linear" }}
+                  transition={{ duration: 0.9, ease: "linear" }}
                 />
               </div>
               <span className="text-xs text-[#666] tabular-nums w-9">

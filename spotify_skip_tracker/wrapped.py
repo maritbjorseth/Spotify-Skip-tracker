@@ -5,6 +5,7 @@ Genererer en statisk HTML-side med personlige høydepunkter basert på
 alle loggede avspillinger — inspirert av Spotify Wrapped.
 """
 
+import html as _html
 import logging
 import sys
 import webbrowser
@@ -196,7 +197,9 @@ _TEMPLATE = """\
 
 
 def _card(label: str, value: str, sub: str | None = None) -> str:
-    sub_html = f'<div class="sub">{sub}</div>' if sub else ""
+    label = _html.escape(label)
+    value = _html.escape(value)
+    sub_html = f'<div class="sub">{_html.escape(sub)}</div>' if sub else ""
     return (
         f'<div class="stat">'
         f'<div class="label">{label}</div>'
@@ -274,10 +277,12 @@ def build_wrapped_html(
     else:
         period = ""
 
+    # Escape { og } i cards-innholdet så str.format() ikke feiltolker dem
+    cards_html = "\n  ".join(cards).replace("{", "{{").replace("}", "}}")
     return _TEMPLATE.format(
         period=period,
         total_plays=data["total_plays"],
-        cards="\n  ".join(cards),
+        cards=cards_html,
     )
 
 

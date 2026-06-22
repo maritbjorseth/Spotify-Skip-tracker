@@ -95,6 +95,7 @@ export default function App() {
             <AnimatePresence mode="sync">
               {(visible.artistChart || visible.contextChart || visible.hourChart || visible.weekdayChart) && (
                 <motion.div
+                  key="graphs"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -114,6 +115,7 @@ export default function App() {
             <AnimatePresence mode="sync">
               {(visible.mostPlayed || visible.mostCompleted) && (
                 <motion.div
+                  key="tables"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}

@@ -166,6 +166,7 @@ def _compute(conn) -> dict:
         FROM plays
         GROUP BY uri
         ORDER BY play_count DESC
+        LIMIT 100
         """,
     ).fetchall()
     most_played = [

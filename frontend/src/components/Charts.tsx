@@ -38,8 +38,8 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 shadow-xl text-xs">
       <p className="font-semibold text-white mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} style={{ color: p.color }}>
+      {payload.map((p) => (
+        <p key={p.name} style={{ color: p.color }}>
           {p.value}{suffix}
         </p>
       ))}
@@ -114,9 +114,11 @@ export function ContextChart({ contexts }: { contexts: Context[] }) {
     rate: Math.round(c.skip_rate * 100),
   }));
 
+  const chartHeight = Math.max(200, data.length * 36);
+
   return (
     <ChartCard title="Høyest skip-rate per spilleliste/album" color="#ff6b35">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={data} layout="vertical" margin={{ left: 0, right: 16 }}>
           <XAxis
             type="number"

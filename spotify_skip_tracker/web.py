@@ -10,10 +10,14 @@ Endepunkter:
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+import logging
+
 from flask import Flask, Response, jsonify, send_from_directory
 
 from .stats import compute_stats
 from .database import pooled_connection, execute
+
+logger = logging.getLogger(__name__)
 
 _HERE = Path(__file__).parent
 _DIST_DIR = _HERE.parent / "frontend" / "dist"
@@ -33,7 +37,11 @@ def create_flask_app() -> Flask:
 
     @app.route("/api/stats")
     def stats():
-        return jsonify(compute_stats())
+        try:
+            return jsonify(compute_stats())
+        except Exception as exc:
+            logger.exception("Feil i /api/stats: %s", exc)
+            return jsonify({"error": "Kunne ikke hente statistikk"}), 500
 
     @app.route("/api/now")
     def now_playing():
@@ -59,8 +67,8 @@ def create_flask_app() -> Flask:
 
                 uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at = row
 
-                # Stale-sjekk: hvis updated_at er eldre enn 30 s → ikke spilt
-                if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=30):
+                # Stale-sjekk: 60 s terskel for å tåle Neon cold-start latens
+                if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=60):
                     is_playing = False
 
                 # Historisk skip-rate — samme tilkobling
@@ -99,10 +107,6 @@ def create_flask_app() -> Flask:
     # ------------------------------------------------------------------
 
     if _DIST_DIR.exists():
-        @app.route("/assets/<path:filename>")
-        def assets(filename):
-            return send_from_directory(_DIST_DIR / "assets", filename)
-
         @app.route("/", defaults={"path": ""})
         @app.route("/<path:path>")
         def spa(path):

@@ -8,6 +8,7 @@ Håndterer:
 """
 
 import logging
+import threading
 import urllib.parse
 from contextlib import contextmanager
 
@@ -23,12 +24,14 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _pool: psycopg2.pool.ThreadedConnectionPool | None = None
+_pool_lock = threading.Lock()
 
 
 def _get_pool() -> psycopg2.pool.ThreadedConnectionPool:
     global _pool
-    if _pool is None or _pool.closed:
-        _pool = psycopg2.pool.ThreadedConnectionPool(1, 10, _clean_dsn(DATABASE_URL))
+    with _pool_lock:
+        if _pool is None or _pool.closed:
+            _pool = psycopg2.pool.ThreadedConnectionPool(1, 10, _clean_dsn(DATABASE_URL))
     return _pool
 
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Track, Artist } from "../types";
 
@@ -41,7 +41,7 @@ function AlbumThumb({ url, title }: { url: string | null; title: string | null }
       src={url}
       alt={title ?? ""}
       loading="lazy"
-      className="block w-14 h-14 shrink-0 rounded-md object-cover"
+      className="w-14 h-14 aspect-square object-cover rounded-md block min-w-[56px] min-h-[56px] shrink-0"
     />
   );
 }
@@ -115,9 +115,13 @@ export function SkippedTable({
       );
     }
     rows = [...rows].sort((a, b) => {
-      const av = a[sortKey] ?? "";
-      const bv = b[sortKey] ?? "";
-      return av < bv ? -sortDir : av > bv ? sortDir : 0;
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (av == null && bv == null) return 0;
+      if (av == null) return sortDir;
+      if (bv == null) return -sortDir;
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * sortDir;
+      return String(av) < String(bv) ? -sortDir : String(av) > String(bv) ? sortDir : 0;
     });
     return rows;
   }, [tracks, ctx, search, sortKey, sortDir]);
@@ -189,7 +193,7 @@ export function SkippedTable({
               ) : (
                 page_rows.map((t, i) => (
                   <motion.tr
-                    key={t.uri + i}
+                    key={t.uri + (t.context_name ?? "")}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -235,6 +239,7 @@ export function SkippedTable({
 
 export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
   const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [tracks]);
   const rows = tracks.slice((page - 1) * PAGE, page * PAGE);
 
   return (
@@ -252,8 +257,8 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((t, i) => (
-              <tr key={t.uri + i} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
+            {rows.map((t) => (
+              <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
                 <td className="px-4 py-3.5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
                 <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-3.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
@@ -289,8 +294,8 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
             </tr>
           </thead>
           <tbody>
-            {tracks.map((t, i) => (
-              <tr key={t.uri + i} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
+            {tracks.map((t) => (
+              <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
                 <td className="px-4 py-3.5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
                 <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-3.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
@@ -326,8 +331,8 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
             </tr>
           </thead>
           <tbody>
-            {artists.map((a, i) => (
-              <tr key={i} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
+            {artists.map((a) => (
+              <tr key={a.artists} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
                 <td className="px-4 py-3.5 text-sm font-medium">{a.artists}</td>
                 <td className="px-4 py-3.5 text-sm text-[#4a9eff] font-semibold text-right">{a.play_count}</td>
                 <td className="px-4 py-3.5 text-right"><SkipBadge rate={a.skip_rate} /></td>

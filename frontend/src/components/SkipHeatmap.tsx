@@ -141,13 +141,10 @@ export function SkipHeatmap({ daily }: Props) {
                   animate={{ opacity: 1 }}
                   transition={{ delay: (c.col * 7 + c.row) * 0.0005 }}
                   className="cursor-pointer"
-                  onMouseEnter={(e) => {
-                    const rect = (e.target as SVGRectElement)
-                      .closest("svg")!
-                      .getBoundingClientRect();
+                  onMouseMove={(e) => {
                     setTooltip({
-                      x: rect.left + c.col * STEP,
-                      y: rect.top + c.row * STEP,
+                      x: e.clientX,
+                      y: e.clientY,
                       date: c.date,
                       skips: c.skips,
                       plays: c.plays,
@@ -159,11 +156,14 @@ export function SkipHeatmap({ daily }: Props) {
             </svg>
           </div>
 
-          {/* Tooltip */}
+          {/* Tooltip — følger cursoren, flipper til venstre nær høyre kant */}
           {tooltip && (
             <div
               className="fixed z-50 pointer-events-none rounded-lg border border-[#333] bg-[#111] px-3 py-2 shadow-xl text-xs"
-              style={{ left: tooltip.x + 8, top: tooltip.y - 4 }}
+              style={{
+                left: tooltip.x + 140 > window.innerWidth ? tooltip.x - 144 : tooltip.x + 12,
+                top: tooltip.y - 36,
+              }}
             >
               <div className="font-semibold text-white mb-0.5">{tooltip.date}</div>
               <div className="text-[#ff6b35]">{tooltip.skips} skip</div>
