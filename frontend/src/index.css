@@ -50,3 +50,9 @@ img[src*="scdn.co"], img[src*="spotify"] {
   width: 56px !important;
   height: 56px !important;
 }
+
+/* Force Vercel cache bust */
+img {
+  max-width: 100%;
+  height: auto;
+}
