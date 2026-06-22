@@ -38,7 +38,7 @@ def _compute(conn) -> dict:
             MAX(p.artists)                                      AS artists,
             COALESCE(
                 c.name,
-                CASE WHEN p.context_uri LIKE 'spotify:user:%:collection'
+                CASE WHEN p.context_uri LIKE 'spotify:user:%%:collection'
                      THEN 'Liked Songs'
                      ELSE p.context_uri
                 END
@@ -136,7 +136,7 @@ def _compute(conn) -> dict:
         SELECT
             COALESCE(
                 c.name,
-                CASE WHEN p.context_uri LIKE 'spotify:user:%:collection'
+                CASE WHEN p.context_uri LIKE 'spotify:user:%%:collection'
                      THEN 'Liked Songs'
                      ELSE p.context_uri
                 END
