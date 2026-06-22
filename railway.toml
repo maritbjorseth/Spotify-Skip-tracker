@@ -1,3 +1,3 @@
 [deploy]
-startCommand = "python3 -m spotify_skip_tracker run"
+startCommand = "gunicorn server:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1"
 restartPolicyType = "ALWAYS"
