@@ -82,7 +82,7 @@ export default function App() {
             />
 
             {/* Heatmap */}
-            <SkipHeatmap daily={data.daily} />
+            {visible.heatmap && <SkipHeatmap daily={data.daily} />}
 
             {/* Mest skippede sanger */}
             {visible.skipped && (

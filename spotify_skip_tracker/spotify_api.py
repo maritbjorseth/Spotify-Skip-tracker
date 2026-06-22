@@ -292,7 +292,7 @@ def backfill_covers() -> int:
                 time.sleep(0.5)
                 continue
 
-            image_url = images[1]["url"] if len(images) > 1 else images[0]["url"]
+            image_url = images[0]["url"]
 
             execute(
                 conn,

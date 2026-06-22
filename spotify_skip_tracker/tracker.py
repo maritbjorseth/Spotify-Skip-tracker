@@ -151,14 +151,14 @@ def polling_loop() -> None:
             context_uri: str | None = (data.get("context") or {}).get("uri")
             shuffle_state: bool | None = data.get("shuffle_state")
 
-            # Velg albumcover: foretrekk ~300px (indeks 1), fall tilbake på første
+            # Velg albumcover: foretrekk ~640px (indeks 0), fall tilbake på første
             images = (item.get("album") or {}).get("images") or []
             image_url: str | None = None
             if images:
-                image_url = images[1]["url"] if len(images) > 1 else images[0]["url"]
+                image_url = images[0]["url"]
 
             # Oppdater now_playing-tabellen på hver poll
-            _upsert_now_playing(conn, uri, title, album, artists, image_url, int(progress_ms), int(duration_ms), is_playing)
+            conn = _upsert_now_playing(conn, uri, title, album, artists, image_url, int(progress_ms), int(duration_ms), is_playing)
 
             if uri != last_uri:
                 if last_uri is not None:
@@ -229,8 +229,16 @@ def _upsert_now_playing(
     progress_ms: int,
     duration_ms: int,
     is_playing: bool,
-) -> None:
-    """Oppdaterer now_playing-tabellen med nåværende avspilling (upsert på rad 1)."""
+):
+    """
+    Oppdaterer now_playing-tabellen med nåværende avspilling (upsert på rad 1).
+
+    Returnerer tilkoblingen som faktisk ble brukt - samme `conn` ved suksess,
+    eller en ny tilkobling dersom den gamle var død og måtte fornyes. Uten
+    dette ville en avbrutt tilkobling (f.eks. Neon inaktivitetstimeout) gjort
+    at hver poll-syklus feilet stille i opptil ett minutt, til et sporbytte
+    tilfeldigvis trigget gjenoppkobling et annet sted i koden.
+    """
     try:
         execute(
             conn,
@@ -252,5 +260,15 @@ def _upsert_now_playing(
             (uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing),
         )
         conn.commit()
+        return conn
     except Exception as exc:
-        logger.warning("Kunne ikke oppdatere now_playing: %s", exc)
+        logger.warning("Kunne ikke oppdatere now_playing, kobler til på nytt: %s", exc)
+        try:
+            conn.close()
+        except Exception:
+            pass
+        new_conn = reconnect()
+        if new_conn is not None:
+            logger.info("Koblet til databasen på nytt (now_playing).")
+            return new_conn
+        return conn

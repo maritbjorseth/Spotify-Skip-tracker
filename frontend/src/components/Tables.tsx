@@ -194,13 +194,13 @@ export function SkippedTable({
                     <td className="px-4 py-2.5">
                       <AlbumThumb url={t.image_url} title={t.title} />
                     </td>
-                    <td className="px-4 py-2.5 text-sm font-medium max-w-48 truncate">
+                    <td className="px-4 py-2.5 text-sm font-medium" title={t.title ?? undefined}>
                       {t.title ?? "—"}
                     </td>
-                    <td className="px-4 py-2.5 text-sm text-[#999] max-w-36 truncate">
+                    <td className="px-4 py-2.5 text-sm text-[#999]" title={t.artists ?? undefined}>
                       {t.artists ?? "—"}
                     </td>
-                    <td className="px-4 py-2.5 text-sm text-[#777] max-w-36 truncate">
+                    <td className="px-4 py-2.5 text-sm text-[#777]" title={t.context_name ?? undefined}>
                       {t.context_name ?? "—"}
                     </td>
                     <td className="px-4 py-2.5 text-center">
@@ -250,8 +250,8 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
             {rows.map((t, i) => (
               <tr key={t.uri + i} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
                 <td className="px-4 py-2.5"><AlbumThumb url={t.image_url} title={t.title} /></td>
-                <td className="px-4 py-2.5 text-sm font-medium max-w-48 truncate">{t.title ?? "—"}</td>
-                <td className="px-4 py-2.5 text-sm text-[#999] max-w-36 truncate">{t.artists ?? "—"}</td>
+                <td className="px-4 py-2.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
+                <td className="px-4 py-2.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
                 <td className="px-4 py-2.5 text-sm text-[#4a9eff] font-semibold">{t.play_count}</td>
                 <td className="px-4 py-2.5"><SkipBadge rate={t.skip_rate} /></td>
               </tr>
@@ -287,8 +287,8 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
             {tracks.map((t, i) => (
               <tr key={t.uri + i} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
                 <td className="px-4 py-2.5"><AlbumThumb url={t.image_url} title={t.title} /></td>
-                <td className="px-4 py-2.5 text-sm font-medium max-w-48 truncate">{t.title ?? "—"}</td>
-                <td className="px-4 py-2.5 text-sm text-[#999] max-w-36 truncate">{t.artists ?? "—"}</td>
+                <td className="px-4 py-2.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
+                <td className="px-4 py-2.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
                 <td className="px-4 py-2.5 text-sm text-[#1db954] font-semibold">{t.play_count}</td>
                 <td className="px-4 py-2.5"><SkipBadge rate={t.skip_rate} /></td>
               </tr>

@@ -78,7 +78,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
       <div style={{ height: chartHeight + 80 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 20, right: 40, bottom: 20, left: 180 }}>
-            <XAxis hide />
+            <XAxis type="number" allowDecimals={false} tick={TICK_STYLE} axisLine={false} tickLine={false} />
             <YAxis
               type="category"
               dataKey="name"

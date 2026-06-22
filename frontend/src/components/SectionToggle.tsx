@@ -8,6 +8,7 @@ export const SECTIONS = [
   { id: "contextChart", label: "Skip-rate per spilleliste/album" },
   { id: "hourChart", label: "Skip etter tidspunkt" },
   { id: "weekdayChart", label: "Skip etter ukedag" },
+  { id: "heatmap", label: "Skip-aktivitet siste år" },
   { id: "mostPlayed", label: "Mest spilt totalt" },
   { id: "mostCompleted", label: "Nesten aldri skippet" },
   { id: "topArtists", label: "Mest hørte artister" },
