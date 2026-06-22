@@ -10,9 +10,9 @@ import { useSectionVisibility, SectionToggle } from "./components/SectionToggle"
 
 function SectionDivider({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-4 mb-6 mt-12">
+    <div className="flex items-center gap-4 mb-8 mt-16">
       <div className="h-px flex-1 bg-[#2a2a2a]" />
-      <span className="text-xs font-semibold uppercase tracking-widest text-[#555]">{label}</span>
+      <span className="text-sm font-semibold uppercase tracking-widest text-[#666]">{label}</span>
       <div className="h-px flex-1 bg-[#2a2a2a]" />
     </div>
   );

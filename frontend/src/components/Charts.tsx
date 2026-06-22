@@ -71,13 +71,13 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
     };
   });
 
-  const chartHeight = Math.max(300, data.length * 40);
+  const chartHeight = Math.max(300, data.length * 44);
 
   return (
     <ChartCard title="Mest skippede artister" color="#ff6b35">
       <div style={{ height: chartHeight + 80 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 20, right: 40, bottom: 20, left: 180 }}>
+          <BarChart data={data} layout="vertical" margin={{ top: 20, right: 28, bottom: 20, left: 180 }}>
             <XAxis type="number" allowDecimals={false} tick={TICK_STYLE} axisLine={false} tickLine={false} />
             <YAxis
               type="category"
@@ -88,14 +88,14 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
               width={180}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
-            <Bar dataKey="skip" radius={[0, 4, 4, 0]}>
+            <Bar dataKey="skip" radius={[0, 4, 4, 0]} barSize={22}>
               {data.map((_, i) => (
                 <Cell
                   key={i}
                   fill={`hsl(${20 + i * 6}, 90%, ${65 - i * 2}%)`}
                 />
               ))}
-              <LabelList dataKey="skip" position="right" style={{ fill: "#fff", fontSize: 15 }} />
+              <LabelList dataKey="skip" position="right" style={{ fill: "#fff", fontSize: 14 }} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -114,12 +114,12 @@ export function ContextChart({ contexts }: { contexts: Context[] }) {
     rate: Math.round(c.skip_rate * 100),
   }));
 
-  const chartHeight = Math.max(200, data.length * 36);
+  const chartHeight = Math.max(200, data.length * 40);
 
   return (
     <ChartCard title="Høyest skip-rate per spilleliste/album" color="#ff6b35">
       <ResponsiveContainer width="100%" height={chartHeight}>
-        <BarChart data={data} layout="vertical" margin={{ left: 0, right: 16 }}>
+        <BarChart data={data} layout="vertical" margin={{ left: 0, right: 48 }}>
           <XAxis
             type="number"
             domain={[0, 100]}
@@ -138,7 +138,7 @@ export function ContextChart({ contexts }: { contexts: Context[] }) {
             tickFormatter={(v: string) => v.length > 15 ? v.slice(0, 14) + "…" : v}
           />
           <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08" }} />
-          <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
+          <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={20}>
             {data.map((d, i) => (
               <Cell
                 key={i}
@@ -146,6 +146,13 @@ export function ContextChart({ contexts }: { contexts: Context[] }) {
                 fillOpacity={0.85 - i * 0.05}
               />
             ))}
+            <LabelList
+              dataKey="rate"
+              position="right"
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(v: any) => v != null ? `${v}%` : ""}
+              style={{ fill: "#aaa", fontSize: 11 }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -169,7 +176,7 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
   return (
     <ChartCard title="Skip etter tidspunkt på døgnet" color="#9b59b6">
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} margin={{ left: -16, right: 8 }}>
+        <BarChart data={data} margin={{ left: -16, right: 4 }} barCategoryGap="12%">
           <XAxis
             dataKey="hour"
             tick={TICK_STYLE}
@@ -212,7 +219,7 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
   return (
     <ChartCard title="Skip etter ukedag" color="#9b59b6">
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} margin={{ left: -16, right: 8 }}>
+        <BarChart data={data} margin={{ left: -16, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />

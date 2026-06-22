@@ -198,6 +198,7 @@ export function SkippedTable({
         <table className="w-full">
           <thead className="bg-[#161616]">
             <tr>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
               <th className="px-4 py-3" />
               <Th k="title" label="Tittel" />
               <Th k="artists" label="Artist" />
@@ -211,7 +212,7 @@ export function SkippedTable({
             <AnimatePresence mode="sync">
               {page_rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm italic text-[#555]">
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm italic text-[#555]">
                     Ingen data ennå
                   </td>
                 </tr>
@@ -225,25 +226,28 @@ export function SkippedTable({
                     transition={{ duration: 0.15, delay: i * 0.02 }}
                     className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors"
                   >
-                    <td className="px-4 py-3.5 w-14">
+                    <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
+                      {(page - 1) * PAGE + i + 1}
+                    </td>
+                    <td className="px-4 py-5 w-14">
                       <AlbumThumb url={t.image_url} title={t.title} />
                     </td>
-                    <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>
+                    <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>
                       {t.title ?? "—"}
                     </td>
-                    <td className="px-4 py-3.5 text-sm text-[#999]" title={t.artists ?? undefined}>
+                    <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>
                       {t.artists ?? "—"}
                     </td>
-                    <td className="px-4 py-3.5 text-sm text-[#777]" title={t.context_name ?? undefined}>
+                    <td className="px-4 py-5 text-sm text-[#777]" title={t.context_name ?? undefined}>
                       {t.context_name ?? "—"}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-4 py-5 text-right">
                       <span className="text-sm font-bold text-[#ff6b35]">{t.skip_count}</span>
                     </td>
-                    <td className="px-4 py-3.5 text-sm text-[#999] text-right">
+                    <td className="px-4 py-5 text-sm text-[#999] text-right">
                       {t.play_count}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-4 py-5 text-right">
                       <SkipBadge rate={t.skip_rate} />
                     </td>
                   </motion.tr>
@@ -274,6 +278,7 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
         <table className="w-full">
           <thead className="bg-[#161616]">
             <tr>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
               <th className="px-4 py-3" />
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
@@ -282,13 +287,16 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((t) => (
+            {rows.map((t, i) => (
               <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
-                <td className="px-4 py-3.5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
-                <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
-                <td className="px-4 py-3.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
-                <td className="px-4 py-3.5 text-sm text-[#4a9eff] font-semibold text-right">{t.play_count}</td>
-                <td className="px-4 py-3.5 text-right"><SkipBadge rate={t.skip_rate} /></td>
+                <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
+                  {(page - 1) * PAGE + i + 1}
+                </td>
+                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
+                <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
+                <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
+                <td className="px-4 py-5 text-sm text-[#4a9eff] font-semibold text-right">{t.play_count}</td>
+                <td className="px-4 py-5 text-right"><SkipBadge rate={t.skip_rate} /></td>
               </tr>
             ))}
           </tbody>
@@ -311,6 +319,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
         <table className="w-full">
           <thead className="bg-[#161616]">
             <tr>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
               <th className="px-4 py-3" />
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
@@ -319,17 +328,18 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
             </tr>
           </thead>
           <tbody>
-            {tracks.map((t) => (
+            {tracks.map((t, i) => (
               <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
-                <td className="px-4 py-3.5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
-                <td className="px-4 py-3.5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
-                <td className="px-4 py-3.5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
-                <td className="px-4 py-3.5 text-sm text-[#1db954] font-semibold text-right">{t.play_count}</td>
-                <td className="px-4 py-3.5 text-right"><SkipBadge rate={t.skip_rate} /></td>
+                <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
+                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
+                <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
+                <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
+                <td className="px-4 py-5 text-sm text-[#1db954] font-semibold text-right">{t.play_count}</td>
+                <td className="px-4 py-5 text-right"><SkipBadge rate={t.skip_rate} /></td>
               </tr>
             ))}
             {tracks.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm italic text-[#555]">Ingen data ennå</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-sm italic text-[#555]">Ingen data ennå</td></tr>
             )}
           </tbody>
         </table>
@@ -350,21 +360,23 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
         <table className="w-full">
           <thead className="bg-[#161616]">
             <tr>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Totalt spilt</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Skip-rate</th>
             </tr>
           </thead>
           <tbody>
-            {artists.map((a) => (
+            {artists.map((a, i) => (
               <tr key={a.artists} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
-                <td className="px-4 py-3.5 text-sm font-medium">{a.artists}</td>
-                <td className="px-4 py-3.5 text-sm text-[#4a9eff] font-semibold text-right">{a.play_count}</td>
-                <td className="px-4 py-3.5 text-right"><SkipBadge rate={a.skip_rate} /></td>
+                <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
+                <td className="px-4 py-5 text-sm font-medium">{a.artists}</td>
+                <td className="px-4 py-5 text-sm text-[#4a9eff] font-semibold text-right">{a.play_count}</td>
+                <td className="px-4 py-5 text-right"><SkipBadge rate={a.skip_rate} /></td>
               </tr>
             ))}
             {artists.length === 0 && (
-              <tr><td colSpan={3} className="px-4 py-8 text-center text-sm italic text-[#555]">Ingen data ennå</td></tr>
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm italic text-[#555]">Ingen data ennå</td></tr>
             )}
           </tbody>
         </table>
