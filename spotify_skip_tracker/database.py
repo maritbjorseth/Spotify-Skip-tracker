@@ -166,6 +166,8 @@ def _migrate(conn) -> None:
     _migrate_timestamp_to_timestamptz(conn)
     _migrate_add_image_url(conn)
     _migrate_skipped_to_boolean(conn)
+    _migrate_smart_skipper(conn)
+    _migrate_janitor(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -232,3 +234,88 @@ def _migrate_skipped_to_boolean(conn) -> None:
         logger.info("Migrerer skipped-kolonne fra INTEGER til BOOLEAN …")
         execute(conn, "ALTER TABLE plays ALTER COLUMN skipped TYPE BOOLEAN USING (skipped <> 0)")
         logger.info("Migrasjon fullført: skipped er nå BOOLEAN.")
+
+
+def _migrate_smart_skipper(conn) -> None:
+    """Oppretter Smart Skipper-tabeller hvis de ikke finnes."""
+    execute(
+        conn,
+        """
+        CREATE TABLE IF NOT EXISTS auto_skips (
+            id           SERIAL PRIMARY KEY,
+            uri          TEXT NOT NULL,
+            title        TEXT,
+            artists      TEXT,
+            context_uri  TEXT,
+            skip_rate    REAL NOT NULL,
+            threshold    REAL NOT NULL,
+            reason       TEXT,
+            timestamp    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            undone       BOOLEAN NOT NULL DEFAULT FALSE,
+            undone_at    TIMESTAMPTZ
+        )
+        """,
+    )
+    execute(
+        conn,
+        """
+        CREATE TABLE IF NOT EXISTS smart_skipper_config (
+            id                INTEGER PRIMARY KEY DEFAULT 1,
+            enabled           BOOLEAN NOT NULL DEFAULT FALSE,
+            threshold         REAL NOT NULL DEFAULT 0.85,
+            min_plays         INTEGER NOT NULL DEFAULT 3,
+            delay_seconds     INTEGER NOT NULL DEFAULT 5,
+            dry_run           BOOLEAN NOT NULL DEFAULT TRUE,
+            respect_time      BOOLEAN NOT NULL DEFAULT FALSE,
+            excluded_contexts TEXT[] DEFAULT '{}',
+            excluded_uris     TEXT[] DEFAULT '{}'
+        )
+        """,
+    )
+    execute(
+        conn,
+        "INSERT INTO smart_skipper_config (id) VALUES (1) ON CONFLICT DO NOTHING",
+    )
+    logger.info("Smart Skipper-tabeller klar.")
+
+
+def _migrate_janitor(conn) -> None:
+    """Oppretter Playlist Janitor-tabeller hvis de ikke finnes."""
+    execute(
+        conn,
+        """
+        CREATE TABLE IF NOT EXISTS janitor_suggestions (
+            id            SERIAL PRIMARY KEY,
+            playlist_id   TEXT NOT NULL,
+            playlist_name TEXT,
+            uri           TEXT NOT NULL,
+            title         TEXT,
+            artists       TEXT,
+            skip_rate     REAL NOT NULL,
+            janitor_score REAL NOT NULL,
+            suggested_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            status        TEXT NOT NULL DEFAULT 'pending',
+            acted_at      TIMESTAMPTZ,
+            snapshot_id   TEXT
+        )
+        """,
+    )
+    execute(
+        conn,
+        """
+        CREATE TABLE IF NOT EXISTS janitor_removals (
+            id            SERIAL PRIMARY KEY,
+            suggestion_id INTEGER REFERENCES janitor_suggestions(id),
+            playlist_id   TEXT NOT NULL,
+            playlist_name TEXT,
+            uri           TEXT NOT NULL,
+            title         TEXT,
+            artists       TEXT,
+            removed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            snapshot_id   TEXT NOT NULL,
+            undone        BOOLEAN NOT NULL DEFAULT FALSE,
+            undone_at     TIMESTAMPTZ
+        )
+        """,
+    )
+    logger.info("Playlist Janitor-tabeller klar.")

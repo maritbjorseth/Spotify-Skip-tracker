@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Track, Artist } from "../types";
+import type { Track, Artist, AutoSkipCandidate } from "../types";
 
 // ---------------------------------------------------------------------------
 // Hjelpefunksjoner
@@ -372,6 +372,91 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
             ))}
             {tracks.length === 0 && (
               <tr><td colSpan={6} className="px-4 py-8 text-center text-sm italic text-[#555]">Ingen data ennå</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Smart Skipper — forhåndsvisning av kandidater (dry-run)
+// ---------------------------------------------------------------------------
+
+export function AutoSkipPreviewTable({
+  candidates,
+  threshold,
+}: {
+  candidates: AutoSkipCandidate[];
+  threshold: number;
+}) {
+  const pct = Math.round(threshold * 100);
+
+  return (
+    <section className="mb-10">
+      <h2 className="mb-1 text-base font-semibold" style={{ color: "#f97316" }}>
+        ⚠️ Forhåndsvisning: Smarte skips (Skip-rate &gt; {pct}%)
+      </h2>
+      <p className="text-xs text-[#666] mb-4">
+        Sanger trackeren vil autoskippe i fremtiden basert på din historikk.
+      </p>
+      <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
+        <table className="w-full">
+          <thead className="bg-[#161616]">
+            <tr>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
+              <th className="px-4 py-3 w-14" />
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Skip-rate</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {candidates.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm italic text-[#555]">
+                  Ingen kandidater — ingen sanger overskrider {pct}%-terskelen ennå.
+                </td>
+              </tr>
+            ) : (
+              candidates.map((c, i) => (
+                <tr
+                  key={c.uri}
+                  className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150"
+                >
+                  <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
+                    {i + 1}
+                  </td>
+                  <td className="px-4 py-5 w-14">
+                    <AlbumThumb url={c.image_url} title={c.title} uri={c.uri} />
+                  </td>
+                  <td className="px-4 py-5 text-sm font-medium" title={c.title ?? undefined}>
+                    {c.title ?? "—"}
+                  </td>
+                  <td className="px-4 py-5 text-sm text-[#999]" title={c.artists ?? undefined}>
+                    {c.artists ?? "—"}
+                  </td>
+                  <td className="px-4 py-5 text-right">
+                    <SkipBadge rate={c.skip_rate} />
+                  </td>
+                  <td className="px-4 py-5 text-right">
+                    <button
+                      disabled
+                      className="rounded-md px-3 py-1 text-xs font-medium cursor-not-allowed"
+                      style={{
+                        background: "#2a2a2a",
+                        color: "#555",
+                        border: "1px solid #333",
+                      }}
+                      title="Aktiver Smart Skipper for å aktivere automatisk hopping"
+                    >
+                      Dry-run aktiv
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

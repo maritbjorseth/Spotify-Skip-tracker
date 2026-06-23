@@ -293,6 +293,50 @@ def _compute(conn) -> dict:
     ).fetchone()[0]
 
     # ------------------------------------------------------------------
+    # Smart Skipper — kandidater over skip-rate-terskel
+    # Henter terskelen fra smart_skipper_config (standard 0.85).
+    # Krever minst min_plays avspillinger for å unngå falske positiver.
+    # ------------------------------------------------------------------
+    config_row = execute(
+        conn,
+        "SELECT threshold, min_plays FROM smart_skipper_config WHERE id = 1",
+    ).fetchone()
+    ss_threshold = float(config_row[0]) if config_row else 0.85
+    ss_min_plays = int(config_row[1]) if config_row else 3
+
+    candidate_rows = execute(
+        conn,
+        """
+        SELECT
+            uri,
+            MAX(title)                                              AS title,
+            MAX(artists)                                            AS artists,
+            MAX(image_url)                                          AS image_url,
+            COUNT(*)                                                AS play_count,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END)               AS skip_count
+        FROM plays
+        GROUP BY uri
+        HAVING
+            COUNT(*) >= %s
+            AND (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) >= %s
+        ORDER BY (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) DESC
+        """,
+        (ss_min_plays, ss_threshold),
+    ).fetchall()
+    auto_skip_candidates = [
+        {
+            "uri": uri,
+            "title": title,
+            "artists": artists,
+            "image_url": image_url,
+            "play_count": int(play_count),
+            "skip_count": int(skip_count),
+            "skip_rate": skip_count / play_count if play_count else 0,
+        }
+        for uri, title, artists, image_url, play_count, skip_count in candidate_rows
+    ]
+
+    # ------------------------------------------------------------------
     # Daglig aktivitet for heatmap (siste 365 dager)
     # ------------------------------------------------------------------
     daily_rows = execute(
@@ -329,4 +373,6 @@ def _compute(conn) -> dict:
         "total_skips": int(total_skips),
         "total_plays": int(total_plays),
         "unique_tracks": int(unique_tracks),
+        "auto_skip_candidates": auto_skip_candidates,
+        "smart_skipper_threshold": ss_threshold,
     }

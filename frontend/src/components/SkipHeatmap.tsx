@@ -37,17 +37,28 @@ export function SkipHeatmap({ daily }: Props) {
   } | null>(null);
 
   const { cells, monthLabels, maxSkips } = useMemo(() => {
-    // Bygg et grid bakover fra i dag, 53 uker
+    // Bygg et grid bakover fra i dag, 53 uker.
+    //
+    // Feil vi fikset: den gamle koden beregnet startDay som
+    // "today - 53*7 + 1" og justerte deretter BAKOVER til mandag.
+    // Det gjorde at gridet endte på søndagen FØR i dag, slik at
+    // de siste dagene (mandag/tirsdag denne uken) aldri ble rendret.
+    //
+    // Riktig tilnærming: ankre alltid til søndagen i UKENs TIL I DAG,
+    // slik at alle dager til og med i dag alltid er synlige.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Start fra mandag i første uke
-    const startDay = new Date(today);
-    startDay.setDate(today.getDate() - WEEKS * 7 + 1);
-    // Juster til nærmeste mandag
-    const dow = startDay.getDay(); // 0 = søndag
-    const toMonday = dow === 0 ? -6 : 1 - dow;
-    startDay.setDate(startDay.getDate() + toMonday);
+    // Finn søndagen i nåværende uke (=slutten av gridet)
+    const dow = today.getDay(); // 0 = søndag, 1 = mandag …
+    const daysToSunday = dow === 0 ? 0 : 7 - dow;
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(today.getDate() + daysToSunday);
+
+    // Start er alltid mandagen som åpner gridet: endOfWeek - 53*7 + 1 dag
+    // Siden endOfWeek er en søndag, gir dette eksakt en mandag.
+    const startDay = new Date(endOfWeek);
+    startDay.setDate(endOfWeek.getDate() - WEEKS * 7 + 1);
 
     const cells: Array<{
       date: string;

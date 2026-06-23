@@ -4,7 +4,7 @@ import { api } from "./api";
 import { NowPlaying } from "./components/NowPlaying";
 import { StatCardsRow } from "./components/StatCards";
 import { SkipHeatmap } from "./components/SkipHeatmap";
-import { SkippedTable, MostPlayedTable, MostCompletedTable, TopArtistsTable } from "./components/Tables";
+import { SkippedTable, MostPlayedTable, MostCompletedTable, TopArtistsTable, AutoSkipPreviewTable } from "./components/Tables";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayChart, HourlyRateChart, WeekdayRateChart } from "./components/Charts";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
@@ -154,6 +154,13 @@ export default function App() {
             </AnimatePresence>
 
             {visible.topArtists && <TopArtistsTable artists={data.top_listened_artists} />}
+
+            {/* Smart Skipper — forhåndsvisning */}
+            <SectionDivider label="Smart Skipper" />
+            <AutoSkipPreviewTable
+              candidates={data.auto_skip_candidates ?? []}
+              threshold={data.smart_skipper_threshold ?? 0.85}
+            />
           </motion.div>
         )}
       </div>

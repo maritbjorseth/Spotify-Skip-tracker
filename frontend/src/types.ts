@@ -54,6 +54,18 @@ export interface StatsResponse {
   total_skips: number;
   total_plays: number;
   unique_tracks: number;
+  auto_skip_candidates: AutoSkipCandidate[];
+  smart_skipper_threshold: number;
+}
+
+export interface AutoSkipCandidate {
+  uri: string;
+  title: string | null;
+  artists: string | null;
+  image_url: string | null;
+  skip_count: number;
+  play_count: number;
+  skip_rate: number;
 }
 
 export interface NowPlayingResponse {
