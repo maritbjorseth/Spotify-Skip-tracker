@@ -45,7 +45,8 @@ def _compute(conn) -> dict:
             )                                                   AS context_name,
             SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END)         AS skip_count,
             COUNT(*)                                            AS play_count,
-            MAX(p.image_url)                                    AS image_url
+            MAX(p.image_url)                                    AS image_url,
+            MAX(p.context_uri)                                  AS context_uri
         FROM plays p
         LEFT JOIN contexts c ON c.uri = p.context_uri
         GROUP BY p.uri, context_name
@@ -56,7 +57,9 @@ def _compute(conn) -> dict:
 
     tracks = []
     contexts: set[str] = set()
-    for uri, title, artists, context_name, skip_count, play_count, image_url in track_rows:
+    playlist_contexts: set[str] = set()
+    album_contexts: set[str] = set()
+    for uri, title, artists, context_name, skip_count, play_count, image_url, context_uri in track_rows:
         tracks.append(
             {
                 "uri": uri,
@@ -71,6 +74,10 @@ def _compute(conn) -> dict:
         )
         if context_name:
             contexts.add(context_name)
+            if context_uri and context_uri.startswith("spotify:album:"):
+                album_contexts.add(context_name)
+            else:
+                playlist_contexts.add(context_name)
 
     # ------------------------------------------------------------------
     # Mest skippede artister (topp 10)
@@ -309,6 +316,8 @@ def _compute(conn) -> dict:
     return {
         "tracks": tracks,
         "contexts": sorted(contexts),
+        "playlist_contexts": sorted(playlist_contexts),
+        "album_contexts": sorted(album_contexts),
         "top_artists": top_artists,
         "top_listened_artists": top_listened_artists,
         "top_contexts": top_contexts,

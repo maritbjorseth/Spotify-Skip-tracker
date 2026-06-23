@@ -50,25 +50,39 @@ const thumbImgStyle: React.CSSProperties = {
   display: 'block',
 };
 
-function AlbumThumb({ url, title }: { url: string | null; title: string | null }) {
-  if (!url)
-    return (
-      <div style={thumbBoxStyle} className="flex items-center justify-center">
-        <svg className="h-5 w-5 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
-        </svg>
-      </div>
-    );
-  return (
+function AlbumThumb({ url, title, uri }: { url: string | null; title: string | null; uri?: string | null }) {
+  // Bygg Spotify-lenke fra track-URI (spotify:track:ID → open.spotify.com/track/ID)
+  const spotifyHref =
+    uri?.startsWith("spotify:track:")
+      ? `https://open.spotify.com/track/${uri.split(":")[2]}`
+      : null;
+
+  const inner = url ? (
     <div style={thumbBoxStyle}>
-      <img
-        src={url}
-        alt={title ?? ""}
-        loading="lazy"
-        style={thumbImgStyle}
-      />
+      <img src={url} alt={title ?? ""} loading="lazy" style={thumbImgStyle} />
+    </div>
+  ) : (
+    <div style={thumbBoxStyle} className="flex items-center justify-center">
+      <svg className="h-5 w-5 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
+      </svg>
     </div>
   );
+
+  if (spotifyHref) {
+    return (
+      <a
+        href={spotifyHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Åpne «${title ?? "sang"}» i Spotify`}
+        className="block hover:scale-105 transition-transform duration-150"
+      >
+        {inner}
+      </a>
+    );
+  }
+  return inner;
 }
 
 function Pagination({
@@ -117,10 +131,12 @@ type SortKey = "skip_count" | "play_count" | "skip_rate" | "title" | "artists" |
 
 export function SkippedTable({
   tracks,
-  contexts,
+  playlistContexts = [],
+  albumContexts = [],
 }: {
   tracks: Track[];
-  contexts: string[];
+  playlistContexts?: string[];
+  albumContexts?: string[];
 }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -176,22 +192,37 @@ export function SkippedTable({
     <section className="mb-10">
       <h2 className="mb-3 text-base font-semibold text-[#ff6b35]">Mest skippede sanger</h2>
 
-      <div className="mb-4 flex flex-wrap gap-3">
-        <select
-          value={ctx}
-          onChange={(e) => { setCtx(e.target.value); setPage(1); }}
-          className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#444]"
-        >
-          <option value="">Alle spillelister/album</option>
-          {contexts.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <input
-          type="text"
-          placeholder="Søk etter tittel eller artist…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-2 text-sm text-[#eee] placeholder-[#555] focus:outline-none focus:border-[#444] min-w-56"
-        />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {/* Venstre: spillelistefiler + søk */}
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={albumContexts.includes(ctx) ? "" : ctx}
+            onChange={(e) => { setCtx(e.target.value); setPage(1); }}
+            className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#444]"
+          >
+            <option value="">Alle spillelister</option>
+            {playlistContexts.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <input
+            type="text"
+            placeholder="Søk etter tittel eller artist…"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-2 text-sm text-[#eee] placeholder-[#555] focus:outline-none focus:border-[#444] min-w-56"
+          />
+        </div>
+
+        {/* Høyre: albumfilter (kun synlig hvis det finnes album) */}
+        {albumContexts.length > 0 && (
+          <select
+            value={albumContexts.includes(ctx) ? ctx : ""}
+            onChange={(e) => { setCtx(e.target.value); setPage(1); }}
+            className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#444]"
+          >
+            <option value="">Alle album</option>
+            {albumContexts.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
@@ -230,7 +261,7 @@ export function SkippedTable({
                       {(page - 1) * PAGE + i + 1}
                     </td>
                     <td className="px-4 py-5 w-14">
-                      <AlbumThumb url={t.image_url} title={t.title} />
+                      <AlbumThumb url={t.image_url} title={t.title} uri={t.uri} />
                     </td>
                     <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>
                       {t.title ?? "—"}
@@ -292,7 +323,7 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
                 <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
                   {(page - 1) * PAGE + i + 1}
                 </td>
-                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
+                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
                 <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
                 <td className="px-4 py-5 text-sm text-[#4a9eff] font-semibold text-right">{t.play_count}</td>
@@ -314,7 +345,8 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
 export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
   return (
     <section>
-      <h2 className="mb-3 text-base font-semibold text-[#1db954]">Sanger du nesten aldri skipper</h2>
+      <h2 className="mb-1 text-base font-semibold text-[#1db954]">Sanger du nesten aldri skipper</h2>
+      <p className="text-xs text-[#555] mb-3">Låter du som regel lytter til helt ferdig.</p>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
         <table className="w-full">
           <thead className="bg-[#161616]">
@@ -331,7 +363,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
             {tracks.map((t, i) => (
               <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
                 <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
-                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
+                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
                 <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
                 <td className="px-4 py-5 text-sm text-[#1db954] font-semibold text-right">{t.play_count}</td>

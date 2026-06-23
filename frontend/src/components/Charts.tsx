@@ -75,12 +75,16 @@ function RateTooltip({
   );
 }
 
-function ChartCard({ title, color, children }: { title: string; color: string; children: ReactNode }) {
+function ChartCard({ title, subtitle, color, children }: { title: string; subtitle?: string; color: string; children: ReactNode }) {
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-6">
-      <h2 className="text-sm font-semibold uppercase tracking-widest mb-5" style={{ color }}>
+      <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color }}>
         {title}
       </h2>
+      {subtitle && (
+        <p className="text-xs text-[#555] mt-1 mb-5">{subtitle}</p>
+      )}
+      {!subtitle && <div className="mb-5" />}
       {children}
     </div>
   );
@@ -102,7 +106,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
   const chartHeight = Math.max(300, data.length * 44);
 
   return (
-    <ChartCard title="Mest skippede artister" color="#ff6b35">
+    <ChartCard title="Mest skippede artister" subtitle="Artister du har lavest tålmodighet for." color="#ff6b35">
       <div style={{ height: chartHeight + 80 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 20, right: 28, bottom: 20, left: 180 }}>
@@ -123,7 +127,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
                   fill={`hsl(${20 + i * 6}, 90%, ${65 - i * 2}%)`}
                 />
               ))}
-              <LabelList dataKey="skip" position="right" style={{ fill: "#fff", fontSize: 14 }} />
+              <LabelList dataKey="skip" position="right" style={{ fill: "#fff", fontSize: 16, fontWeight: 600 }} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -179,7 +183,7 @@ export function ContextChart({ contexts }: { contexts: Context[] }) {
               position="right"
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(v: any) => v != null ? `${v}%` : ""}
-              style={{ fill: "#aaa", fontSize: 11 }}
+              style={{ fill: "#aaa", fontSize: 13, fontWeight: 600 }}
             />
           </Bar>
         </BarChart>
@@ -200,9 +204,15 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
   }));
 
   const max = Math.max(...data.map((d) => d.skip), 1);
+  const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
   return (
-    <ChartCard title="Skip etter tidspunkt på døgnet" color="#9b59b6">
+    <ChartCard title="Skip-antall etter tidspunkt på døgnet" color="#9b59b6">
+      {totalSkips === 0 ? (
+        <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
+          Ingen data ennå – tracker samler data i sanntid.
+        </div>
+      ) : (
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={{ left: -16, right: 4 }} barCategoryGap="12%">
           <XAxis
@@ -225,6 +235,7 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }
@@ -243,9 +254,15 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
   }));
 
   const max = Math.max(...data.map((d) => d.skip), 1);
+  const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
   return (
-    <ChartCard title="Skip etter ukedag" color="#9b59b6">
+    <ChartCard title="Skip-antall etter ukedag" color="#9b59b6">
+      {totalSkips === 0 ? (
+        <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
+          Ingen data ennå – tracker samler data i sanntid.
+        </div>
+      ) : (
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={{ left: -16, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />
@@ -261,6 +278,7 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }
@@ -374,7 +392,7 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
               position="top"
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(v: any) => (v > 0 ? `${v}%` : "")}
-              style={{ fill: "#777", fontSize: 10 }}
+              style={{ fill: "#777", fontSize: 12, fontWeight: 600 }}
             />
           </Bar>
         </BarChart>

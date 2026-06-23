@@ -90,11 +90,21 @@ export default function App() {
             />
 
             {/* Heatmap */}
-            {visible.heatmap && <SkipHeatmap daily={data.daily} />}
+            {visible.heatmap && (
+              <div className="mb-6">
+                <SkipHeatmap daily={data.daily} />
+              </div>
+            )}
 
             {/* Mest skippede sanger */}
             {visible.skipped && (
-              <SkippedTable tracks={data.tracks} contexts={data.contexts} />
+              <div className="mb-6">
+                <SkippedTable
+                tracks={data.tracks}
+                playlistContexts={data.playlist_contexts ?? data.contexts ?? []}
+                albumContexts={data.album_contexts ?? []}
+              />
+              </div>
             )}
 
             {hasGraphs && <SectionDivider label="Grafer" />}

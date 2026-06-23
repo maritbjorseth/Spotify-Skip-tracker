@@ -177,7 +177,7 @@ export function StatCardsRow({
   const rateTailwind = skipRate >= 50 ? "text-orange-500/70" : "text-emerald-500/70";
 
   return (
-    <div className="flex gap-4 flex-wrap mb-10">
+    <div className="flex gap-4 flex-wrap mb-16">
       <StatCard
         icon={<IconSkipForward className="w-5 h-5 text-orange-500/70" />}
         label="Totalt skippet"

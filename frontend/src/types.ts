@@ -41,6 +41,8 @@ export interface DailyStats {
 export interface StatsResponse {
   tracks: Track[];
   contexts: string[];
+  playlist_contexts: string[];
+  album_contexts: string[];
   top_artists: Artist[];
   top_listened_artists: Artist[];
   top_contexts: Context[];
