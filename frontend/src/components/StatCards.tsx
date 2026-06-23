@@ -1,7 +1,5 @@
-import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { SkipForward, TrendingUp, Music, Disc } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Animert teller
@@ -40,7 +38,7 @@ interface StatCardProps {
   value: number;
   format?: (n: number) => string;
   color?: string;
-  icon: ReactNode;
+  icon: string;
 }
 
 export function StatCard({ label, value, format, color = "#1db954", icon }: StatCardProps) {
@@ -58,9 +56,7 @@ export function StatCard({ label, value, format, color = "#1db954", icon }: Stat
         <span className="text-xs font-medium uppercase tracking-wider text-[#666]">
           {label}
         </span>
-        <span style={{ color }} className="opacity-70">
-          {icon}
-        </span>
+        <span className="text-2xl leading-none">{icon}</span>
       </div>
 
       {/* Stor verdi */}
@@ -89,31 +85,10 @@ export function StatCardsRow({
 
   return (
     <div className="flex gap-4 flex-wrap mb-10">
-      <StatCard
-        icon={<SkipForward className="w-5 h-5" />}
-        label="Totalt skippet"
-        value={totalSkips}
-        color="#ff6b35"
-      />
-      <StatCard
-        icon={<TrendingUp className="w-5 h-5" />}
-        label="Skip-rate"
-        value={skipRate}
-        format={(n) => `${n}%`}
-        color={rateColor}
-      />
-      <StatCard
-        icon={<Music className="w-5 h-5" />}
-        label="Avspillinger logget"
-        value={totalPlays}
-        color="#1db954"
-      />
-      <StatCard
-        icon={<Disc className="w-5 h-5" />}
-        label="Unike sanger skippet"
-        value={uniqueTracks}
-        color="#4a9eff"
-      />
+      <StatCard icon="⏩" label="Totalt skippet" value={totalSkips} color="#ff6b35" />
+      <StatCard icon="📈" label="Skip-rate" value={skipRate} format={(n) => `${n}%`} color={rateColor} />
+      <StatCard icon="🎵" label="Avspillinger logget" value={totalPlays} color="#1db954" />
+      <StatCard icon="🎶" label="Unike sanger skippet" value={uniqueTracks} color="#4a9eff" />
     </div>
   );
 }
