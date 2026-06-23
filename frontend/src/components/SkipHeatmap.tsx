@@ -90,8 +90,14 @@ export function SkipHeatmap({ daily }: Props) {
 
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-6 mb-8">
-      <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest mb-4">
+      <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest mb-4 flex items-center gap-1.5">
         Skip-aktivitet siste år
+        <span
+          title="Viser hvor mange sanger du skipper per dag i et kalender-heatmap."
+          className="text-[#444] hover:text-[#888] cursor-help transition-colors text-[10px] font-normal normal-case tracking-normal"
+        >
+          ⓘ
+        </span>
       </h2>
 
       <div className="overflow-x-auto">

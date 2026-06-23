@@ -1,5 +1,88 @@
+import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+
+// ---------------------------------------------------------------------------
+// Inline SVG-ikoner – tynne streker, strokeWidth 1.5, ingen fill
+// ---------------------------------------------------------------------------
+
+function IconSkipForward({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Fremre trekant */}
+      <polygon points="5 4 15 12 5 20 5 4" />
+      {/* Loddrett strek (slutten av sporet) */}
+      <line x1="19" y1="5" x2="19" y2="19" />
+    </svg>
+  );
+}
+
+function IconTrendingUp({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+      <polyline points="16 7 22 7 22 13" />
+    </svg>
+  );
+}
+
+function IconMusicNote({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Strek ned + bue øverst */}
+      <path d="M9 18V5l12-2v13" />
+      {/* Notehodet */}
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
+  );
+}
+
+function IconDisc({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Ytre sirkel */}
+      <circle cx="12" cy="12" r="10" />
+      {/* Indre hull */}
+      <circle cx="12" cy="12" r="3" />
+      {/* To dekorative buer for vinyl-riller */}
+      <path d="M12 2a10 10 0 0 1 7.07 2.93" strokeOpacity={0.35} />
+      <path d="M2 12a10 10 0 0 1 2.93-7.07" strokeOpacity={0.35} />
+    </svg>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Animert teller
@@ -38,10 +121,11 @@ interface StatCardProps {
   value: number;
   format?: (n: number) => string;
   color?: string;
-  icon: string;
+  icon: ReactNode;
+  tooltip?: string;
 }
 
-export function StatCard({ label, value, format, color = "#1db954", icon }: StatCardProps) {
+export function StatCard({ label, value, format, color = "#1db954", icon, tooltip }: StatCardProps) {
   const fmt = format ?? ((n: number) => n.toLocaleString("nb-NO"));
 
   return (
@@ -53,10 +137,18 @@ export function StatCard({ label, value, format, color = "#1db954", icon }: Stat
     >
       {/* Øverste rad: etikett til venstre, ikon til høyre */}
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-medium uppercase tracking-wider text-[#666]">
+        <span className="text-xs font-medium uppercase tracking-wider text-[#666] flex items-center gap-1">
           {label}
+          {tooltip && (
+            <span
+              title={tooltip}
+              className="text-[#444] hover:text-[#888] cursor-help transition-colors text-[10px]"
+            >
+              ⓘ
+            </span>
+          )}
         </span>
-        <span className="text-2xl leading-none">{icon}</span>
+        {icon}
       </div>
 
       {/* Stor verdi */}
@@ -82,13 +174,37 @@ export function StatCardsRow({
 }) {
   const skipRate = totalPlays > 0 ? Math.round((totalSkips / totalPlays) * 100) : 0;
   const rateColor = skipRate >= 50 ? "#ff6b35" : "#1db954";
+  const rateTailwind = skipRate >= 50 ? "text-orange-500/70" : "text-emerald-500/70";
 
   return (
     <div className="flex gap-4 flex-wrap mb-10">
-      <StatCard icon="⏩" label="Totalt skippet" value={totalSkips} color="#ff6b35" />
-      <StatCard icon="📈" label="Skip-rate" value={skipRate} format={(n) => `${n}%`} color={rateColor} />
-      <StatCard icon="🎵" label="Avspillinger logget" value={totalPlays} color="#1db954" />
-      <StatCard icon="🎶" label="Unike sanger skippet" value={uniqueTracks} color="#4a9eff" />
+      <StatCard
+        icon={<IconSkipForward className="w-5 h-5 text-orange-500/70" />}
+        label="Totalt skippet"
+        value={totalSkips}
+        color="#ff6b35"
+      />
+      <StatCard
+        icon={<IconTrendingUp className={`w-5 h-5 ${rateTailwind}`} />}
+        label="Skip-rate"
+        value={skipRate}
+        format={(n) => `${n}%`}
+        color={rateColor}
+        tooltip="Andel av avspillinger som ble skippet før sangen var ferdig."
+      />
+      <StatCard
+        icon={<IconMusicNote className="w-5 h-5 text-green-500/70" />}
+        label="Avspillinger logget"
+        value={totalPlays}
+        color="#1db954"
+      />
+      <StatCard
+        icon={<IconDisc className="w-5 h-5 text-blue-500/70" />}
+        label="Unike sanger skippet"
+        value={uniqueTracks}
+        color="#4a9eff"
+        tooltip="Antall unike sanger du har skippet minst én gang."
+      />
     </div>
   );
 }

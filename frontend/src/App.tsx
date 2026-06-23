@@ -49,6 +49,14 @@ export default function App() {
             <p className="text-sm text-[#555] mt-1">
               Hva skipper du egentlig?
             </p>
+            <span className="text-xs text-neutral-500 mt-1 block">
+              Sist oppdatert:{" "}
+              {new Date().toLocaleDateString("nb-NO", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
           </div>
           <SectionToggle visible={visible} onToggle={toggle} />
         </motion.div>

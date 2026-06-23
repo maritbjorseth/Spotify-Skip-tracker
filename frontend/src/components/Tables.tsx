@@ -224,7 +224,7 @@ export function SkippedTable({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15, delay: i * 0.02 }}
-                    className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors"
+                    className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150"
                   >
                     <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
                       {(page - 1) * PAGE + i + 1}
@@ -288,7 +288,7 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
           </thead>
           <tbody>
             {rows.map((t, i) => (
-              <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
+              <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
                 <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
                   {(page - 1) * PAGE + i + 1}
                 </td>
@@ -329,7 +329,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
           </thead>
           <tbody>
             {tracks.map((t, i) => (
-              <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
+              <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
                 <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
                 <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} /></td>
                 <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
@@ -368,7 +368,7 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
           </thead>
           <tbody>
             {artists.map((a, i) => (
-              <tr key={a.artists} className="border-t border-[#2a2a2a] hover:bg-[#232323] transition-colors">
+              <tr key={a.artists} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
                 <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
                 <td className="px-4 py-5 text-sm font-medium">{a.artists}</td>
                 <td className="px-4 py-5 text-sm text-[#4a9eff] font-semibold text-right">{a.play_count}</td>
