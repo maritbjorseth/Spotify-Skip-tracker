@@ -18,7 +18,15 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import requests
 
-from .config import CREDS_PATH, REDIRECT_URI, SCOPE, APP_DIR
+from .config import (
+    CREDS_PATH,
+    REDIRECT_URI,
+    SCOPE,
+    APP_DIR,
+    SPOTIFY_CLIENT_ID,
+    SPOTIFY_CLIENT_SECRET,
+    SPOTIFY_REFRESH_TOKEN,
+)
 from .database import execute
 
 logger = logging.getLogger(__name__)
@@ -116,23 +124,22 @@ def run_setup(client_id: str, client_secret: str) -> None:
 
 def load_creds() -> dict:
     """
-    Laster legitimasjon fra miljøvariabler (cloud) eller lokal fil.
+    Laster legitimasjon i prioritert rekkefølge:
+    1. Miljøvariabler / .env.local (SPOTIFY_CLIENT_ID, _SECRET, _REFRESH_TOKEN)
+    2. Lokal fil ~/.spotify_skip_tracker/credentials.json (fallback)
+
     Avslutter programmet med en feilmelding dersom ingen legitimasjon finnes.
     """
-    import os
-
-    if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
-        client_id = os.environ.get("SPOTIFY_CLIENT_ID")
-        client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
-        if not client_id or not client_secret:
+    if SPOTIFY_REFRESH_TOKEN:
+        if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
             raise RuntimeError(
                 "SPOTIFY_REFRESH_TOKEN er satt, men SPOTIFY_CLIENT_ID og/eller "
-                "SPOTIFY_CLIENT_SECRET mangler som miljøvariabler."
+                "SPOTIFY_CLIENT_SECRET mangler i .env.local / miljøvariabler."
             )
         return {
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
+            "client_id": SPOTIFY_CLIENT_ID,
+            "client_secret": SPOTIFY_CLIENT_SECRET,
+            "refresh_token": SPOTIFY_REFRESH_TOKEN,
             "access_token": "",
             "expires_at": 0,
         }
@@ -144,12 +151,11 @@ def load_creds() -> dict:
 
 def save_creds(creds: dict) -> None:
     """
-    Lagrer legitimasjon lokalt. Gjør ingenting i cloud-modus (refresh-tokenet
-    roterer ikke, så miljøvariabelen er alltid gyldig etter en omstart).
+    Lagrer legitimasjon lokalt. Gjør ingenting når legitimasjon kommer fra
+    .env.local / miljøvariabler (refresh-tokenet roterer ikke, og
+    miljøvariabelen er alltid gyldig etter en omstart).
     """
-    import os
-
-    if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
+    if SPOTIFY_REFRESH_TOKEN:
         return
     CREDS_PATH.write_text(json.dumps(creds, indent=2))
 

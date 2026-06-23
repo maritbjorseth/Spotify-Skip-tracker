@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
 import {
   BarChart,
@@ -140,54 +141,108 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
 // Høyest skip-rate per spilleliste/album
 // ---------------------------------------------------------------------------
 
-export function ContextChart({ contexts }: { contexts: Context[] }) {
-  const data = contexts.slice(0, 8).map((c) => ({
+type ContextFilter = "playlist" | "album" | "all";
+
+const FILTER_BUTTONS: { id: ContextFilter; label: string }[] = [
+  { id: "playlist", label: "Spillelister" },
+  { id: "album",    label: "Album" },
+  { id: "all",      label: "Alle" },
+];
+
+export function ContextChart({
+  contexts,
+  playlistContexts = [],
+  albumContexts = [],
+}: {
+  contexts: Context[];
+  playlistContexts?: string[];
+  albumContexts?: string[];
+}) {
+  const [filter, setFilter] = useState<ContextFilter>("playlist");
+
+  const playlistSet = new Set(playlistContexts);
+  const albumSet    = new Set(albumContexts);
+
+  const filtered = contexts.filter((c) => {
+    if (filter === "all")      return true;
+    if (filter === "playlist") return playlistSet.has(c.context_name);
+    if (filter === "album")    return albumSet.has(c.context_name);
+    return true;
+  });
+
+  const data = filtered.slice(0, 8).map((c) => ({
     name: c.context_name,
     rate: Math.round(c.skip_rate * 100),
+    skips: c.skip_count,
+    plays: c.play_count,
   }));
 
   const chartHeight = Math.max(200, data.length * 40);
 
   return (
     <ChartCard title="Høyest skip-rate per spilleliste/album" color="#ff6b35">
-      <ResponsiveContainer width="100%" height={chartHeight}>
-        <BarChart data={data} layout="vertical" margin={{ left: 0, right: 48 }}>
-          <XAxis
-            type="number"
-            domain={[0, 100]}
-            tick={TICK_STYLE}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={(v: number) => `${v}%`}
-          />
-          <YAxis
-            type="category"
-            dataKey="name"
-            tick={TICK_STYLE}
-            axisLine={false}
-            tickLine={false}
-            width={110}
-            tickFormatter={(v: string) => v.length > 15 ? v.slice(0, 14) + "…" : v}
-          />
-          <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08" }} />
-          <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={20}>
-            {data.map((d, i) => (
-              <Cell
-                key={i}
-                fill={d.rate >= 50 ? "#ff6b35" : "#1db954"}
-                fillOpacity={0.85 - i * 0.05}
-              />
-            ))}
-            <LabelList
-              dataKey="rate"
-              position="right"
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(v: any) => v != null ? `${v}%` : ""}
-              style={{ fill: "#aaa", fontSize: 13, fontWeight: 600 }}
+      {/* Filter-bryterrekke */}
+      <div className="flex gap-1 mb-4">
+        {FILTER_BUTTONS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setFilter(id)}
+            className={[
+              "rounded-md border px-3 py-1 text-xs font-medium transition-all duration-150",
+              filter === id
+                ? "border-[#ff6b35] bg-[#ff6b3520] text-[#ff6b35]"
+                : "border-[#2e2e2e] bg-[#1c1c1c] text-[#666] hover:border-[#555] hover:text-[#aaa]",
+            ].join(" ")}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {data.length === 0 ? (
+        <div className="flex items-center justify-center h-[120px] text-xs text-[#444] italic">
+          Ingen data for dette filteret ennå.
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 48 }}>
+            <XAxis
+              type="number"
+              domain={[0, 100]}
+              tick={TICK_STYLE}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v: number) => `${v}%`}
             />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+            <YAxis
+              type="category"
+              dataKey="name"
+              tick={TICK_STYLE}
+              axisLine={false}
+              tickLine={false}
+              width={110}
+              tickFormatter={(v: string) => v.length > 15 ? v.slice(0, 14) + "…" : v}
+            />
+            <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08" }} />
+            <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={20}>
+              {data.map((d, i) => (
+                <Cell
+                  key={i}
+                  fill={d.rate >= 50 ? "#ff6b35" : "#1db954"}
+                  fillOpacity={0.85 - i * 0.05}
+                />
+              ))}
+              <LabelList
+                dataKey="rate"
+                position="right"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(v: any) => v != null ? `${v}%` : ""}
+                style={{ fill: "#aaa", fontSize: 13, fontWeight: 600 }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }

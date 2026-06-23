@@ -19,6 +19,15 @@ load_dotenv(_REPO_ROOT / ".env")
 DATABASE_URL: str | None = os.environ.get("DATABASE_URL")
 
 # ---------------------------------------------------------------------------
+# Spotify-legitimasjon (leses fra .env.local / miljøvariabler)
+# Fallback til ~/.spotify_skip_tracker/credentials.json håndteres i spotify_api.py
+# ---------------------------------------------------------------------------
+
+SPOTIFY_CLIENT_ID: str | None = os.environ.get("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET: str | None = os.environ.get("SPOTIFY_CLIENT_SECRET")
+SPOTIFY_REFRESH_TOKEN: str | None = os.environ.get("SPOTIFY_REFRESH_TOKEN")
+
+# ---------------------------------------------------------------------------
 # Lokale filstier (brukes ikke i cloud-modus)
 # ---------------------------------------------------------------------------
 

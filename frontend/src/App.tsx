@@ -120,7 +120,13 @@ export default function App() {
                   className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
                 >
                   {visible.artistChart && <ArtistChart artists={data.top_artists} />}
-                  {visible.contextChart && <ContextChart contexts={data.top_contexts} />}
+                  {visible.contextChart && (
+                    <ContextChart
+                      contexts={data.top_contexts}
+                      playlistContexts={data.playlist_contexts ?? []}
+                      albumContexts={data.album_contexts ?? []}
+                    />
+                  )}
                   {visible.hourChart && <HourlyChart hourly={data.hourly} />}
                   {visible.weekdayChart && <WeekdayChart weekday={data.weekday} />}
                   {visible.hourRateChart && <HourlyRateChart hourly={data.hourly} />}
