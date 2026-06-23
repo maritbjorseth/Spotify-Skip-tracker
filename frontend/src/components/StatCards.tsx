@@ -1,13 +1,11 @@
+import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { SkipForward, TrendingUp, Music, Disc } from "lucide-react";
 
-interface StatCardProps {
-  label: string;
-  value: number;
-  format?: (n: number) => string;
-  color?: string;
-  icon: string;
-}
+// ---------------------------------------------------------------------------
+// Animert teller
+// ---------------------------------------------------------------------------
 
 function AnimatedNumber({
   value,
@@ -33,6 +31,18 @@ function AnimatedNumber({
   return <motion.span>{display}</motion.span>;
 }
 
+// ---------------------------------------------------------------------------
+// Enkelt KPI-kort
+// ---------------------------------------------------------------------------
+
+interface StatCardProps {
+  label: string;
+  value: number;
+  format?: (n: number) => string;
+  color?: string;
+  icon: ReactNode;
+}
+
 export function StatCard({ label, value, format, color = "#1db954", icon }: StatCardProps) {
   const fmt = format ?? ((n: number) => n.toLocaleString("nb-NO"));
 
@@ -41,16 +51,29 @@ export function StatCard({ label, value, format, color = "#1db954", icon }: Stat
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="flex-1 min-w-40 rounded-xl border border-[#2a2a2a] bg-[#181818] p-6"
+      className="flex-1 min-w-40 rounded-xl border border-[#2a2a2a] bg-[#181818] p-5"
     >
-      <div className="text-xl mb-3">{icon}</div>
+      {/* Øverste rad: etikett til venstre, ikon til høyre */}
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs font-medium uppercase tracking-wider text-[#666]">
+          {label}
+        </span>
+        <span style={{ color }} className="opacity-70">
+          {icon}
+        </span>
+      </div>
+
+      {/* Stor verdi */}
       <div className="text-3xl font-bold tabular-nums" style={{ color }}>
         <AnimatedNumber value={value} format={fmt} />
       </div>
-      <div className="mt-1 text-sm text-[#999]">{label}</div>
     </motion.div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Rad med alle fire KPI-kortene
+// ---------------------------------------------------------------------------
 
 export function StatCardsRow({
   totalSkips,
@@ -62,19 +85,35 @@ export function StatCardsRow({
   uniqueTracks: number;
 }) {
   const skipRate = totalPlays > 0 ? Math.round((totalSkips / totalPlays) * 100) : 0;
+  const rateColor = skipRate >= 50 ? "#ff6b35" : "#1db954";
 
   return (
     <div className="flex gap-4 flex-wrap mb-10">
-      <StatCard icon="⏭" label="Totalt skippet" value={totalSkips} color="#ff6b35" />
       <StatCard
-        icon="📊"
+        icon={<SkipForward className="w-5 h-5" />}
+        label="Totalt skippet"
+        value={totalSkips}
+        color="#ff6b35"
+      />
+      <StatCard
+        icon={<TrendingUp className="w-5 h-5" />}
         label="Skip-rate"
         value={skipRate}
         format={(n) => `${n}%`}
-        color={skipRate >= 50 ? "#ff6b35" : "#1db954"}
+        color={rateColor}
       />
-      <StatCard icon="🎵" label="Avspillinger logget" value={totalPlays} />
-      <StatCard icon="🎶" label="Unike sanger skippet" value={uniqueTracks} color="#4a9eff" />
+      <StatCard
+        icon={<Music className="w-5 h-5" />}
+        label="Avspillinger logget"
+        value={totalPlays}
+        color="#1db954"
+      />
+      <StatCard
+        icon={<Disc className="w-5 h-5" />}
+        label="Unike sanger skippet"
+        value={uniqueTracks}
+        color="#4a9eff"
+      />
     </div>
   );
 }
