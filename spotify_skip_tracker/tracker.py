@@ -16,6 +16,7 @@ import requests
 
 from .config import MIN_REMAINING_MS, POLL_SECONDS, SKIP_THRESHOLD
 from .database import connect, execute, init_db, reconnect
+from .smart_skipper import SmartSkipper
 from .spotify_api import get_access_token, get_context_name, load_creds
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,9 @@ def polling_loop() -> None:
     creds = load_creds()
     conn = connect()
     init_db(conn)
+
+    # Smart Skipper — instansieres én gang og lever hele sesjonen
+    skipper = SmartSkipper()
 
     # Tilstand fra forrige poll-syklus
     last_uri: str | None = None
@@ -207,9 +211,53 @@ def polling_loop() -> None:
                 last_context = context_uri
                 last_image_url = image_url
 
+            # ------------------------------------------------------------------
+            # Edge case A: søk tilbake i samme sang (progress hopper bakover).
+            # Dersom brukeren spoler mer enn 5 s bakover i samme spor, nullstilles
+            # nedtellingen slik at Smart Skipper ikke hopper umiddelbart.
+            # Sjekkes før last_progress_ms oppdateres, mens den fortsatt har
+            # forrige polls verdi.
+            # ------------------------------------------------------------------
+            if uri == last_uri and progress_ms < last_progress_ms - 5_000:
+                logger.debug(
+                    "Smart Skipper: progress spolet bakover (%.0f→%.0f ms) — "
+                    "nullstiller nedtelling for '%s'.",
+                    last_progress_ms, progress_ms, title,
+                )
+                skipper._reset()
+
             last_progress_ms = progress_ms
             last_duration_ms = duration_ms
             last_shuffle_state = shuffle_state
+
+            # ------------------------------------------------------------------
+            # Smart Skipper — evalueres på hvert poll-syklus etter at
+            # sporbytte-logging og last_*-variabler er oppdatert.
+            #
+            # Edge case B (A→B→A): dersom brukeren manuelt hopper til en sang
+            # de nettopp forlot, vil SmartSkipper-tilstandsmaskinen se at
+            # current_uri ≠ _pending_uri og kalle _reset() internt. Den nye
+            # forekomsten av sangen starter en frisk nedtelling fra 0.
+            #
+            # Feil i SmartSkipper isoleres med try/except slik at en bug
+            # i skip-logikken aldri kan krasje hoved-tracking-loopen.
+            # ------------------------------------------------------------------
+            try:
+                skipper.evaluate(
+                    conn=conn,
+                    token=token,
+                    current_uri=uri,
+                    current_title=title,
+                    current_artists=artists,
+                    context_uri=context_uri,
+                    progress_ms=int(progress_ms),
+                    duration_ms=int(duration_ms),
+                    is_playing=is_playing,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Smart Skipper-feil (ignorerer, tracking fortsetter): %s", exc
+                )
 
         except requests.RequestException as exc:
             logger.warning("Nettverksfeil, prøver igjen: %s", exc)

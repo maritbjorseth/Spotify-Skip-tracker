@@ -104,6 +104,57 @@ def create_flask_app() -> Flask:
             "updated_at": updated_at.isoformat() if updated_at else None,
         })
 
+    @app.route("/api/smart-skipper")
+    def smart_skipper():
+        try:
+            with pooled_connection() as conn:
+                config_row = execute(
+                    conn,
+                    """
+                    SELECT enabled, threshold, min_plays, delay_seconds, dry_run
+                    FROM smart_skipper_config
+                    WHERE id = 1
+                    """,
+                ).fetchone()
+
+                history_rows = execute(
+                    conn,
+                    """
+                    SELECT title, artists, skip_rate, reason, timestamp, undone
+                    FROM auto_skips
+                    ORDER BY timestamp DESC
+                    LIMIT 20
+                    """,
+                ).fetchall()
+
+        except Exception as exc:
+            logger.exception("Feil i /api/smart-skipper: %s", exc)
+            return jsonify({"error": "Kunne ikke hente Smart Skipper-data"}), 500
+
+        config = {}
+        if config_row:
+            config = {
+                "enabled": bool(config_row[0]),
+                "threshold": float(config_row[1]),
+                "min_plays": int(config_row[2]),
+                "delay_seconds": int(config_row[3]),
+                "dry_run": bool(config_row[4]),
+            }
+
+        history = [
+            {
+                "title": r[0],
+                "artists": r[1],
+                "skip_rate": float(r[2]) if r[2] is not None else None,
+                "reason": r[3],
+                "timestamp": r[4].isoformat() if r[4] else None,
+                "undone": bool(r[5]),
+            }
+            for r in history_rows
+        ]
+
+        return jsonify({"config": config, "history": history})
+
     # ------------------------------------------------------------------
     # Statisk serving: React-build hvis tilgjengelig, ellers gammel HTML
     # ------------------------------------------------------------------

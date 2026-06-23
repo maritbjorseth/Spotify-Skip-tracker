@@ -5,6 +5,7 @@ import { NowPlaying } from "./components/NowPlaying";
 import { StatCardsRow } from "./components/StatCards";
 import { SkipHeatmap } from "./components/SkipHeatmap";
 import { SkippedTable, MostPlayedTable, MostCompletedTable, TopArtistsTable, AutoSkipPreviewTable } from "./components/Tables";
+import { SmartSkipperPanel } from "./components/SmartSkipperPanel";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayChart, HourlyRateChart, WeekdayRateChart } from "./components/Charts";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
@@ -155,8 +156,9 @@ export default function App() {
 
             {visible.topArtists && <TopArtistsTable artists={data.top_listened_artists} />}
 
-            {/* Smart Skipper — forhåndsvisning */}
+            {/* Smart Skipper — kontrollpanel + forhåndsvisning */}
             <SectionDivider label="Smart Skipper" />
+            <SmartSkipperPanel />
             <AutoSkipPreviewTable
               candidates={data.auto_skip_candidates ?? []}
               threshold={data.smart_skipper_threshold ?? 0.85}

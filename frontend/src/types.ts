@@ -68,6 +68,28 @@ export interface AutoSkipCandidate {
   skip_rate: number;
 }
 
+export interface SmartSkipperConfig {
+  enabled: boolean;
+  threshold: number;
+  min_plays: number;
+  delay_seconds: number;
+  dry_run: boolean;
+}
+
+export interface AutoSkipHistoryEntry {
+  title: string | null;
+  artists: string | null;
+  skip_rate: number | null;
+  reason: string | null;
+  timestamp: string | null;
+  undone: boolean;
+}
+
+export interface SmartSkipperResponse {
+  config: SmartSkipperConfig;
+  history: AutoSkipHistoryEntry[];
+}
+
 export interface NowPlayingResponse {
   is_playing: boolean;
   uri: string | null;

@@ -318,4 +318,26 @@ def _migrate_janitor(conn) -> None:
         )
         """,
     )
+    # Legg til UNIQUE-constraint på (playlist_id, uri) dersom den ikke finnes.
+    # Sjekker information_schema først for idempotens — tryggere enn try/except
+    # rundt ALTER TABLE, som ville krevd rollback i psycopg2 ved DuplicateObject.
+    cur = execute(
+        conn,
+        """
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE table_name = 'janitor_suggestions'
+          AND constraint_name = 'unique_playlist_track'
+        """,
+    )
+    if cur.fetchone() is None:
+        execute(
+            conn,
+            """
+            ALTER TABLE janitor_suggestions
+            ADD CONSTRAINT unique_playlist_track UNIQUE (playlist_id, uri)
+            """,
+        )
+        logger.info("Lagt til UNIQUE-constraint unique_playlist_track på janitor_suggestions.")
+
     logger.info("Playlist Janitor-tabeller klar.")

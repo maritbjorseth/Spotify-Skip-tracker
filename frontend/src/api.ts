@@ -1,4 +1,4 @@
-import type { StatsResponse, NowPlayingResponse } from "./types";
+import type { StatsResponse, NowPlayingResponse, SmartSkipperResponse } from "./types";
 
 const BASE =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
@@ -14,4 +14,5 @@ async function fetchJson<T>(path: string): Promise<T> {
 export const api = {
   stats: () => fetchJson<StatsResponse>("/api/stats"),
   nowPlaying: () => fetchJson<NowPlayingResponse>("/api/now"),
+  smartSkipper: () => fetchJson<SmartSkipperResponse>("/api/smart-skipper"),
 };

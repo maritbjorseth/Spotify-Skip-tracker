@@ -7,6 +7,8 @@ Bruk:
     python -m spotify_skip_tracker track
     python -m spotify_skip_tracker wrapped [--month 6] [--year 2026]
     python -m spotify_skip_tracker export [--output skips.csv]
+    python -m spotify_skip_tracker smart-skipper status
+    python -m spotify_skip_tracker janitor [--playlist NAVN] [--min-score 0.70] [--no-dry-run]
 """
 
 import argparse
@@ -78,6 +80,58 @@ def main() -> None:
         help="Filnavn/sti for CSV-filen (standard: skips_export.csv)",
     )
 
+    # smart-skipper
+    ss_p = sub.add_parser(
+        "smart-skipper",
+        help="Administrer Smart Skipper-innstillinger",
+    )
+    ss_p.add_argument(
+        "action",
+        choices=["status", "enable", "disable", "dry-run", "threshold"],
+        help="Handling som skal utføres",
+    )
+    ss_p.add_argument(
+        "value",
+        nargs="?",
+        default=None,
+        metavar="VERDI",
+        help="Verdi for 'dry-run' (on/off) eller 'threshold' (0.50–1.00)",
+    )
+    ss_p.set_defaults(func=handle_smart_skipper)
+
+    # janitor
+    janitor_p = sub.add_parser(
+        "janitor",
+        help="Analyser spillelister og finn kandidater for fjerning (Playlist Janitor)",
+    )
+    janitor_p.add_argument(
+        "--playlist",
+        type=str,
+        default=None,
+        metavar="NAVN",
+        help="Filtrer på spillelistenavn (case-insensitiv delstreng)",
+    )
+    janitor_p.add_argument(
+        "--min-score",
+        type=float,
+        default=0.70,
+        metavar="SCORE",
+        help="Minimum janitor-score for å inkludere en kandidat (standard: 0.70)",
+    )
+    janitor_p.add_argument(
+        "--min-plays",
+        type=int,
+        default=3,
+        metavar="N",
+        help="Minimum antall avspillinger i spillelisten (standard: 3)",
+    )
+    janitor_p.add_argument(
+        "--no-dry-run",
+        action="store_true",
+        help="Deaktiver dry-run og lagre forslag til databasen (standard: dry-run aktiv)",
+    )
+    janitor_p.set_defaults(func=handle_janitor)
+
     args = parser.parse_args()
 
     if args.command == "setup":
@@ -122,6 +176,135 @@ def main() -> None:
     elif args.command == "export":
         from .export import run_export
         run_export(args.output)
+
+    elif args.command == "smart-skipper":
+        handle_smart_skipper(args)
+
+    elif args.command == "janitor":
+        handle_janitor(args)
+
+
+def handle_smart_skipper(args) -> None:
+    from .database import connect, execute, init_db
+
+    conn = connect()
+    init_db(conn)
+
+    if args.action == "status":
+        row = execute(
+            conn,
+            "SELECT enabled, threshold, min_plays, dry_run FROM smart_skipper_config WHERE id = 1",
+        ).fetchone()
+        if not row:
+            print("Ingen konfigurasjon funnet — kjør init_db først.")
+        else:
+            enabled, threshold, min_plays, dry_run = row
+            print(f"Smart Skipper: {'PÅ' if enabled else 'AV'}")
+            print(f"  Terskel:     {threshold:.0%}")
+            print(f"  Min avspill: {min_plays}")
+            print(f"  Prøvemodus:  {'JA' if dry_run else 'NEI'}")
+
+    elif args.action == "enable":
+        execute(conn, "UPDATE smart_skipper_config SET enabled = TRUE WHERE id = 1")
+        conn.commit()
+        print("Smart Skipper aktivert.")
+
+    elif args.action == "disable":
+        execute(conn, "UPDATE smart_skipper_config SET enabled = FALSE WHERE id = 1")
+        conn.commit()
+        print("Smart Skipper deaktivert.")
+
+    elif args.action == "dry-run":
+        if args.value is None:
+            print("Feil: oppgi verdi — 'on' eller 'off'.")
+        else:
+            val = args.value.lower() in ("on", "true", "1", "ja")
+            execute(
+                conn,
+                "UPDATE smart_skipper_config SET dry_run = %s WHERE id = 1",
+                (val,),
+            )
+            conn.commit()
+            print(f"Prøvemodus: {'PÅ' if val else 'AV'}")
+
+    elif args.action == "threshold":
+        if args.value is None:
+            print("Feil: oppgi en verdi mellom 0.50 og 1.00.")
+        else:
+            try:
+                t = float(args.value)
+            except ValueError:
+                print(f"Feil: '{args.value}' er ikke et gyldig tall.")
+                conn.close()
+                return
+            if not 0.50 <= t <= 1.00:
+                print("Feil: terskel må være mellom 0.50 og 1.00.")
+            else:
+                execute(
+                    conn,
+                    "UPDATE smart_skipper_config SET threshold = %s WHERE id = 1",
+                    (t,),
+                )
+                conn.commit()
+                print(f"Terskel satt til {t:.0%}")
+
+    conn.close()
+
+
+def handle_janitor(args) -> None:
+    from .janitor import run_janitor
+
+    dry_run = not args.no_dry_run
+
+    print(
+        f"Playlist Janitor starter"
+        f"{' [DRY RUN — ingen DB-skriving]' if dry_run else ' [AKTIV — lagrer forslag]'}"
+    )
+    if args.playlist:
+        print(f"  Filter:      '{args.playlist}'")
+    print(f"  Min score:   {args.min_score:.0%}")
+    print(f"  Min avspill: {args.min_plays}")
+    print()
+
+    result = run_janitor(
+        playlist_filter=args.playlist,
+        min_score=float(args.min_score),
+        min_plays=int(args.min_plays),
+        dry_run=dry_run,
+    )
+
+    analysed = result["playlists_analysed"]
+    skipped = result["playlists_skipped"]
+    total = result["total_candidates"]
+
+    print(f"Analyserte spillelister: {analysed}")
+    if skipped:
+        print(f"Hoppet over (ingen spor/data): {skipped}")
+    print(f"Totalt antall kandidater funnet: {total}")
+    print()
+
+    for entry in result["results"]:
+        candidates = entry["candidates"]
+        if not candidates:
+            continue
+        print(f"  {entry['playlist_name']} — {len(candidates)} kandidat(er):")
+        for c in candidates:
+            print(
+                f"    [{c['score']:.2f}] {c['artists']} — {c['title']}"
+                f"  (skip {c['skip_count']}/{c['play_count']}, "
+                f"rate {c['skip_rate']:.0%})"
+            )
+        print()
+
+    if total == 0:
+        print("Ingen kandidater funnet over terskelen.")
+    elif dry_run:
+        print(
+            "Dry-run aktiv — ingen endringer lagret. "
+            "Bruk --no-dry-run for å lagre forslagene til databasen."
+        )
+    else:
+        print(f"{total} forslag lagret i janitor_suggestions-tabellen.")
 
 
 if __name__ == "__main__":
