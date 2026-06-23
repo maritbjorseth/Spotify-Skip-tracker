@@ -21,6 +21,7 @@ interface TooltipPayload {
   name: string;
   value: number;
   color: string;
+  payload: Record<string, number>;
 }
 
 function CustomTooltip({
@@ -43,6 +44,33 @@ function CustomTooltip({
           {p.value}{suffix}
         </p>
       ))}
+    </div>
+  );
+}
+
+// Tooltip for rate-grafer: viser %-rate + rå skip/avspillinger
+function RateTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0];
+  const { skips, plays } = row.payload;
+  return (
+    <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 shadow-xl text-xs">
+      <p className="font-semibold text-white mb-1">{label}</p>
+      <p style={{ color: row.color }}>{row.value}% skip-rate</p>
+      {plays > 0 && (
+        <p className="text-[#555] mt-0.5">{skips} skip / {plays} avsp.</p>
+      )}
+      {plays === 0 && (
+        <p className="text-[#444] mt-0.5 italic">Ingen avspillinger</p>
+      )}
     </div>
   );
 }
@@ -233,6 +261,129 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Skip-RATE per time på døgnet (prosent, ikke antall)
+// ---------------------------------------------------------------------------
+
+export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
+  const data = hourly.map((h, i) => ({
+    hour: `${i}:00`,
+    rate: h.plays > 0 ? Math.round((h.skips / h.plays) * 100) : 0,
+    skips: h.skips,
+    plays: h.plays,
+  }));
+
+  // Farger: lav rate → grønn, høy rate → oransje (matching ContextChart-logikk)
+  function barColor(rate: number, plays: number): string {
+    if (plays === 0) return "#2a2a2a";
+    if (rate < 25) return `hsl(140, 60%, ${28 + rate * 0.4}%)`;
+    if (rate < 50) return `hsl(${140 - (rate - 25) * 3.6}, 65%, 38%)`;
+    return `hsl(${25 - (rate - 50) * 0.2}, 85%, 48%)`;
+  }
+
+  return (
+    <ChartCard title="Skip-rate per time på døgnet" color="#4a9eff">
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="12%">
+          <XAxis
+            dataKey="hour"
+            tick={TICK_STYLE}
+            axisLine={false}
+            tickLine={false}
+            interval={3}
+            tickFormatter={(v: string) => v.split(":")[0]}
+          />
+          <YAxis
+            tick={TICK_STYLE}
+            axisLine={false}
+            tickLine={false}
+            domain={[0, 100]}
+            tickFormatter={(v: number) => `${v}%`}
+            width={34}
+          />
+          <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08" }} />
+          <Bar dataKey="rate" name="Skip-rate" radius={[3, 3, 0, 0]}>
+            {data.map((d, i) => (
+              <Cell
+                key={i}
+                fill={barColor(d.rate, d.plays)}
+                fillOpacity={d.plays === 0 ? 0.35 : 0.9}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Skip-RATE per ukedag (prosent, ikke antall)
+// ---------------------------------------------------------------------------
+
+export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
+  const data = weekday.map((w, i) => ({
+    day: DAYS[i],
+    rate: w.plays > 0 ? Math.round((w.skips / w.plays) * 100) : 0,
+    skips: w.skips,
+    plays: w.plays,
+  }));
+
+  function barColor(rate: number, plays: number): string {
+    if (plays === 0) return "#2a2a2a";
+    if (rate < 25) return `hsl(140, 60%, ${28 + rate * 0.4}%)`;
+    if (rate < 50) return `hsl(${140 - (rate - 25) * 3.6}, 65%, 38%)`;
+    return `hsl(${25 - (rate - 50) * 0.2}, 85%, 48%)`;
+  }
+
+  // Beregn gjennomsnittlig skip-rate (kun dager med data)
+  const daysWithData = data.filter((d) => d.plays > 0);
+  const avgRate =
+    daysWithData.length > 0
+      ? Math.round(daysWithData.reduce((s, d) => s + d.rate, 0) / daysWithData.length)
+      : null;
+
+  return (
+    <ChartCard title="Skip-rate per ukedag" color="#4a9eff">
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="18%">
+          <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />
+          <YAxis
+            tick={TICK_STYLE}
+            axisLine={false}
+            tickLine={false}
+            domain={[0, 100]}
+            tickFormatter={(v: number) => `${v}%`}
+            width={34}
+          />
+          <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08" }} />
+          <Bar dataKey="rate" name="Skip-rate" radius={[3, 3, 0, 0]}>
+            {data.map((d, i) => (
+              <Cell
+                key={i}
+                fill={barColor(d.rate, d.plays)}
+                fillOpacity={d.plays === 0 ? 0.35 : 0.9}
+              />
+            ))}
+            <LabelList
+              dataKey="rate"
+              position="top"
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(v: any) => (v > 0 ? `${v}%` : "")}
+              style={{ fill: "#777", fontSize: 10 }}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+      {avgRate !== null && (
+        <p className="mt-2 text-right text-xs text-[#555]">
+          Snitt: <span className="text-[#777] font-medium">{avgRate}%</span>
+        </p>
+      )}
     </ChartCard>
   );
 }

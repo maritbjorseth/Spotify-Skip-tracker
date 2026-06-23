@@ -5,7 +5,7 @@ import { NowPlaying } from "./components/NowPlaying";
 import { StatCardsRow } from "./components/StatCards";
 import { SkipHeatmap } from "./components/SkipHeatmap";
 import { SkippedTable, MostPlayedTable, MostCompletedTable, TopArtistsTable } from "./components/Tables";
-import { ArtistChart, ContextChart, HourlyChart, WeekdayChart } from "./components/Charts";
+import { ArtistChart, ContextChart, HourlyChart, WeekdayChart, HourlyRateChart, WeekdayRateChart } from "./components/Charts";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
 function SectionDivider({ label }: { label: string }) {
@@ -28,7 +28,7 @@ export default function App() {
 
   const { visible, toggle } = useSectionVisibility();
 
-  const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayChart"].some((id) => visible[id]);
+  const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayChart", "hourRateChart", "weekdayRateChart"].some((id) => visible[id]);
   const hasMore = ["mostPlayed", "mostCompleted", "topArtists"].some((id) => visible[id]);
 
   return (
@@ -93,7 +93,7 @@ export default function App() {
 
             {/* Graf-grid */}
             <AnimatePresence mode="sync">
-              {(visible.artistChart || visible.contextChart || visible.hourChart || visible.weekdayChart) && (
+              {(visible.artistChart || visible.contextChart || visible.hourChart || visible.weekdayChart || visible.hourRateChart || visible.weekdayRateChart) && (
                 <motion.div
                   key="graphs"
                   initial={{ opacity: 0 }}
@@ -105,6 +105,8 @@ export default function App() {
                   {visible.contextChart && <ContextChart contexts={data.top_contexts} />}
                   {visible.hourChart && <HourlyChart hourly={data.hourly} />}
                   {visible.weekdayChart && <WeekdayChart weekday={data.weekday} />}
+                  {visible.hourRateChart && <HourlyRateChart hourly={data.hourly} />}
+                  {visible.weekdayRateChart && <WeekdayRateChart weekday={data.weekday} />}
                 </motion.div>
               )}
             </AnimatePresence>
