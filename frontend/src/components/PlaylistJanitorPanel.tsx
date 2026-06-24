@@ -200,12 +200,11 @@ function PlaylistGroup({
 // ---------------------------------------------------------------------------
 
 function TabContent({
-  category,
   candidates,
   onRemove,
   removingUri,
 }: {
-  category: JanitorCategory;
+  category?: JanitorCategory;
   candidates: JanitorCandidate[];
   onRemove: (playlistId: string, trackUri: string) => void;
   removingUri: string | null;

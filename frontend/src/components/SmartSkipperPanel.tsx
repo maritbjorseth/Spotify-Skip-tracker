@@ -47,6 +47,7 @@ function StatusBadge({ config }: { config: SmartSkipperConfig }) {
 // Konfigurasjon-grid
 // ---------------------------------------------------------------------------
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ConfigGrid({ config }: { config: SmartSkipperConfig }) {
   const items = [
     { label: "Terskel", value: `${Math.round(config.threshold * 100)}%` },
