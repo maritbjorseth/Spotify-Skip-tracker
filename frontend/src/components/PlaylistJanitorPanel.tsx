@@ -204,7 +204,6 @@ function TabContent({
   onRemove,
   removingUri,
 }: {
-  category?: JanitorCategory;
   candidates: JanitorCandidate[];
   onRemove: (playlistId: string, trackUri: string) => void;
   removingUri: string | null;

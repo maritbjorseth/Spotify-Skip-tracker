@@ -47,31 +47,6 @@ function StatusBadge({ config }: { config: SmartSkipperConfig }) {
 // Konfigurasjon-grid
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function ConfigGrid({ config }: { config: SmartSkipperConfig }) {
-  const items = [
-    { label: "Terskel", value: `${Math.round(config.threshold * 100)}%` },
-    { label: "Min. avspillinger", value: String(config.min_plays) },
-    { label: "Forsinkelse", value: `${config.delay_seconds}s` },
-  ];
-
-  return (
-    <div className="flex flex-wrap gap-4 mt-3">
-      {items.map(({ label, value }) => (
-        <div
-          key={label}
-          className="rounded-lg border border-[#2a2a2a] bg-[#161616] px-4 py-2 text-center"
-        >
-          <div className="text-xs text-[#555] uppercase tracking-wider mb-0.5">
-            {label}
-          </div>
-          <div className="text-sm font-semibold text-[#ccc]">{value}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Historikk-tabell
 // ---------------------------------------------------------------------------
