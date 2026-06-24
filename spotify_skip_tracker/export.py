@@ -12,8 +12,8 @@ from .database import connect, execute
 logger = logging.getLogger(__name__)
 
 
-def run_export(output_path: str | Path) -> None:
-    """Eksporterer alle avspillinger til en CSV-fil."""
+def run_export(output_path: str | Path, user_id: str = "default_user") -> None:
+    """Eksporterer avspillinger for én bruker til en CSV-fil."""
     output_path = Path(output_path)
     conn = connect()
     try:
@@ -30,8 +30,10 @@ def run_export(output_path: str | Path) -> None:
                 p.progress_ratio
             FROM plays p
             LEFT JOIN contexts c ON c.uri = p.context_uri
+            WHERE p.user_id = %s
             ORDER BY p.timestamp
             """,
+            (user_id,),
         ).fetchall()
     finally:
         conn.close()

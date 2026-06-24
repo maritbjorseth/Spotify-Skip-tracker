@@ -9,6 +9,7 @@ Endepunkter:
 
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+import threading
 
 import logging
 
@@ -17,7 +18,7 @@ import requests as http_requests
 from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 
-from .stats import compute_stats
+from .stats import compute_stats, compute_insight_stats, calculate_listening_score
 from .database import pooled_connection, execute
 from .spotify_api import get_access_token, load_creds
 
@@ -31,6 +32,47 @@ try:
 except FileNotFoundError:
     _DASHBOARD_HTML = "<h1>Dashboard ikke funnet</h1>"
 
+# ---------------------------------------------------------------------------
+# Spotify-bruker-ID (caches for hele prosessens levetid)
+# ---------------------------------------------------------------------------
+
+_cached_user_id: str | None = None
+_user_id_lock = threading.Lock()
+
+
+def _resolve_user_id() -> str:
+    """
+    Returnerer den innloggede brukerens Spotify-ID.
+
+    Kaller GET /v1/me første gang og cacher resultatet i minnet.
+    Faller trygt tilbake på 'default_user' dersom API-kallet feiler
+    (f.eks. ved nettverksproblemer eller manglende legitimasjon).
+    """
+    global _cached_user_id
+    if _cached_user_id is not None:
+        return _cached_user_id
+    with _user_id_lock:
+        # Dobbel sjekk inne i låsen
+        if _cached_user_id is not None:
+            return _cached_user_id
+        try:
+            creds = load_creds()
+            token = get_access_token(creds)
+            resp = http_requests.get(
+                "https://api.spotify.com/v1/me",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            _cached_user_id = resp.json().get("id") or "default_user"
+            logger.info("Spotify-bruker-ID cachet: '%s'.", _cached_user_id)
+        except Exception as exc:
+            logger.warning(
+                "Kunne ikke hente Spotify-bruker-ID: %s. Bruker 'default_user'.", exc
+            )
+            _cached_user_id = "default_user"
+        return _cached_user_id
+
 
 def create_flask_app() -> Flask:
     app = Flask(__name__, static_folder=None)
@@ -43,7 +85,7 @@ def create_flask_app() -> Flask:
     @app.route("/api/stats")
     def stats():
         try:
-            return jsonify(compute_stats())
+            return jsonify(compute_stats(_resolve_user_id()))
         except Exception as exc:
             logger.exception("Feil i /api/stats: %s", exc)
             return jsonify({"error": "Kunne ikke hente statistikk"}), 500
@@ -84,9 +126,11 @@ def create_flask_app() -> Flask:
                         """
                         SELECT
                             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / NULLIF(COUNT(*), 0)
-                        FROM plays WHERE uri = %s
+                        FROM plays
+                        WHERE uri = %s
+                          AND user_id = %s
                         """,
-                        (uri,),
+                        (uri, _resolve_user_id()),
                     ).fetchone()
                     if result and result[0] is not None:
                         skip_rate = round(float(result[0]), 3)
@@ -158,10 +202,46 @@ def create_flask_app() -> Flask:
 
         return jsonify({"config": config, "history": history})
 
+    @app.route("/api/stats/score")
+    def listening_score():
+        """
+        Returnerer brukerens lyttescore (0–100) basert på fullføringsgrad,
+        lengste streak og daglig konsistens.
+        """
+        try:
+            score = calculate_listening_score(_resolve_user_id())
+            return jsonify({"score": score})
+        except Exception as exc:
+            logger.exception("Feil i /api/stats/score: %s", exc)
+            return jsonify({"error": "Kunne ikke beregne lyttescore"}), 500
+
+    @app.route("/api/coach/insights")
+    def coach_insights():
+        """
+        Returnerer musikkcoach-innsikter basert på historiske avspillingsdata.
+
+        Eksempel-respons:
+        {
+            "top_skipped_hour": 22,
+            "most_impatient_day": "Fredag",
+            "weekday_skip_rate": 0.74,
+            "janitor_pending_count": 12
+        }
+        """
+        try:
+            with pooled_connection() as conn:
+                cursor = conn.cursor()
+                insights = compute_insight_stats(cursor, _resolve_user_id())
+            return jsonify(insights)
+        except Exception as exc:
+            logger.exception("Feil i /api/coach/insights: %s", exc)
+            return jsonify({"error": "Kunne ikke hente coach-innsikter"}), 500
+
     @app.route("/api/janitor/suggestions")
     def janitor_suggestions():
         from .janitor import _confidence_level, _category
 
+        user_id = _resolve_user_id()
         try:
             with pooled_connection() as conn:
                 rows = execute(
@@ -174,13 +254,16 @@ def create_flask_app() -> Flask:
                         (
                             SELECT COUNT(*) FROM plays p
                             WHERE p.uri = js.uri
+                              AND p.user_id = js.user_id
                               AND p.context_uri = 'spotify:playlist:' || js.playlist_id
                         ) AS play_count
                     FROM janitor_suggestions js
-                    WHERE status IN ('pending', 'rejected')
+                    WHERE js.user_id = %s
+                      AND js.status IN ('pending', 'rejected')
                     ORDER BY janitor_score DESC, playlist_name
                     LIMIT 200
                     """,
+                    (user_id,),
                 ).fetchall()
         except Exception as exc:
             logger.exception("Feil i /api/janitor/suggestions: %s", exc)
@@ -214,6 +297,8 @@ def create_flask_app() -> Flask:
         if not playlist_id or not track_uri:
             return jsonify({"error": "playlist_id og track_uri er påkrevd"}), 400
 
+        user_id = _resolve_user_id()
+
         try:
             creds = load_creds()
             token = get_access_token(creds)
@@ -238,10 +323,12 @@ def create_flask_app() -> Flask:
                     """
                     SELECT id, title, artists, playlist_name
                     FROM janitor_suggestions
-                    WHERE playlist_id = %s AND uri = %s
+                    WHERE user_id = %s
+                      AND playlist_id = %s
+                      AND uri = %s
                     LIMIT 1
                     """,
-                    (playlist_id, track_uri),
+                    (user_id, playlist_id, track_uri),
                 ).fetchone()
 
                 suggestion_id   = suggestion[0] if suggestion else None
@@ -256,9 +343,11 @@ def create_flask_app() -> Flask:
                     UPDATE janitor_suggestions
                     SET status = 'removed', acted_at = NOW(),
                         snapshot_id = %s
-                    WHERE playlist_id = %s AND uri = %s
+                    WHERE user_id = %s
+                      AND playlist_id = %s
+                      AND uri = %s
                     """,
-                    (snapshot_id, playlist_id, track_uri),
+                    (snapshot_id, user_id, playlist_id, track_uri),
                 )
 
                 # Logg fjerningen i audit-tabellen
@@ -266,11 +355,11 @@ def create_flask_app() -> Flask:
                     conn,
                     """
                     INSERT INTO janitor_removals
-                        (suggestion_id, playlist_id, playlist_name,
+                        (user_id, suggestion_id, playlist_id, playlist_name,
                          uri, title, artists, snapshot_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (suggestion_id, playlist_id, playlist_name,
+                    (user_id, suggestion_id, playlist_id, playlist_name,
                      track_uri, title, artists, snapshot_id),
                 )
 

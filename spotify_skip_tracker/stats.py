@@ -6,6 +6,9 @@ et JSON-serialiserbart dict med alle data dashbordet trenger.
 
 Hourly- og weekday-aggregering gjøres nå i SQL (ikke Python),
 noe som skalerer langt bedre med mange avspillinger.
+
+Alle funksjoner tar en 'user_id'-parameter slik at dataene isoleres
+per bruker (Fase H — multi-user forberedelse).
 """
 
 import logging
@@ -15,17 +18,197 @@ from .database import execute, pooled_connection
 logger = logging.getLogger(__name__)
 
 
-def compute_stats() -> dict:
+def calculate_listening_score(user_id: str = "default_user") -> int:
+    """
+    Beregner en lyttescore mellom 0 og 100 for brukeren.
+
+    Tre vektede komponenter:
+        Fullføringsgrad   50%  — andelen sanger brukeren faktisk hører ferdig
+        Lengste streak    30%  — lengste sammenhengende rekke uten ett eneste skip
+        Daglig konsistens 20%  — lavt standardavvik i daglig skip-rate = forutsigbar lytting
+
+    Returnerer 75 (nøytralt) dersom det finnes færre enn 10 avspillinger.
+    """
+    DEFAULT_SCORE = 75
+
+    with pooled_connection() as conn:
+        # --- Grunnlagstall ---
+        base = execute(
+            conn,
+            """
+            SELECT
+                COUNT(*)                                            AS total_plays,
+                SUM(CASE WHEN skipped THEN 1 ELSE 0 END)           AS total_skips
+            FROM plays
+            WHERE user_id = %s
+            """,
+            (user_id,),
+        ).fetchone()
+
+        if not base or (base[0] or 0) < 10:
+            return DEFAULT_SCORE
+
+        total_plays = int(base[0])
+        total_skips = int(base[1] or 0)
+
+        # --- Komponent 1: Fullføringsgrad (50%) ---
+        completion_rate = 1.0 - (total_skips / total_plays)
+
+        # --- Komponent 2: Lengste sammenhengende streak uten skip (30%) ---
+        # «Gaps and islands»-teknikk: gruppenummer = absolutt radnummer minus
+        # radnummer innenfor samme skipped-verdi. Alle rader i samme øy
+        # (sammenhengende ikke-skippa sanger) får samme grp-verdi.
+        streak_row = execute(
+            conn,
+            """
+            WITH numbered AS (
+                SELECT
+                    skipped,
+                    ROW_NUMBER() OVER (ORDER BY timestamp)
+                    - ROW_NUMBER() OVER (PARTITION BY skipped ORDER BY timestamp) AS grp
+                FROM plays
+                WHERE user_id = %s
+            ),
+            streaks AS (
+                SELECT COUNT(*) AS streak_len
+                FROM numbered
+                WHERE NOT skipped
+                GROUP BY grp
+            )
+            SELECT COALESCE(MAX(streak_len), 0) AS max_streak
+            FROM streaks
+            """,
+            (user_id,),
+        ).fetchone()
+
+        max_streak = int(streak_row[0]) if streak_row else 0
+        # 20 sanger på rad uten skip = full score på denne komponenten
+        streak_score = min(1.0, max_streak / 20.0)
+
+        # --- Komponent 3: Daglig konsistens — siste 30 dager (20%) ---
+        # Lav standardavvik i daglig skip-rate = forutsigbar lytteadferd = høyere score.
+        # STDDEV_POP = 0 betyr at skip-raten er identisk hver dag (perfekt konsistens).
+        # STDDEV_POP >= 0,5 regnes som høyt kaos → score 0.
+        consistency_row = execute(
+            conn,
+            """
+            SELECT COALESCE(STDDEV_POP(daily_rate), 0.0)
+            FROM (
+                SELECT
+                    SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL
+                        / NULLIF(COUNT(*), 0)                       AS daily_rate
+                FROM plays
+                WHERE user_id = %s
+                  AND timestamp >= NOW() - INTERVAL '30 days'
+                GROUP BY DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+                HAVING COUNT(*) >= 3
+            ) daily
+            """,
+            (user_id,),
+        ).fetchone()
+
+        stddev = float(consistency_row[0]) if consistency_row and consistency_row[0] else 0.0
+        consistency_score = max(0.0, 1.0 - stddev * 2.0)
+
+        # --- Kombiner og skaler til 0–100 ---
+        raw = (
+            0.50 * completion_rate
+            + 0.30 * streak_score
+            + 0.20 * consistency_score
+        )
+        return max(0, min(100, round(raw * 100)))
+
+
+def compute_insight_stats(db_cursor, user_id: str = "default_user") -> dict:
+    """
+    Beregner coach-innsikter for /api/coach/insights-endepunktet.
+
+    Parametere:
+        db_cursor  En åpen psycopg2-markør mot databasen.
+        user_id    Spotify-bruker-ID — filtrerer data til kun denne brukeren.
+
+    Returnerer et dict med:
+        top_skipped_hour      — timen på døgnet (0–23) med flest registrerte skips
+        most_impatient_day    — ukedagnavn (norsk) med høyest skip-rate
+        weekday_skip_rate     — skip-raten for den mest utålmodige ukedagen (0.0–1.0)
+        janitor_pending_count — antall sanger i janitor_suggestions som venter (status='pending')
+    """
+    WEEKDAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"]
+
+    # --- Time på døgnet med flest skips ---
+    db_cursor.execute(
+        """
+        SELECT
+            EXTRACT(HOUR FROM timestamp AT TIME ZONE 'Europe/Oslo')::INT AS hour,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skip_count
+        FROM plays
+        WHERE user_id = %s
+        GROUP BY hour
+        ORDER BY skip_count DESC
+        LIMIT 1
+        """,
+        (user_id,),
+    )
+    hour_row = db_cursor.fetchone()
+    top_skipped_hour = int(hour_row[0]) if hour_row else None
+
+    # --- Ukedag med høyest skip-rate ---
+    db_cursor.execute(
+        """
+        SELECT
+            (EXTRACT(ISODOW FROM timestamp AT TIME ZONE 'Europe/Oslo')::INT - 1) AS weekday,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / NULLIF(COUNT(*), 0) AS skip_rate
+        FROM plays
+        WHERE user_id = %s
+        GROUP BY weekday
+        ORDER BY skip_rate DESC
+        LIMIT 1
+        """,
+        (user_id,),
+    )
+    weekday_row = db_cursor.fetchone()
+    most_impatient_day = None
+    weekday_skip_rate = None
+    if weekday_row:
+        wd_index = int(weekday_row[0])
+        most_impatient_day = WEEKDAY_NAMES[wd_index] if 0 <= wd_index <= 6 else None
+        weekday_skip_rate = round(float(weekday_row[1]), 3) if weekday_row[1] is not None else None
+
+    # --- Antall ventende janitor-forslag ---
+    db_cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM janitor_suggestions
+        WHERE user_id = %s
+          AND status = 'pending'
+        """,
+        (user_id,),
+    )
+    pending_row = db_cursor.fetchone()
+    janitor_pending_count = int(pending_row[0]) if pending_row else 0
+
+    return {
+        "top_skipped_hour": top_skipped_hour,
+        "most_impatient_day": most_impatient_day,
+        "weekday_skip_rate": weekday_skip_rate,
+        "janitor_pending_count": janitor_pending_count,
+    }
+
+
+def compute_stats(user_id: str = "default_user") -> dict:
     """
     Henter all statistikk fra databasen og returnerer den som et dict.
     Bruker connection-poolen slik at dashboard-forespørsler ikke åpner
     en ny tilkobling for hvert kall.
+
+    Parametere:
+        user_id  Spotify-bruker-ID — filtrerer all statistikk til kun denne brukeren.
     """
     with pooled_connection() as conn:
-        return _compute(conn)
+        return _compute(conn, user_id)
 
 
-def _compute(conn) -> dict:
+def _compute(conn, user_id: str) -> dict:
     # ------------------------------------------------------------------
     # Sanger med minst ett skip
     # ------------------------------------------------------------------
@@ -49,10 +232,12 @@ def _compute(conn) -> dict:
             MAX(p.context_uri)                                  AS context_uri
         FROM plays p
         LEFT JOIN contexts c ON c.uri = p.context_uri
+        WHERE p.user_id = %s
         GROUP BY p.uri, context_name
         HAVING SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END) > 0
         ORDER BY skip_count DESC
         """,
+        (user_id,),
     ).fetchall()
 
     tracks = []
@@ -90,12 +275,14 @@ def _compute(conn) -> dict:
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skip_count,
             COUNT(*)                                  AS play_count
         FROM plays
-        WHERE artists IS NOT NULL AND artists != ''
+        WHERE user_id = %s
+          AND artists IS NOT NULL AND artists != ''
         GROUP BY artists
         HAVING SUM(CASE WHEN skipped THEN 1 ELSE 0 END) > 0
         ORDER BY skip_count DESC
         LIMIT 10
         """,
+        (user_id,),
     ).fetchall()
     top_artists = [
         {
@@ -118,11 +305,13 @@ def _compute(conn) -> dict:
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skip_count,
             COUNT(*)                                  AS play_count
         FROM plays
-        WHERE artists IS NOT NULL AND artists != ''
+        WHERE user_id = %s
+          AND artists IS NOT NULL AND artists != ''
         GROUP BY artists
         ORDER BY play_count DESC
         LIMIT 10
         """,
+        (user_id,),
     ).fetchall()
     top_listened_artists = [
         {
@@ -152,12 +341,14 @@ def _compute(conn) -> dict:
             COUNT(*)                                            AS play_count
         FROM plays p
         LEFT JOIN contexts c ON c.uri = p.context_uri
-        WHERE p.context_uri IS NOT NULL
+        WHERE p.user_id = %s
+          AND p.context_uri IS NOT NULL
         GROUP BY context_name
         HAVING COUNT(*) >= 2
         ORDER BY (SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) DESC
         LIMIT 10
         """,
+        (user_id,),
     ).fetchall()
     top_contexts = [
         {
@@ -170,7 +361,7 @@ def _compute(conn) -> dict:
     ]
 
     # ------------------------------------------------------------------
-    # Mest spilte sanger (alle, sortert etter avspillingsantall)
+    # Mest spilte sanger (topp 100, sortert etter avspillingsantall)
     # ------------------------------------------------------------------
     played_rows = execute(
         conn,
@@ -183,10 +374,12 @@ def _compute(conn) -> dict:
             COUNT(*)                                            AS play_count,
             MAX(image_url)                                      AS image_url
         FROM plays
+        WHERE user_id = %s
         GROUP BY uri
         ORDER BY play_count DESC
         LIMIT 100
         """,
+        (user_id,),
     ).fetchall()
     most_played = [
         {
@@ -216,6 +409,7 @@ def _compute(conn) -> dict:
             COUNT(*)                                            AS play_count,
             MAX(image_url)                                      AS image_url
         FROM plays
+        WHERE user_id = %s
         GROUP BY uri
         HAVING COUNT(*) >= 2
         ORDER BY
@@ -223,6 +417,7 @@ def _compute(conn) -> dict:
             play_count DESC
         LIMIT 10
         """,
+        (user_id,),
     ).fetchall()
     most_completed = [
         {
@@ -249,9 +444,11 @@ def _compute(conn) -> dict:
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)                    AS skips,
             COUNT(*)                                                      AS plays
         FROM plays
+        WHERE user_id = %s
         GROUP BY hour
         ORDER BY hour
         """,
+        (user_id,),
     ).fetchall()
     hourly = [{"skips": 0, "plays": 0} for _ in range(24)]
     for hour, skips, plays in hourly_rows:
@@ -270,9 +467,11 @@ def _compute(conn) -> dict:
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)                             AS skips,
             COUNT(*)                                                               AS plays
         FROM plays
+        WHERE user_id = %s
         GROUP BY weekday
         ORDER BY weekday
         """,
+        (user_id,),
     ).fetchall()
     weekday = [{"skips": 0, "plays": 0} for _ in range(7)]
     for wd, skips, plays in weekday_rows:
@@ -284,12 +483,22 @@ def _compute(conn) -> dict:
     # ------------------------------------------------------------------
     total_skips = execute(
         conn,
-        "SELECT COALESCE(SUM(CASE WHEN skipped THEN 1 ELSE 0 END), 0) FROM plays",
+        """
+        SELECT COALESCE(SUM(CASE WHEN skipped THEN 1 ELSE 0 END), 0)
+        FROM plays
+        WHERE user_id = %s
+        """,
+        (user_id,),
     ).fetchone()[0]
-    total_plays = execute(conn, "SELECT COUNT(*) FROM plays").fetchone()[0]
+    total_plays = execute(
+        conn,
+        "SELECT COUNT(*) FROM plays WHERE user_id = %s",
+        (user_id,),
+    ).fetchone()[0]
     unique_tracks = execute(
         conn,
-        "SELECT COUNT(DISTINCT uri) FROM plays WHERE skipped = TRUE",
+        "SELECT COUNT(DISTINCT uri) FROM plays WHERE user_id = %s AND skipped = TRUE",
+        (user_id,),
     ).fetchone()[0]
 
     # ------------------------------------------------------------------
@@ -315,13 +524,14 @@ def _compute(conn) -> dict:
             COUNT(*)                                                AS play_count,
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)               AS skip_count
         FROM plays
+        WHERE user_id = %s
         GROUP BY uri
         HAVING
             COUNT(*) >= %s
             AND (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) >= %s
         ORDER BY (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) DESC
         """,
-        (ss_min_plays, ss_threshold),
+        (user_id, ss_min_plays, ss_threshold),
     ).fetchall()
     auto_skip_candidates = [
         {
@@ -347,10 +557,12 @@ def _compute(conn) -> dict:
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)               AS skips,
             COUNT(*)                                                 AS plays
         FROM plays
-        WHERE timestamp >= NOW() - INTERVAL '365 days'
+        WHERE user_id = %s
+          AND timestamp >= NOW() - INTERVAL '365 days'
         GROUP BY day
         ORDER BY day
         """,
+        (user_id,),
     ).fetchall()
     daily = {
         str(day): {"skips": int(skips), "plays": int(plays)}

@@ -7,6 +7,8 @@ import { SkipHeatmap } from "./components/SkipHeatmap";
 import { SkippedTable, MostCompletedTable, AutoSkipPreviewTable } from "./components/Tables";
 import { SmartSkipperPanel } from "./components/SmartSkipperPanel";
 import { PlaylistJanitorPanel } from "./components/PlaylistJanitorPanel";
+import { CoachInsightsPanel } from "./components/CoachInsightsPanel";
+import { ListeningScorePanel } from "./components/ListeningScorePanel";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayRateChart } from "./components/Charts";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
@@ -142,6 +144,11 @@ export default function App() {
                 <MostCompletedTable tracks={data.most_completed} />
               </div>
             )}
+
+            {/* Musikkcoach — lyttescore + innsiktskort */}
+            <SectionDivider label="Musikkcoach" />
+            <ListeningScorePanel />
+            <CoachInsightsPanel />
 
             {/* Smart Skipper — kontrollpanel + forhåndsvisning */}
             <SectionDivider label="Smart Skipper" />

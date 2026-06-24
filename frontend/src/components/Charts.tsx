@@ -287,15 +287,8 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
   const max = Math.max(...data.map((d) => d.skip), 1);
   const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
-  const peakHour = totalSkips > 0
-    ? data.reduce((best, d) => (d.skip > best.skip ? d : best), data[0])
-    : null;
-  const peakLabel = peakHour && peakHour.skip > 0
-    ? `Du gjør flest skips rundt kl. ${peakHour.hour.split(":")[0]}–${String(Number(peakHour.hour.split(":")[0]) + 2).padStart(2, "0")}`
-    : undefined;
-
   return (
-    <ChartCard title="Skips etter tidspunkt på døgnet" subtitle={peakLabel} color="#9b59b6">
+    <ChartCard title="Skips etter tidspunkt på døgnet" color="#9b59b6">
       {totalSkips === 0 ? (
         <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
           Ingen data ennå – tracker samler data i sanntid.
@@ -449,16 +442,8 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
     return `hsl(${25 - (rate - 50) * 0.2}, 85%, 48%)`;
   }
 
-  const daysWithData = data.filter((d) => d.plays > 0);
-  const peakDay = daysWithData.length > 0
-    ? daysWithData.reduce((best, d) => (d.rate > best.rate ? d : best), daysWithData[0])
-    : null;
-  const subtitle = peakDay && peakDay.rate > 0
-    ? `${peakDay.dayFull} er din mest utålmodige dag (${peakDay.rate}% skip-rate)`
-    : undefined;
-
   return (
-    <ChartCard title="Skip-rate per ukedag" subtitle={subtitle} color="#1db954">
+    <ChartCard title="Skip-rate per ukedag" color="#1db954">
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />

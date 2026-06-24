@@ -63,14 +63,16 @@ def log_play(
     skipped: bool,
     ratio: float,
     image_url: str | None,
+    user_id: str = "default_user",
 ) -> None:
     """Logger én avspilling (ferdig eller skippet) til databasen."""
     execute(
         conn,
         """
         INSERT INTO plays
-            (uri, title, album, artists, context_uri, skipped, progress_ratio, timestamp, image_url)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (uri, title, album, artists, context_uri, skipped, progress_ratio,
+             timestamp, image_url, user_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             uri,
@@ -82,6 +84,7 @@ def log_play(
             ratio,
             datetime.now(timezone.utc),
             image_url,
+            user_id,
         ),
     )
     conn.commit()
@@ -102,6 +105,30 @@ def polling_loop() -> None:
     creds = load_creds()
     conn = connect()
     init_db(conn)
+
+    # Hent Spotify-bruker-ID én gang ved oppstart og bruk den på alle log_play-kall.
+    # Kaller /v1/me med det første tokenet — faller tilbake på 'default_user' ved feil.
+    user_id = "default_user"
+    try:
+        _startup_token = get_access_token(creds)
+        _me = requests.get(
+            "https://api.spotify.com/v1/me",
+            headers={"Authorization": f"Bearer {_startup_token}"},
+            timeout=10,
+        )
+        if _me.status_code == 200:
+            user_id = _me.json().get("id") or "default_user"
+            logger.info("Tracker: innlogget som Spotify-bruker '%s'.", user_id)
+        else:
+            logger.warning(
+                "Spotify /v1/me svarte %d — bruker 'default_user' som fallback.",
+                _me.status_code,
+            )
+    except Exception as exc:
+        logger.warning(
+            "Kunne ikke hente Spotify-bruker-ID ved oppstart: %s. "
+            "Bruker 'default_user' som fallback.", exc,
+        )
 
     # Smart Skipper — instansieres én gang og lever hele sesjonen
     skipper = SmartSkipper()
@@ -188,7 +215,11 @@ def polling_loop() -> None:
                             skipped,
                             ratio,
                             last_image_url,
+                            user_id,
                         )
+                        # Fortell Smart Skipper om utfallet slik at utålmodighets-
+                        # logikken (Fase G) kan holde styr på de siste 3 sangene.
+                        skipper.record_outcome(skipped)
                         if last_context:
                             get_context_name(conn, token, last_context)
                     except psycopg2.Error as exc:

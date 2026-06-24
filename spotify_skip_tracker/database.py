@@ -168,6 +168,7 @@ def _migrate(conn) -> None:
     _migrate_skipped_to_boolean(conn)
     _migrate_smart_skipper(conn)
     _migrate_janitor(conn)
+    _migrate_add_user_id(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -364,3 +365,129 @@ def _migrate_janitor(conn) -> None:
             )
 
     logger.info("Playlist Janitor-tabeller klar.")
+
+
+def _migrate_add_user_id(conn) -> None:
+    """
+    Fase H — Multi-user forberedelse.
+
+    Legger til 'user_id'-kolonnen (VARCHAR, standard 'default_user') i de
+    fire kjernetabellene. Bruker information_schema til å sjekke om kolonnen
+    allerede finnes, slik at migrasjonen er trygg å kjøre flere ganger.
+
+    I tillegg oppgraderes UNIQUE-constrainten på janitor_suggestions fra
+    (playlist_id, uri) til (user_id, playlist_id, uri), slik at to ulike
+    brukere kan ha samme sang i samme spilleliste uten nøkkelkollisjon.
+    """
+    _USER_ID_TABLES = [
+        "plays",
+        "smart_skipper_config",
+        "janitor_suggestions",
+        "janitor_removals",
+    ]
+
+    # ------------------------------------------------------------------
+    # Steg 1: Legg til user_id-kolonne der den mangler
+    # ------------------------------------------------------------------
+    for table in _USER_ID_TABLES:
+        cur = execute(
+            conn,
+            """
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_name = %s
+              AND column_name = 'user_id'
+            """,
+            (table,),
+        )
+        if cur.fetchone() is None:
+            logger.info("Legger til user_id-kolonne i '%s' …", table)
+            execute(
+                conn,
+                # Tabellnavn kan ikke parameteriseres med %s i psycopg2;
+                # verdien er en hardkodet literal i koden — ikke brukerinput.
+                f"ALTER TABLE {table} ADD COLUMN user_id VARCHAR NOT NULL DEFAULT 'default_user'",
+            )
+            logger.info("user_id lagt til i '%s'.", table)
+
+    # ------------------------------------------------------------------
+    # Steg 2: Oppgrader UNIQUE-constrainten på janitor_suggestions
+    #
+    # Gammel constraint: unique_playlist_track        → (playlist_id, uri)
+    # Ny constraint:     unique_playlist_track_multiuser → (user_id, playlist_id, uri)
+    #
+    # Rekkefølge:
+    #   a) Sjekk om ny constraint allerede finnes — hopp over hvis ja.
+    #   b) Fjern gammel constraint hvis den fortsatt finnes.
+    #   c) Dedupliser rader på (user_id, playlist_id, uri) — behold høyest id.
+    #   d) Legg til ny constraint.
+    #
+    # Alt kjøres innenfor et SAVEPOINT slik at en uventet feil ikke
+    # ødelegger resten av init_db()-transaksjonen.
+    # ------------------------------------------------------------------
+    cur = execute(
+        conn,
+        """
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE table_name = 'janitor_suggestions'
+          AND constraint_name = 'unique_playlist_track_multiuser'
+        """,
+    )
+    if cur.fetchone() is not None:
+        # Ny constraint finnes allerede — ingenting å gjøre.
+        return
+
+    try:
+        execute(conn, "SAVEPOINT upgrade_janitor_constraint")
+
+        # a) Fjern gammel to-kolonne-constraint hvis den finnes
+        cur2 = execute(
+            conn,
+            """
+            SELECT 1
+            FROM information_schema.table_constraints
+            WHERE table_name = 'janitor_suggestions'
+              AND constraint_name = 'unique_playlist_track'
+            """,
+        )
+        if cur2.fetchone() is not None:
+            execute(
+                conn,
+                "ALTER TABLE janitor_suggestions DROP CONSTRAINT unique_playlist_track",
+            )
+            logger.info("Fjernet gammel UNIQUE-constraint 'unique_playlist_track'.")
+
+        # b) Dedupliser på den nye tre-kolonne-nøkkelen — behold raden med høyest id
+        execute(
+            conn,
+            """
+            DELETE FROM janitor_suggestions a
+            USING janitor_suggestions b
+            WHERE a.id < b.id
+              AND a.user_id    = b.user_id
+              AND a.playlist_id = b.playlist_id
+              AND a.uri        = b.uri
+            """,
+        )
+
+        # c) Legg til ny constraint
+        execute(
+            conn,
+            """
+            ALTER TABLE janitor_suggestions
+            ADD CONSTRAINT unique_playlist_track_multiuser
+            UNIQUE (user_id, playlist_id, uri)
+            """,
+        )
+
+        execute(conn, "RELEASE SAVEPOINT upgrade_janitor_constraint")
+        logger.info(
+            "UNIQUE-constraint 'unique_playlist_track_multiuser' "
+            "(user_id, playlist_id, uri) lagt til på janitor_suggestions."
+        )
+    except Exception as exc:
+        execute(conn, "ROLLBACK TO SAVEPOINT upgrade_janitor_constraint")
+        logger.warning(
+            "Kunne ikke oppgradere janitor-constraint — rullet tilbake SAVEPOINT: %s", exc
+        )

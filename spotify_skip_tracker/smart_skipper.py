@@ -256,6 +256,10 @@ class SmartSkipper:
         # Tidsstempel (monotonic) for hvert gjennomførte auto-hopp denne sesjonen.
         # Brukes til å håndheve MAX_AUTO_SKIPS_PER_HOUR.
         self._skip_timestamps: list[float] = []
+        # Utålmodighetslogikk (Fase G — Musikkcoach)
+        self._recent_outcomes: list[bool] = []   # True = skippet, False = fullført
+        self._impatience_active: bool = False    # True når brukeren er i utålmodig modus
+        self.IMPATIENCE_FACTOR: float = 0.15     # Senk terskelen med 15% under utålmodighet
 
     # ------------------------------------------------------------------
     # Hoved-evaluering — kalles ved hvert poll-syklus
@@ -345,11 +349,21 @@ class SmartSkipper:
             self._reset()
 
         # --- Sjekk om sangen kvalifiserer for auto-hopp ---
+        # I utålmodighets-modus senkes terskelen med IMPATIENCE_FACTOR (f.eks. 85% → 70%)
+        effective_threshold = config["threshold"]
+        if self._impatience_active:
+            effective_threshold = max(0.0, effective_threshold - self.IMPATIENCE_FACTOR)
+            logger.debug(
+                "Smart Skipper: utålmodighets-modus aktiv — terskel senket fra %.0f%% til %.0f%%.",
+                config["threshold"] * 100,
+                effective_threshold * 100,
+            )
+
         should_skip, reason = should_auto_skip(
             conn,
             uri=current_uri,
             context_uri=context_uri,
-            threshold=config["threshold"],
+            threshold=effective_threshold,
             min_plays=config["min_plays"],
         )
 
@@ -463,6 +477,42 @@ class SmartSkipper:
         return success
 
     # ------------------------------------------------------------------
+    # Utålmodighetsregistrering — kalles av tracker.py etter hvert sporbytte
+    # ------------------------------------------------------------------
+
+    def record_outcome(self, is_skipped: bool) -> None:
+        """
+        Registrerer utfallet av sangen som nettopp ble avsluttet.
+
+        is_skipped=True  → sangen ble skippet
+        is_skipped=False → sangen ble spilt helt ferdig
+
+        Holder kun de 3 siste sangene i minnet. Dersom minst 2 av de
+        3 siste ble skippet, aktiveres utålmodighets-modus, noe som senker
+        skip-terskelen med IMPATIENCE_FACTOR i neste evaluate()-kall.
+        """
+        self._recent_outcomes.append(is_skipped)
+        self._recent_outcomes = self._recent_outcomes[-3:]
+
+        if len(self._recent_outcomes) == 3:
+            self._impatience_active = self._recent_outcomes.count(True) >= 2
+        else:
+            self._impatience_active = False
+
+        if self._impatience_active:
+            logger.debug(
+                "Smart Skipper: utålmodighets-modus aktivert "
+                "(minst 2 av 3 siste sanger skippet)."
+            )
+        else:
+            logger.debug(
+                "Smart Skipper: utålmodighets-modus ikke aktiv "
+                "(utfall siste %d sanger: %s).",
+                len(self._recent_outcomes),
+                self._recent_outcomes,
+            )
+
+    # ------------------------------------------------------------------
     # Intern hjelpefunksjon
     # ------------------------------------------------------------------
 
@@ -470,3 +520,5 @@ class SmartSkipper:
         """Nullstiller nedtellingstilstand. Påvirker ikke session-historikk."""
         self._pending_uri = None
         self._pending_since = None
+        self._recent_outcomes = []
+        self._impatience_active = False

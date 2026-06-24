@@ -108,6 +108,17 @@ export interface JanitorCandidate {
   suggested_at: string | null;
 }
 
+export interface ListeningScore {
+  score: number;
+}
+
+export interface CoachInsights {
+  top_skipped_hour: number | null;
+  most_impatient_day: string | null;
+  weekday_skip_rate: number | null;
+  janitor_pending_count: number;
+}
+
 export interface NowPlayingResponse {
   is_playing: boolean;
   uri: string | null;

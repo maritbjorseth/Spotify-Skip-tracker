@@ -11,6 +11,8 @@ Fase E (fjerning, angring, CLI) implementeres i neste fase.
 import logging
 from datetime import datetime, timezone
 
+import requests as _requests
+
 from .database import connect, execute, init_db
 from .janitor_helpers import get_all_my_playlists, get_playlist_tracks
 from .spotify_api import get_access_token, load_creds
@@ -130,6 +132,7 @@ def get_janitor_candidates(
     track_uris: list[str],
     min_score: float = 0.0,
     min_plays: int = 2,
+    user_id: str = "default_user",
 ) -> list[dict]:
     """
     Returnerer alle sanger fra spillelisten med beregnet score, kategori og
@@ -182,10 +185,11 @@ def get_janitor_candidates(
             FROM plays
             WHERE uri IN ({placeholders})
               AND context_uri = %s
+              AND user_id = %s
             GROUP BY uri
             HAVING COUNT(*) >= %s
             """,
-            (*track_uris, context_uri, min_plays),
+            (*track_uris, context_uri, user_id, min_plays),
         ).fetchall()
     except Exception as exc:
         logger.error(
@@ -213,11 +217,13 @@ def get_janitor_candidates(
                 conn,
                 """
                 SELECT skipped FROM plays
-                WHERE uri = %s AND context_uri = %s
+                WHERE uri = %s
+                  AND context_uri = %s
+                  AND user_id = %s
                 ORDER BY timestamp DESC
                 LIMIT 3
                 """,
-                (uri, context_uri),
+                (uri, context_uri, user_id),
             ).fetchall()
             recent_outcomes = [bool(r[0]) for r in recent_rows]
         except Exception:
@@ -250,23 +256,24 @@ def get_janitor_candidates(
     return sorted(candidates, key=lambda x: x["score"], reverse=True)
 
 
-def _upsert_suggestion(conn, playlist: dict, candidate: dict) -> None:
+def _upsert_suggestion(conn, playlist: dict, candidate: dict, user_id: str = "default_user") -> None:
     """
     Lagrer en janitor-kandidat i janitor_suggestions-tabellen.
 
     Bruker ON CONFLICT DO NOTHING for å unngå duplikater — samme
-    (playlist_id, uri)-kombinasjon med 'pending'-status settes bare inn én gang.
+    (user_id, playlist_id, uri)-kombinasjon settes bare inn én gang.
     """
     execute(
         conn,
         """
         INSERT INTO janitor_suggestions
-            (playlist_id, playlist_name, uri, title, artists,
+            (user_id, playlist_id, playlist_name, uri, title, artists,
              skip_rate, janitor_score, status)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
-        ON CONFLICT (playlist_id, uri) DO NOTHING
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+        ON CONFLICT (user_id, playlist_id, uri) DO NOTHING
         """,
         (
+            user_id,
             playlist["id"],
             playlist["name"],
             candidate["uri"],
@@ -314,6 +321,22 @@ def run_janitor(
     """
     creds = load_creds()
     token = get_access_token(creds)
+
+    # Hent Spotify-bruker-ID slik at forslag tagges riktig i databasen
+    user_id = "default_user"
+    try:
+        _me = _requests.get(
+            "https://api.spotify.com/v1/me",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        if _me.status_code == 200:
+            user_id = _me.json().get("id") or "default_user"
+            logger.info("Janitor: innlogget som Spotify-bruker '%s'.", user_id)
+        else:
+            logger.warning("Janitor: /v1/me svarte %d — bruker 'default_user'.", _me.status_code)
+    except Exception as exc:
+        logger.warning("Janitor: kunne ikke hente bruker-ID: %s. Bruker 'default_user'.", exc)
 
     conn = connect()
     init_db(conn)
@@ -375,6 +398,7 @@ def run_janitor(
             track_uris=track_uris,
             min_score=min_score,
             min_plays=min_plays,
+            user_id=user_id,
         )
 
         total_candidates += len(candidates)
@@ -391,7 +415,7 @@ def run_janitor(
                     c["skip_count"], c["play_count"],
                 )
                 if not dry_run:
-                    _upsert_suggestion(conn, playlist, c)
+                    _upsert_suggestion(conn, playlist, c, user_id)
         else:
             logger.info(
                 "  → '%s': ingen kandidater over terskelen.", playlist_name

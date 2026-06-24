@@ -10,8 +10,11 @@ import logging
 import sys
 import webbrowser
 
+import requests as _requests
+
 from .config import WRAPPED_PATH, APP_DIR
 from .database import connect, execute, init_db
+from .spotify_api import get_access_token, load_creds
 
 logger = logging.getLogger(__name__)
 
@@ -20,25 +23,37 @@ logger = logging.getLogger(__name__)
 # Datainnhenting
 # ---------------------------------------------------------------------------
 
-def build_wrapped_data(month: int | None = None, year: int | None = None) -> dict:
+def build_wrapped_data(
+    month: int | None = None,
+    year: int | None = None,
+    user_id: str = "default_user",
+) -> dict:
     """
     Henter statistikk for Wrapped-rapporten.
 
     Args:
-        month: Filtrer på måned (1–12). None = alle måneder.
-        year:  Filtrer på år. None = alle år.
+        month:   Filtrer på måned (1–12). None = alle måneder.
+        year:    Filtrer på år. None = alle år.
+        user_id: Spotify-bruker-ID — filtrerer data til kun denne brukeren.
     """
     conn = connect()
     try:
-        return _build_data(conn, month=month, year=year)
+        return _build_data(conn, month=month, year=year, user_id=user_id)
     finally:
         conn.close()
 
 
-def _date_filter(month: int | None, year: int | None) -> tuple[str, tuple]:
-    """Returnerer en SQL WHERE-klausul og parametre for dato-filtrering."""
-    clauses = []
-    params: list = []
+def _date_filter(
+    month: int | None,
+    year: int | None,
+    user_id: str = "default_user",
+) -> tuple[str, tuple]:
+    """
+    Returnerer en SQL WHERE-klausul og parametre for bruker- og dato-filtrering.
+    user_id er alltid inkludert som første filter.
+    """
+    clauses = ["user_id = %s"]
+    params: list = [user_id]
     if year is not None:
         clauses.append(
             "EXTRACT(YEAR FROM timestamp AT TIME ZONE 'Europe/Oslo') = %s"
@@ -50,12 +65,12 @@ def _date_filter(month: int | None, year: int | None) -> tuple[str, tuple]:
         )
         params.append(month)
 
-    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    where = "WHERE " + " AND ".join(clauses)
     return where, tuple(params)
 
 
-def _build_data(conn, month: int | None, year: int | None) -> dict:
-    where, params = _date_filter(month, year)
+def _build_data(conn, month: int | None, year: int | None, user_id: str = "default_user") -> dict:
+    where, params = _date_filter(month, year, user_id)
 
     total_skips = execute(
         conn,
@@ -292,7 +307,22 @@ def build_wrapped_html(
 
 def run_wrapped(month: int | None = None, year: int | None = None) -> None:
     """Genererer Wrapped-rapporten og åpner den i nettleseren."""
-    data = build_wrapped_data(month=month, year=year)
+    # Hent Spotify-bruker-ID for å filtrere data til riktig bruker
+    user_id = "default_user"
+    try:
+        creds = load_creds()
+        token = get_access_token(creds)
+        _me = _requests.get(
+            "https://api.spotify.com/v1/me",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        if _me.status_code == 200:
+            user_id = _me.json().get("id") or "default_user"
+    except Exception as exc:
+        logger.warning("Wrapped: kunne ikke hente bruker-ID: %s. Bruker 'default_user'.", exc)
+
+    data = build_wrapped_data(month=month, year=year, user_id=user_id)
     if data["total_plays"] == 0:
         print("Ingen data logget ennå. Kjør 'run' og hør på musikk en stund først.")
         sys.exit(1)
