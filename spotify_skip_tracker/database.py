@@ -319,8 +319,6 @@ def _migrate_janitor(conn) -> None:
         """,
     )
     # Legg til UNIQUE-constraint på (playlist_id, uri) dersom den ikke finnes.
-    # Sjekker information_schema først for idempotens — tryggere enn try/except
-    # rundt ALTER TABLE, som ville krevd rollback i psycopg2 ved DuplicateObject.
     cur = execute(
         conn,
         """
@@ -331,13 +329,38 @@ def _migrate_janitor(conn) -> None:
         """,
     )
     if cur.fetchone() is None:
+        # Fjern eventuelle duplikater først — behold raden med høyest id per par.
+        # Uten dette steget vil ALTER TABLE feile dersom databasen har duplikate rader
+        # (f.eks. innsatt lokalt før constrainten eksisterte).
         execute(
             conn,
             """
-            ALTER TABLE janitor_suggestions
-            ADD CONSTRAINT unique_playlist_track UNIQUE (playlist_id, uri)
+            DELETE FROM janitor_suggestions a
+            USING janitor_suggestions b
+            WHERE a.id < b.id
+              AND a.playlist_id = b.playlist_id
+              AND a.uri = b.uri
             """,
         )
-        logger.info("Lagt til UNIQUE-constraint unique_playlist_track på janitor_suggestions.")
+        conn.commit()
+
+        # Bruk SAVEPOINT for å unngå at en eventuell feil her forgifter
+        # den ytre transaksjonen i init_db().
+        try:
+            execute(conn, "SAVEPOINT add_unique_constraint")
+            execute(
+                conn,
+                """
+                ALTER TABLE janitor_suggestions
+                ADD CONSTRAINT unique_playlist_track UNIQUE (playlist_id, uri)
+                """,
+            )
+            execute(conn, "RELEASE SAVEPOINT add_unique_constraint")
+            logger.info("Lagt til UNIQUE-constraint unique_playlist_track på janitor_suggestions.")
+        except Exception as exc:
+            execute(conn, "ROLLBACK TO SAVEPOINT add_unique_constraint")
+            logger.warning(
+                "Kunne ikke legge til unique_playlist_track (finnes kanskje allerede): %s", exc
+            )
 
     logger.info("Playlist Janitor-tabeller klar.")
