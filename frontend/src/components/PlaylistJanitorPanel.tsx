@@ -384,7 +384,6 @@ export function PlaylistJanitorPanel() {
 
           {/* Fane-innhold */}
           <TabContent
-            category={activeTab}
             candidates={byCategory[activeTab]}
             onRemove={(playlistId, trackUri) => mutation.mutate({ playlistId, trackUri })}
             removingUri={removingUri}
