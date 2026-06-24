@@ -395,8 +395,12 @@ export function AutoSkipPreviewTable({
 
   return (
     <section className="mb-10">
-      <h2 className="mb-1 text-base font-semibold" style={{ color: "#f97316" }}>
-        ⚠️ Forhåndsvisning: Smarte skips (Skip-rate &gt; {pct}%)
+      <h2 className="mb-1 text-base font-semibold flex items-center gap-2" style={{ color: "#f97316" }}>
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true" className="flex-shrink-0 opacity-80">
+          <circle cx="7.5" cy="7.5" r="6.5" stroke="#f97316" strokeWidth="1.25" />
+          <path d="M7.5 5v.5M7.5 7v3" stroke="#f97316" strokeWidth="1.25" strokeLinecap="round" />
+        </svg>
+        Forhåndsvisning: Smarte skips
       </h2>
       <p className="text-xs text-[#666] mb-4">
         Sanger trackeren vil autoskippe i fremtiden basert på din historikk.

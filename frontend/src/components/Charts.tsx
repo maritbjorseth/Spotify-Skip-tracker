@@ -98,37 +98,63 @@ function ChartCard({ title, subtitle, color, children }: { title: string; subtit
 export function ArtistChart({ artists }: { artists: Artist[] }) {
   const data = artists.map((a) => {
     const first = a.artists.split(",")[0].trim();
+    const ratePct = Math.round(a.skip_rate * 100);
     return {
       name: a.artists.includes(",") ? first + " m.fl." : first,
       skip: a.skip_count,
+      label: `${a.skip_count} skips (${ratePct}%)`,
     };
   });
 
-  const chartHeight = Math.max(300, data.length * 44);
+  const chartHeight = Math.max(300, data.length * 56);
 
   return (
     <ChartCard title="Mest skippede artister" subtitle="Artister du har lavest tålmodighet for." color="#ff6b35">
       <div style={{ height: chartHeight + 80 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 20, right: 28, bottom: 20, left: 180 }}>
-            <XAxis type="number" allowDecimals={false} tick={TICK_STYLE} axisLine={false} tickLine={false} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              tick={{ fontSize: 16, fill: "#d0d0d0" }}
-              axisLine={false}
-              tickLine={false}
-              width={180}
-            />
+          <BarChart
+            data={data}
+            layout="vertical"
+            barCategoryGap="35%"
+            margin={{ top: 20, right: 120, bottom: 20, left: 20 }}
+          >
+            <XAxis type="number" hide />
+            <YAxis type="category" dataKey="name" hide />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
-            <Bar dataKey="skip" radius={[0, 4, 4, 0]} barSize={22}>
+            <Bar dataKey="skip" radius={[0, 4, 4, 0]} barSize={24}>
               {data.map((_, i) => (
                 <Cell
                   key={i}
                   fill={`hsl(${20 + i * 6}, 90%, ${65 - i * 2}%)`}
                 />
               ))}
-              <LabelList dataKey="skip" position="right" style={{ fill: "#fff", fontSize: 16, fontWeight: 600 }} />
+              {/* Artistnavn rendres rett over sin søyle */}
+              <LabelList
+                dataKey="name"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                content={({ x, y, value }: any) => {
+                  const text = String(value ?? "");
+                  const display = text.length > 24 ? text.slice(0, 23) + "…" : text;
+                  return (
+                    <text
+                      x={Number(x) + 6}
+                      y={Number(y) - 5}
+                      fill="#d0d0d0"
+                      fontSize={12}
+                      fontWeight={500}
+                      textAnchor="start"
+                    >
+                      {display}
+                    </text>
+                  );
+                }}
+              />
+              {/* Skip-teller til høyre for søylen */}
+              <LabelList
+                dataKey="label"
+                position="right"
+                style={{ fill: "#aaa", fontSize: 13, fontWeight: 500 }}
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -175,6 +201,7 @@ export function ContextChart({
     rate: Math.round(c.skip_rate * 100),
     skips: c.skip_count,
     plays: c.play_count,
+    label: `${Math.round(c.skip_rate * 100)}%`,
   }));
 
   const chartHeight = Math.max(200, data.length * 40);
@@ -205,7 +232,7 @@ export function ContextChart({
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={chartHeight}>
-          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 48 }}>
+          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 120, bottom: 4, left: 8 }}>
             <XAxis
               type="number"
               domain={[0, 100]}
@@ -217,27 +244,26 @@ export function ContextChart({
             <YAxis
               type="category"
               dataKey="name"
-              tick={TICK_STYLE}
+              tick={{ fontSize: 13, fill: "#d0d0d0", textAnchor: "start" }}
               axisLine={false}
               tickLine={false}
-              width={110}
-              tickFormatter={(v: string) => v.length > 15 ? v.slice(0, 14) + "…" : v}
+              width={140}
+              dx={-132}
+              tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 17) + "…" : v}
             />
             <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08" }} />
             <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={20}>
               {data.map((d, i) => (
                 <Cell
                   key={i}
-                  fill={d.rate >= 50 ? "#ff6b35" : "#1db954"}
-                  fillOpacity={0.85 - i * 0.05}
+                  fill={d.rate > 25 ? "#e11d48" : "#1db954"}
+                  fillOpacity={0.85 - i * 0.04}
                 />
               ))}
               <LabelList
-                dataKey="rate"
+                dataKey="label"
                 position="right"
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(v: any) => v != null ? `${v}%` : ""}
-                style={{ fill: "#aaa", fontSize: 13, fontWeight: 600 }}
+                style={{ fill: "#aaa", fontSize: 13, fontWeight: 500 }}
               />
             </Bar>
           </BarChart>
@@ -261,8 +287,15 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
   const max = Math.max(...data.map((d) => d.skip), 1);
   const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
+  const peakHour = totalSkips > 0
+    ? data.reduce((best, d) => (d.skip > best.skip ? d : best), data[0])
+    : null;
+  const peakLabel = peakHour && peakHour.skip > 0
+    ? `Du gjør flest skips rundt kl. ${peakHour.hour.split(":")[0]}–${String(Number(peakHour.hour.split(":")[0]) + 2).padStart(2, "0")}`
+    : undefined;
+
   return (
-    <ChartCard title="Skip-antall etter tidspunkt på døgnet" color="#9b59b6">
+    <ChartCard title="Skips etter tidspunkt på døgnet" subtitle={peakLabel} color="#9b59b6">
       {totalSkips === 0 ? (
         <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
           Ingen data ennå – tracker samler data i sanntid.
@@ -398,9 +431,12 @@ export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
 // Skip-RATE per ukedag (prosent, ikke antall)
 // ---------------------------------------------------------------------------
 
+const DAY_FULL = ["Mandager", "Tirsdager", "Onsdager", "Torsdager", "Fredager", "Lørdager", "Søndager"];
+
 export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
   const data = weekday.map((w, i) => ({
     day: DAYS[i],
+    dayFull: DAY_FULL[i],
     rate: w.plays > 0 ? Math.round((w.skips / w.plays) * 100) : 0,
     skips: w.skips,
     plays: w.plays,
@@ -413,15 +449,16 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
     return `hsl(${25 - (rate - 50) * 0.2}, 85%, 48%)`;
   }
 
-  // Beregn gjennomsnittlig skip-rate (kun dager med data)
   const daysWithData = data.filter((d) => d.plays > 0);
-  const avgRate =
-    daysWithData.length > 0
-      ? Math.round(daysWithData.reduce((s, d) => s + d.rate, 0) / daysWithData.length)
-      : null;
+  const peakDay = daysWithData.length > 0
+    ? daysWithData.reduce((best, d) => (d.rate > best.rate ? d : best), daysWithData[0])
+    : null;
+  const subtitle = peakDay && peakDay.rate > 0
+    ? `${peakDay.dayFull} er din mest utålmodige dag (${peakDay.rate}% skip-rate)`
+    : undefined;
 
   return (
-    <ChartCard title="Skip-rate per ukedag" color="#4a9eff">
+    <ChartCard title="Skip-rate per ukedag" subtitle={subtitle} color="#1db954">
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />
@@ -452,11 +489,6 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      {avgRate !== null && (
-        <p className="mt-2 text-right text-xs text-[#555]">
-          Snitt: <span className="text-[#777] font-medium">{avgRate}%</span>
-        </p>
-      )}
     </ChartCard>
   );
 }

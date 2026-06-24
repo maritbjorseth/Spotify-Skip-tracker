@@ -90,6 +90,24 @@ export interface SmartSkipperResponse {
   history: AutoSkipHistoryEntry[];
 }
 
+export type JanitorCategory = "Remove" | "Candidate" | "Watchlist" | "Keep";
+
+export interface JanitorCandidate {
+  id: number;
+  playlist_id: string;
+  playlist_name: string;
+  uri: string;
+  title: string;
+  artists: string;
+  skip_rate: number;
+  janitor_score: number;
+  status: string;
+  play_count: number;
+  confidence_level: string;
+  category: JanitorCategory;
+  suggested_at: string | null;
+}
+
 export interface NowPlayingResponse {
   is_playing: boolean;
   uri: string | null;

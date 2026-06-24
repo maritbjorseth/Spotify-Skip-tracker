@@ -36,6 +36,13 @@
    - 5.3 [Audit-logg](#53-audit-logg)
 6. [Deployment og konfigurasjon på Railway](#6-deployment-og-konfigurasjon-på-railway)
 7. [Anbefalt utviklingsrekkefølge](#7-anbefalt-utviklingsrekkefølge)
+8. [Fase G — Musikkcoach og Avansert Innsikt (Insights)](#8-fase-g--musikkcoach-og-avansert-innsikt-insights)
+   - 8.1 [Utålmodighets-modus (Sequential Skips)](#81-utålmodighets-modus-sequential-skips)
+   - 8.2 [Tids- og kontekstanalyser](#82-tids--og-kontekstanalyser)
+   - 8.3 [Låt-DNA (Audio Features)](#83-låt-dna-audio-features)
+9. [Fase H — Smart Score og Rapportering (Wrapped)](#9-fase-h--smart-score-og-rapportering-wrapped)
+   - 9.1 [Listening Score](#91-listening-score)
+   - 9.2 [Månedlig Skip Wrapped](#92-månedlig-skip-wrapped)
 
 ---
 
@@ -1964,6 +1971,999 @@ Følg denne rekkefølgen for å minimere risiko og maksimere nytten av tidlig te
 18. Aktiver på Railway med konservative innstillinger
 19. Overvåk audit-logg ukentlig
 20. Juster innstillinger basert på erfaring
+
+---
+
+*Dette dokumentet er ment som en levende guide. Oppdater det etter hvert som implementasjonen skrider frem og nye innsikter oppstår. Lykke til!*
+
+---
+
+## 8. Fase G — Musikkcoach og Avansert Innsikt (Insights)
+
+Fase G tar skip-trackeren fra et loggverktøy til en aktiv musikkcoach. Ved å analysere mønstre på tvers av tid, kontekst og lydegenskaper kan systemet gi brukeren presis, personlig innsikt om egne lyttevaner — og bruke disse innsiktene til å gjøre Smart Skipper enda smartere i sanntid.
+
+### 8.1 Utålmodighets-modus (Sequential Skips)
+
+**Konsept:**  
+Forskning på musikklytting viser at skip-atferd er sterkt sekvensavhengig: en bruker som har hoppet over de siste 2–3 sangene på rad befinner seg i en "utålmodig tilstand" der sannsynligheten for neste hopp er betydelig høyere enn baseline-raten. Denne observasjonen, kjent fra *Sequential Skip Prediction*-forskning (Brost et al., Spotify Research 2019), utnyttes her til dynamisk terskel-justering i Smart Skipper.
+
+**Implementasjon i `tracker.py` og `smart_skipper.py`:**
+
+Polling-loopen holder allerede rede på rekkefølgen av avspillinger i inneværende sesjon. Utvid `SmartSkipper`-klassen med en sekvensielt skip-teller:
+
+```python
+# I SmartSkipper.__init__:
+self._recent_outcomes: list[bool] = []   # True = skippet, False = fullført
+self._impatience_active: bool = False
+
+# Konstanter:
+IMPATIENCE_WINDOW = 3         # vurder de siste N sangene
+IMPATIENCE_SKIP_THRESHOLD = 2 # minst X av N må være skippet
+IMPATIENCE_FACTOR = 0.85      # reduser terskel med denne faktoren
+```
+
+Når en sang avsluttes (enten ved skip eller fullføring), registreres utfallet:
+
+```python
+def record_outcome(self, skipped: bool) -> None:
+    """
+    Registrerer utfall for sist avsluttede sang og oppdaterer
+    utålmodighets-tilstanden for inneværende sesjon.
+
+    Kalles av polling-loopen i tracker.py umiddelbart etter at
+    log_play() har skrevet til databasen, mens forrige sang
+    fortsatt er tilgjengelig i lokalt minne.
+    """
+    self._recent_outcomes.append(skipped)
+    # Behold bare de siste N utfallene
+    if len(self._recent_outcomes) > IMPATIENCE_WINDOW:
+        self._recent_outcomes.pop(0)
+
+    recent_skips = sum(self._recent_outcomes)
+    was_impatient = self._impatience_active
+    self._impatience_active = (
+        len(self._recent_outcomes) >= IMPATIENCE_WINDOW
+        and recent_skips >= IMPATIENCE_SKIP_THRESHOLD
+    )
+
+    if self._impatience_active and not was_impatient:
+        logger.info(
+            "Utålmodighets-modus aktivert: %d av %d siste sanger skippet.",
+            recent_skips, len(self._recent_outcomes)
+        )
+    elif not self._impatience_active and was_impatient:
+        logger.info("Utålmodighets-modus deaktivert.")
+```
+
+I `evaluate()`-metoden justeres terskelen dynamisk dersom utålmodighets-modus er aktiv:
+
+```python
+# I SmartSkipper.evaluate(), etter at config er lastet:
+effective_threshold = config["threshold"]
+if self._impatience_active:
+    effective_threshold = config["threshold"] * IMPATIENCE_FACTOR
+    logger.debug(
+        "Utålmodighets-modus aktiv — terskel senket fra %.0f%% til %.0f%%.",
+        config["threshold"] * 100, effective_threshold * 100
+    )
+
+# Bruk effective_threshold i stedet for config["threshold"] videre:
+should_skip, reason = should_auto_skip(
+    conn,
+    uri=current_uri,
+    context_uri=context_uri,
+    threshold=effective_threshold,
+    min_plays=config["min_plays"],
+)
+if should_skip and self._impatience_active:
+    reason += " [utålmodighets-boost]"
+```
+
+**Databasekolonne for sesjonssporing:**
+
+For å persistere utålmodighets-hendelser (nyttig for innsikt-visninger i frontend), legg til en kolonne i `auto_skips`:
+
+```sql
+ALTER TABLE auto_skips
+    ADD COLUMN IF NOT EXISTS impatience_active BOOLEAN NOT NULL DEFAULT FALSE;
+```
+
+**Integrasjon med `tracker.py`:**
+
+`record_outcome()` kalles fra polling-loopen like etter at `log_play()` er fullført, med det som ble logget for *forrige* sang:
+
+```python
+# I polling_loop(), etter at en ny sang er oppdaget og forrige er logget:
+skipper.record_outcome(skipped=was_skipped)
+```
+
+### 8.2 Tids- og kontekstanalyser
+
+**Konsept:**  
+Brukere har sterkt tidsmønstrede lyttevaner. Systemet skal beregne statistikk som kan presenteres i dashbordet som meningsfulle setninger fremfor rå tall: "Du skipper 43% mer etter kl. 22:00" eller "Mandager er din mest utålmodige dag."
+
+**Statistikk-modul i `stats.py`:**
+
+Legg til en dedikert funksjon `compute_insight_stats()` som beregner alle innsikter i én databaserunde:
+
+```python
+def compute_insight_stats(conn) -> dict:
+    """
+    Beregner avanserte tids- og kontekstbaserte innsikter for dashboard.
+
+    Returnerer en dict med nøklene:
+        - hourly_skip_delta:  skip-rate per time relativt til dagsgjennomsnittet
+        - weekday_skip_rate:  skip-rate per ukedag (0=mandag, 6=søndag)
+        - most_impatient_day: ukedag med høyest skip-rate
+        - night_vs_day_delta: prosentforskjell i skip-rate kl. 22–06 vs. 07–21
+        - top_skipped_hour:   timen med høyest skip-rate (0–23)
+    """
+    # --- Timesbasert skip-rate ---
+    hourly_rows = execute(
+        conn,
+        """
+        SELECT
+            EXTRACT(HOUR FROM timestamp AT TIME ZONE 'Europe/Oslo')::INT AS hour,
+            COUNT(*)                                                       AS plays,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END)                      AS skips
+        FROM plays
+        GROUP BY hour
+        ORDER BY hour
+        """,
+    ).fetchall()
+
+    hourly = {h: {"plays": p, "skips": s, "rate": s / p if p else 0.0}
+              for h, p, s in hourly_rows}
+
+    total_plays = sum(r["plays"] for r in hourly.values())
+    total_skips = sum(r["skips"] for r in hourly.values())
+    global_rate = total_skips / total_plays if total_plays else 0.0
+
+    hourly_skip_delta = {
+        h: round((v["rate"] - global_rate) * 100, 1)
+        for h, v in hourly.items()
+    }
+
+    top_skipped_hour = max(hourly, key=lambda h: hourly[h]["rate"], default=None)
+
+    # --- Ukedagsbasert skip-rate ---
+    weekday_rows = execute(
+        conn,
+        """
+        SELECT
+            (EXTRACT(ISODOW FROM timestamp AT TIME ZONE 'Europe/Oslo')::INT - 1)
+                AS weekday,  -- 0=mandag, 6=søndag
+            COUNT(*)                                              AS plays,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END)             AS skips
+        FROM plays
+        GROUP BY weekday
+        ORDER BY weekday
+        """,
+    ).fetchall()
+
+    WEEKDAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag",
+                     "Fredag", "Lørdag", "Søndag"]
+
+    weekday_skip_rate = {
+        WEEKDAY_NAMES[wd]: round(s / p * 100, 1) if p else 0.0
+        for wd, p, s in weekday_rows
+    }
+
+    most_impatient_day = max(
+        weekday_skip_rate, key=weekday_skip_rate.get, default=None
+    )
+
+    # --- Natt vs. dag ---
+    night_plays = sum(
+        v["plays"] for h, v in hourly.items() if h >= 22 or h < 6
+    )
+    night_skips = sum(
+        v["skips"] for h, v in hourly.items() if h >= 22 or h < 6
+    )
+    day_plays = total_plays - night_plays
+    day_skips = total_skips - night_skips
+
+    night_rate = night_skips / night_plays if night_plays else 0.0
+    day_rate = day_skips / day_plays if day_plays else 0.0
+    night_vs_day_delta = round((night_rate - day_rate) * 100, 1)
+
+    return {
+        "hourly_skip_delta": hourly_skip_delta,
+        "weekday_skip_rate": weekday_skip_rate,
+        "most_impatient_day": most_impatient_day,
+        "night_vs_day_delta": night_vs_day_delta,
+        "top_skipped_hour": top_skipped_hour,
+        "global_skip_rate": round(global_rate * 100, 1),
+    }
+```
+
+**API-rute i `web.py`:**
+
+```python
+@app.route("/api/insights")
+def api_insights():
+    """Returnerer tids- og kontekstbaserte innsikter for dashbordet."""
+    with pooled_connection() as conn:
+        data = compute_insight_stats(conn)
+    return jsonify(data)
+```
+
+**Eksempel på frontend-visning:**
+
+Innsiktene rendres som menneskevennlige setninger i et eget "Musikkcoach"-panel:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Din musikkprofil                                            │
+├─────────────────────────────────────────────────────────────┤
+│  Mest utålmodige dag:   Mandag  (+18% over snittet)         │
+│  Mest utålmodige time:  Kl. 23  (+31% over snittet)         │
+│  Natt vs. dag:          Du skipper 43% mer etter kl. 22     │
+│  Global skip-rate:      34%                                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 8.3 Låt-DNA (Audio Features)
+
+**Konsept:**  
+Spotifys `/v1/audio-features`-endepunkt returnerer akustiske egenskaper for hvert spor: tempo (BPM), `acousticness`, `danceability`, `energy`, `valence` (positivitet) m.fl. Ved å koble disse til skip-historikken kan systemet avdekke om brukeren systematisk hopper over sanger med bestemte lydegenskaper — f.eks. sakte sanger om morgenen, eller akustiske sanger på treningsdager.
+
+**Spotify API-endepunkt:**
+
+```
+GET https://api.spotify.com/v1/audio-features?ids={comma_separated_track_ids}
+Authorization: Bearer {access_token}
+```
+
+Maks 100 spor per kall. Returnerer en liste med `audio_features`-objekter.
+
+**Eksempel på respons for ett spor:**
+
+```json
+{
+  "id": "4iV5W9uYEdYUVa79Axb7Rh",
+  "danceability": 0.735,
+  "energy": 0.578,
+  "tempo": 98.002,
+  "acousticness": 0.00242,
+  "valence": 0.636,
+  "speechiness": 0.0461,
+  "instrumentalness": 0.0,
+  "liveness": 0.159,
+  "loudness": -11.840,
+  "duration_ms": 255349
+}
+```
+
+**Databaseendringer:**
+
+Legg til en ny tabell for audio features som caches lokalt for å unngå repeterte API-kall:
+
+```sql
+CREATE TABLE IF NOT EXISTS audio_features (
+    uri              TEXT PRIMARY KEY,
+    danceability     REAL,
+    energy           REAL,
+    tempo            REAL,
+    acousticness     REAL,
+    valence          REAL,
+    speechiness      REAL,
+    instrumentalness REAL,
+    liveness         REAL,
+    loudness         REAL,
+    fetched_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**Python-funksjon for batch-henting og caching:**
+
+```python
+def fetch_and_cache_audio_features(
+    conn,
+    token: str,
+    uris: list[str],
+) -> dict[str, dict]:
+    """
+    Henter audio features for en liste med spor-URIer.
+    Sjekker lokal cache (audio_features-tabellen) først.
+    Henter manglende spor fra Spotify API i batcher på 100.
+
+    Returnerer dict: {uri: {danceability, energy, tempo, ...}}
+    """
+    # Finn hvilke URIer som allerede er cachet
+    cached_rows = execute(
+        conn,
+        """
+        SELECT uri, danceability, energy, tempo, acousticness,
+               valence, speechiness, instrumentalness, liveness, loudness
+        FROM audio_features
+        WHERE uri = ANY(%s)
+        """,
+        (uris,),
+    ).fetchall()
+
+    result = {}
+    cached_uris = set()
+
+    for row in cached_rows:
+        uri = row[0]
+        result[uri] = {
+            "danceability": row[1], "energy": row[2], "tempo": row[3],
+            "acousticness": row[4], "valence": row[5], "speechiness": row[6],
+            "instrumentalness": row[7], "liveness": row[8], "loudness": row[9],
+        }
+        cached_uris.add(uri)
+
+    missing_uris = [u for u in uris if u not in cached_uris]
+
+    if not missing_uris:
+        return result
+
+    # Batch-hent manglende fra Spotify (maks 100 per kall)
+    batch_size = 100
+    for i in range(0, len(missing_uris), batch_size):
+        batch = missing_uris[i : i + batch_size]
+        # Konverter spotify:track:XXX → XXX (kun ID-delen)
+        ids = [u.split(":")[-1] for u in batch]
+
+        resp = requests.get(
+            "https://api.spotify.com/v1/audio-features",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"ids": ",".join(ids)},
+            timeout=15,
+        )
+
+        if resp.status_code != 200:
+            logger.warning(
+                "Klarte ikke hente audio features (status %d).", resp.status_code
+            )
+            continue
+
+        for feat in resp.json().get("audio_features") or []:
+            if not feat:
+                continue  # Spotify returnerer null for lokale filer/podcaster
+            uri = f"spotify:track:{feat['id']}"
+            features = {
+                "danceability": feat["danceability"],
+                "energy": feat["energy"],
+                "tempo": feat["tempo"],
+                "acousticness": feat["acousticness"],
+                "valence": feat["valence"],
+                "speechiness": feat["speechiness"],
+                "instrumentalness": feat["instrumentalness"],
+                "liveness": feat["liveness"],
+                "loudness": feat["loudness"],
+            }
+            result[uri] = features
+
+            # Cache i databasen
+            execute(
+                conn,
+                """
+                INSERT INTO audio_features
+                    (uri, danceability, energy, tempo, acousticness,
+                     valence, speechiness, instrumentalness, liveness, loudness)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (uri) DO NOTHING
+                """,
+                (uri,
+                 features["danceability"], features["energy"], features["tempo"],
+                 features["acousticness"], features["valence"], features["speechiness"],
+                 features["instrumentalness"], features["liveness"], features["loudness"]),
+            )
+
+        conn.commit()
+
+    return result
+```
+
+**Analyseeksempel — BPM og skip-rate koblet til ukedag:**
+
+```python
+def compute_audio_feature_skip_correlation(conn) -> list[dict]:
+    """
+    Beregner gjennomsnittlig BPM, energy og danceability for
+    skippede vs. fullførte sanger, brutt ned på ukedag.
+
+    Eksempel på output:
+        [
+          {"weekday": "Mandag", "skipped_avg_tempo": 118.2,
+           "completed_avg_tempo": 95.4, "delta_tempo": 22.8},
+          ...
+        ]
+
+    Positiv delta_tempo betyr at brukeren skipper raskere sanger
+    denne ukedagen relativt til hva de fullfører.
+    """
+    rows = execute(
+        conn,
+        """
+        SELECT
+            (EXTRACT(ISODOW FROM p.timestamp AT TIME ZONE 'Europe/Oslo')::INT - 1)
+                AS weekday,
+            p.skipped,
+            AVG(af.tempo)       AS avg_tempo,
+            AVG(af.energy)      AS avg_energy,
+            AVG(af.danceability) AS avg_danceability
+        FROM plays p
+        JOIN audio_features af ON af.uri = p.uri
+        GROUP BY weekday, p.skipped
+        ORDER BY weekday, p.skipped
+        """,
+    ).fetchall()
+
+    WEEKDAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag",
+                     "Fredag", "Lørdag", "Søndag"]
+
+    by_day: dict[int, dict] = {}
+    for wd, skipped, tempo, energy, dance in rows:
+        key = "skipped" if skipped else "completed"
+        if wd not in by_day:
+            by_day[wd] = {}
+        by_day[wd][key] = {
+            "tempo": round(tempo, 1) if tempo else None,
+            "energy": round(energy, 3) if energy else None,
+            "danceability": round(dance, 3) if dance else None,
+        }
+
+    result = []
+    for wd in sorted(by_day):
+        skipped_data = by_day[wd].get("skipped", {})
+        completed_data = by_day[wd].get("completed", {})
+        delta_tempo = None
+        if skipped_data.get("tempo") and completed_data.get("tempo"):
+            delta_tempo = round(skipped_data["tempo"] - completed_data["tempo"], 1)
+        result.append({
+            "weekday": WEEKDAY_NAMES[wd],
+            "skipped": skipped_data,
+            "completed": completed_data,
+            "delta_tempo": delta_tempo,
+        })
+
+    return result
+```
+
+**Fremtidig integrasjon med Smart Skipper:**
+
+Når audio-features-cachen er fylt opp (typisk etter 2–4 uker med tracking), kan `should_auto_skip()` utvides med en tredje faktor: om den nåværende sangens tempo/danceability passer inn i brukerens historiske preferanseprofil for dette tidspunktet. Dette beskrives nærmere i Fase G sin planlagte kode-iterasjon og er naturlig å implementere som Tilnærming D (utover A, B, C i seksjon 3.3).
+
+---
+
+## 9. Fase H — Smart Score og Rapportering (Wrapped)
+
+Fase H introduserer to overordnede rapporteringsverktøy: en kontinuerlig **Listening Score** som gir brukeren et enkelt, forståelig tall for lyttekvaliteten sin, og en månedlig **Skip Wrapped** — en personlig oppsummering inspirert av Spotify Wrapped, men utelukkende fokusert på skip-atferd og musikklojalitet.
+
+### 9.1 Listening Score
+
+**Konsept:**  
+Listening Score er et enkelt tall fra 0 til 100 som oppsummerer hvor "tålmodig" og "engasjert" brukeren er som lytter. En score på 100 betyr at brukeren fullfører nesten alle sanger, lytter i lange sesjoner uten avbrudd, og er konsistent over tid. En lav score betyr mye hopping, korte sesjoner og uforutsigbar atferd. Scoren er ikke ment som dom, men som et speil og et sammenligningspunkt over tid.
+
+**Algoritme:**
+
+Scoren beregnes fra tre vektede komponenter, hver normalisert til 0–100:
+
+```python
+def compute_listening_score(conn, days: int = 30) -> dict:
+    """
+    Beregner Listening Score (0–100) basert på de siste N dagene.
+
+    Komponenter og vekting:
+        1. Completion Rate (50%):
+           Andelen sanger fullført (ikke skippet) av totalt antall avspillinger.
+           100 = fullfører alt, 0 = hopper over alt.
+
+        2. Gjennomsnittlig sesjonslengde uten skip (30%):
+           Gjennomsnittlig antall sanger på rad uten skip.
+           Normalisert: 1 = score 0, 10+ = score 100.
+
+        3. Skip-konsistens (20%):
+           Standardavvik i daglig skip-rate over perioden.
+           Lavt avvik = høy konsistens = høy delscore.
+           Normalisert: stddev 0 = 100, stddev 0.5+ = 0.
+
+    Returnerer:
+        {
+            "score": int (0–100),
+            "completion_rate": float,
+            "avg_streak": float,
+            "consistency": float,
+            "breakdown": {"completion": int, "streak": int, "consistency": int}
+        }
+    """
+    cutoff = f"NOW() - INTERVAL '{days} days'"
+
+    # --- Komponent 1: Completion Rate ---
+    cr_row = execute(
+        conn,
+        f"""
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN NOT skipped THEN 1 ELSE 0 END) AS completed
+        FROM plays
+        WHERE timestamp >= {cutoff}
+        """,
+    ).fetchone()
+
+    total = cr_row[0] or 0
+    completed = cr_row[1] or 0
+    completion_rate = completed / total if total > 0 else 0.0
+    completion_score = round(completion_rate * 100)
+
+    # --- Komponent 2: Gjennomsnittlig streak (sanger på rad uten skip) ---
+    # Beregnes ved å identifisere sekvenser av ikke-skippede sanger
+    streak_rows = execute(
+        conn,
+        f"""
+        SELECT skipped
+        FROM plays
+        WHERE timestamp >= {cutoff}
+        ORDER BY timestamp ASC
+        """,
+    ).fetchall()
+
+    streaks = []
+    current_streak = 0
+    for (skipped,) in streak_rows:
+        if not skipped:
+            current_streak += 1
+        else:
+            if current_streak > 0:
+                streaks.append(current_streak)
+            current_streak = 0
+    if current_streak > 0:
+        streaks.append(current_streak)
+
+    avg_streak = sum(streaks) / len(streaks) if streaks else 0.0
+    # Normaliser: 1 sang = score 0, 10+ sanger = score 100
+    streak_score = round(min(100, max(0, (avg_streak - 1) / 9 * 100)))
+
+    # --- Komponent 3: Skip-konsistens (daglig stddev) ---
+    daily_rows = execute(
+        conn,
+        f"""
+        SELECT
+            DATE(timestamp AT TIME ZONE 'Europe/Oslo') AS day,
+            AVG(CASE WHEN skipped THEN 1.0 ELSE 0.0 END) AS daily_skip_rate
+        FROM plays
+        WHERE timestamp >= {cutoff}
+        GROUP BY day
+        ORDER BY day
+        """,
+    ).fetchall()
+
+    if len(daily_rows) >= 2:
+        rates = [r[1] for r in daily_rows]
+        mean = sum(rates) / len(rates)
+        variance = sum((r - mean) ** 2 for r in rates) / len(rates)
+        stddev = variance ** 0.5
+    else:
+        stddev = 0.0
+
+    # Normaliser: stddev 0 = 100, stddev 0.5 = 0
+    consistency_score = round(max(0, (1.0 - stddev / 0.5) * 100))
+
+    # --- Vektet samlet score ---
+    final_score = round(
+        0.50 * completion_score
+        + 0.30 * streak_score
+        + 0.20 * consistency_score
+    )
+
+    return {
+        "score": final_score,
+        "completion_rate": round(completion_rate * 100, 1),
+        "avg_streak": round(avg_streak, 1),
+        "consistency_stddev": round(stddev, 3),
+        "breakdown": {
+            "completion": completion_score,
+            "streak": streak_score,
+            "consistency": consistency_score,
+        },
+        "based_on_days": days,
+        "total_plays": total,
+    }
+```
+
+**API-rute:**
+
+```python
+@app.route("/api/listening-score")
+def api_listening_score():
+    """
+    Returnerer Listening Score for siste 30 dager (standard)
+    eller valgfri periode via ?days=N.
+    """
+    days = min(int(request.args.get("days", 30)), 365)
+    with pooled_connection() as conn:
+        data = compute_listening_score(conn, days=days)
+    return jsonify(data)
+```
+
+**Frontend-visning:**
+
+Listening Score rendres som en stor sirkulær progressindikator (f.eks. en SVG-arc) i toppen av dashbordet, med en kort forklaring av hva scoren betyr. Under vises en trekkspill-seksjon med de tre delkomponentene og tilhørende forklaringstekster.
+
+**Historisk sporing av scoren:**
+
+For å la brukeren se utvikling over tid, lagres scoren ukentlig i en ny tabell:
+
+```sql
+CREATE TABLE IF NOT EXISTS listening_score_history (
+    id          SERIAL PRIMARY KEY,
+    score       INTEGER NOT NULL,
+    completion  INTEGER NOT NULL,
+    streak      INTEGER NOT NULL,
+    consistency INTEGER NOT NULL,
+    total_plays INTEGER NOT NULL,
+    period_days INTEGER NOT NULL DEFAULT 30,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+En daemon-tråd (tilsvarende `_janitor_scheduler` i seksjon 6) skriver en ny rad søndager kl. 03:00. Dette gir et ukentlig datapunkt som kan tegnes som en enkel linjegraf i dashbordet under tittelen "Din score over tid".
+
+### 9.2 Månedlig Skip Wrapped
+
+**Konsept:**  
+Skip Wrapped genererer en månedlig personlig rapport inspirert av Spotify Wrapped, men utelukkende fokusert på skip-atferd. Den svarer på spørsmål som: Hvilken artist skippet du mest? Hvilken sang var du mest lojal mot? Ble du mer eller mindre tålmodig sammenlignet med forrige måned?
+
+**Datastruktur:**
+
+```python
+from dataclasses import dataclass, field
+from datetime import date
+from typing import Optional
+
+
+@dataclass
+class SkipWrappedData:
+    """
+    Fullstendig datastruktur for månedlig Skip Wrapped-rapport.
+    Genereres av build_skip_wrapped() og serialiseres til JSON for API.
+    """
+    month: int                          # 1–12
+    year: int
+    period_label: str                   # f.eks. "Juni 2026"
+
+    # Totaltall
+    total_plays: int
+    total_skips: int
+    global_skip_rate: float             # 0.0–1.0
+
+    # Mest skippede artist
+    most_skipped_artist: str
+    most_skipped_artist_skips: int
+    most_skipped_artist_plays: int
+    most_skipped_artist_rate: float
+
+    # Mest trofaste sang (lavest skip-rate blant sanger med nok avspillinger)
+    most_loyal_track_title: str
+    most_loyal_track_artists: str
+    most_loyal_track_plays: int
+    most_loyal_track_skip_rate: float   # typisk 0.0
+
+    # Mest skippede sang
+    most_skipped_track_title: str
+    most_skipped_track_artists: str
+    most_skipped_track_skips: int
+    most_skipped_track_plays: int
+
+    # Utålmodighets-topper
+    most_impatient_day: str             # ukedagnavn
+    most_impatient_hour: int            # 0–23
+
+    # Trendlinje: daglige skip-rater for hele måneden
+    daily_skip_rates: list[dict]        # [{date: "2026-06-01", rate: 0.34}, ...]
+
+    # Sammenlignet med forrige måned
+    prev_month_skip_rate: Optional[float]
+    trend: str                          # "bedre", "verre", "uendret", "ukjent"
+    trend_delta: Optional[float]        # prosentpoeng endring
+```
+
+**Byggefunksjon i `wrapped.py`:**
+
+```python
+def build_skip_wrapped(conn, month: int, year: int) -> SkipWrappedData:
+    """
+    Bygger komplett Skip Wrapped-rapport for gitt måned og år.
+
+    Bruker én felles CTE-basert spørring for de fleste totaltall,
+    og separate spørringer for rangeringer og trendlinjer.
+    """
+    import calendar
+
+    period_label = f"{calendar.month_name[month]} {year}"
+    start = f"{year}-{month:02d}-01"
+    # Finn siste dag i måneden
+    last_day = calendar.monthrange(year, month)[1]
+    end = f"{year}-{month:02d}-{last_day}"
+
+    # --- Totaltall ---
+    totals = execute(
+        conn,
+        """
+        SELECT
+            COUNT(*) AS total_plays,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS total_skips
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+        """,
+        (start, end),
+    ).fetchone()
+
+    total_plays = totals[0] or 0
+    total_skips = totals[1] or 0
+    global_skip_rate = total_skips / total_plays if total_plays else 0.0
+
+    # --- Mest skippede artist ---
+    artist_row = execute(
+        conn,
+        """
+        SELECT
+            artists,
+            COUNT(*) AS plays,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skips
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+          AND artists IS NOT NULL
+        GROUP BY artists
+        ORDER BY skips DESC, plays DESC
+        LIMIT 1
+        """,
+        (start, end),
+    ).fetchone()
+
+    # --- Mest trofaste sang (0% skip-rate, minst 3 avspillinger) ---
+    loyal_row = execute(
+        conn,
+        """
+        SELECT
+            title, artists, COUNT(*) AS plays,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skips
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+          AND title IS NOT NULL
+        GROUP BY title, artists
+        HAVING COUNT(*) >= 3
+        ORDER BY
+            (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) ASC,
+            COUNT(*) DESC
+        LIMIT 1
+        """,
+        (start, end),
+    ).fetchone()
+
+    # --- Mest skippede sang ---
+    skipped_track_row = execute(
+        conn,
+        """
+        SELECT
+            title, artists,
+            COUNT(*) AS plays,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skips
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+          AND title IS NOT NULL
+        GROUP BY title, artists
+        HAVING COUNT(*) >= 2
+        ORDER BY skips DESC, plays DESC
+        LIMIT 1
+        """,
+        (start, end),
+    ).fetchone()
+
+    # --- Mest utålmodige ukedag og time ---
+    impatient_day_row = execute(
+        conn,
+        """
+        SELECT
+            (EXTRACT(ISODOW FROM timestamp AT TIME ZONE 'Europe/Oslo')::INT - 1)
+                AS weekday,
+            AVG(CASE WHEN skipped THEN 1.0 ELSE 0.0 END) AS skip_rate
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+        GROUP BY weekday
+        ORDER BY skip_rate DESC
+        LIMIT 1
+        """,
+        (start, end),
+    ).fetchone()
+
+    impatient_hour_row = execute(
+        conn,
+        """
+        SELECT
+            EXTRACT(HOUR FROM timestamp AT TIME ZONE 'Europe/Oslo')::INT AS hour,
+            AVG(CASE WHEN skipped THEN 1.0 ELSE 0.0 END) AS skip_rate
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+        GROUP BY hour
+        ORDER BY skip_rate DESC
+        LIMIT 1
+        """,
+        (start, end),
+    ).fetchone()
+
+    WEEKDAY_NAMES = ["Mandag", "Tirsdag", "Onsdag", "Torsdag",
+                     "Fredag", "Lørdag", "Søndag"]
+
+    # --- Daglig trendlinje ---
+    daily_rows = execute(
+        conn,
+        """
+        SELECT
+            DATE(timestamp AT TIME ZONE 'Europe/Oslo') AS day,
+            COUNT(*) AS plays,
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skips
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+        GROUP BY day
+        ORDER BY day
+        """,
+        (start, end),
+    ).fetchall()
+
+    daily_skip_rates = [
+        {
+            "date": str(row[0]),
+            "plays": row[1],
+            "skips": row[2],
+            "rate": round(row[2] / row[1] * 100, 1) if row[1] else 0.0,
+        }
+        for row in daily_rows
+    ]
+
+    # --- Sammenligning med forrige måned ---
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    prev_last_day = calendar.monthrange(prev_year, prev_month)[1]
+    prev_start = f"{prev_year}-{prev_month:02d}-01"
+    prev_end = f"{prev_year}-{prev_month:02d}-{prev_last_day}"
+
+    prev_row = execute(
+        conn,
+        """
+        SELECT
+            COUNT(*),
+            SUM(CASE WHEN skipped THEN 1 ELSE 0 END)
+        FROM plays
+        WHERE DATE(timestamp AT TIME ZONE 'Europe/Oslo')
+              BETWEEN %s AND %s
+        """,
+        (prev_start, prev_end),
+    ).fetchone()
+
+    prev_month_skip_rate = None
+    trend = "ukjent"
+    trend_delta = None
+
+    if prev_row and prev_row[0] and prev_row[0] >= 10:
+        prev_month_skip_rate = round(prev_row[1] / prev_row[0] * 100, 1)
+        current_pct = round(global_skip_rate * 100, 1)
+        trend_delta = round(current_pct - prev_month_skip_rate, 1)
+        if abs(trend_delta) < 2.0:
+            trend = "uendret"
+        elif trend_delta < 0:
+            trend = "bedre"   # færre skips = bedre
+        else:
+            trend = "verre"
+
+    return SkipWrappedData(
+        month=month,
+        year=year,
+        period_label=period_label,
+        total_plays=total_plays,
+        total_skips=total_skips,
+        global_skip_rate=round(global_skip_rate * 100, 1),
+        most_skipped_artist=artist_row[0] if artist_row else "—",
+        most_skipped_artist_skips=artist_row[2] if artist_row else 0,
+        most_skipped_artist_plays=artist_row[1] if artist_row else 0,
+        most_skipped_artist_rate=round(
+            artist_row[2] / artist_row[1] * 100, 1
+        ) if artist_row and artist_row[1] else 0.0,
+        most_loyal_track_title=loyal_row[0] if loyal_row else "—",
+        most_loyal_track_artists=loyal_row[1] if loyal_row else "—",
+        most_loyal_track_plays=loyal_row[2] if loyal_row else 0,
+        most_loyal_track_skip_rate=round(
+            loyal_row[3] / loyal_row[2] * 100, 1
+        ) if loyal_row and loyal_row[2] else 0.0,
+        most_skipped_track_title=skipped_track_row[0] if skipped_track_row else "—",
+        most_skipped_track_artists=skipped_track_row[1] if skipped_track_row else "—",
+        most_skipped_track_skips=skipped_track_row[3] if skipped_track_row else 0,
+        most_skipped_track_plays=skipped_track_row[2] if skipped_track_row else 0,
+        most_impatient_day=WEEKDAY_NAMES[impatient_day_row[0]]
+            if impatient_day_row else "—",
+        most_impatient_hour=impatient_hour_row[0] if impatient_hour_row else 0,
+        daily_skip_rates=daily_skip_rates,
+        prev_month_skip_rate=prev_month_skip_rate,
+        trend=trend,
+        trend_delta=trend_delta,
+    )
+```
+
+**CLI-kommando:**
+
+```bash
+# Generer Wrapped for gjeldende måned
+python3 -m spotify_skip_tracker skip-wrapped
+
+# Generer for en spesifikk måned
+python3 -m spotify_skip_tracker skip-wrapped --month 5 --year 2026
+
+# Eksporter som JSON
+python3 -m spotify_skip_tracker skip-wrapped --format json --output wrapped_mai_2026.json
+```
+
+**API-rute:**
+
+```python
+@app.route("/api/skip-wrapped")
+def api_skip_wrapped():
+    """
+    Returnerer månedlig Skip Wrapped-rapport.
+    Valgfrie query-parametere: ?month=N&year=YYYY
+    Standardverdier: inneværende måned og år.
+    """
+    from datetime import date as _date
+    today = _date.today()
+    month = int(request.args.get("month", today.month))
+    year = int(request.args.get("year", today.year))
+
+    with pooled_connection() as conn:
+        data = build_skip_wrapped(conn, month=month, year=year)
+
+    # Konverter dataclass til dict for JSON-serialisering
+    from dataclasses import asdict
+    return jsonify(asdict(data))
+```
+
+**Frontend-visning:**
+
+Skip Wrapped rendres som en kortbasert oppsummering, tilsvarende Spotify Wrapped-kortene, med én seksjon per innsikt:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Din Juni 2026 — Skip Wrapped                                │
+├────────────────┬────────────────────────────────────────────┤
+│  Din måned     │  432 avspillinger  ·  34% skip-rate        │
+│                │  Trend vs. mai: ↓ 4.2 pp  (bedre!)         │
+├────────────────┼────────────────────────────────────────────┤
+│  Verst artist  │  The Chainsmokers                          │
+│                │  12 skips av 13 avspillinger (92%)          │
+├────────────────┼────────────────────────────────────────────┤
+│  Trofast sang  │  Bohemian Rhapsody — Queen                 │
+│                │  8 avspillinger  ·  0% skip                │
+├────────────────┼────────────────────────────────────────────┤
+│  Utålmodig     │  Mandager kl. 08  (+28 pp over snittet)    │
+├────────────────┼────────────────────────────────────────────┤
+│  Trendlinje    │  [Miniatyr-linjegraf for hele måneden]      │
+└────────────────┴────────────────────────────────────────────┘
+```
+
+**Persistering av månedlige rapporter:**
+
+For å unngå å regenerere historiske rapporter fra databasen ved hvert API-kall, lagres ferdigbygde Wrapped-rapporter i en cache-tabell:
+
+```sql
+CREATE TABLE IF NOT EXISTS skip_wrapped_cache (
+    id          SERIAL PRIMARY KEY,
+    month       INTEGER NOT NULL,
+    year        INTEGER NOT NULL,
+    data        JSONB NOT NULL,
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (month, year)
+);
+```
+
+Bygger automatisk cache for forrige måned den 1. i hver ny måned, trigget av samme daemon-tråd som Listening Score-historikken. Rapporten for inneværende måned genereres alltid ferskt fra databasen og caches ikke.
 
 ---
 

@@ -205,9 +205,6 @@ export function SmartSkipperPanel() {
 
       {data && (
         <>
-          {/* Konfigurasjon */}
-          <ConfigGrid config={data.config} />
-
           {/* Aktiveringshjelp */}
           {!data.config.enabled && (
             <p className="mt-3 text-xs text-[#555]">

@@ -6,14 +6,11 @@ export const SECTIONS = [
   { id: "skipped", label: "Mest skippede sanger" },
   { id: "artistChart", label: "Mest skippede artister" },
   { id: "contextChart", label: "Skip-rate per spilleliste/album" },
-  { id: "hourChart", label: "Skip-antall etter tidspunkt" },
-  { id: "weekdayChart", label: "Skip-antall etter ukedag" },
-  { id: "hourRateChart", label: "Skip-rate per time på døgnet" },
+  { id: "hourChart", label: "Skips etter tidspunkt på døgnet" },
   { id: "weekdayRateChart", label: "Skip-rate per ukedag" },
   { id: "heatmap", label: "Skip-aktivitet siste år" },
-  { id: "mostPlayed", label: "Mest spilt totalt" },
   { id: "mostCompleted", label: "Nesten aldri skippet" },
-  { id: "topArtists", label: "Mest hørte artister" },
+  { id: "playlistJanitor", label: "Playlist Janitor" },
 ] as const;
 
 export function useSectionVisibility() {

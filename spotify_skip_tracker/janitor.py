@@ -23,6 +23,7 @@ def calculate_janitor_score(
     play_count: int,
     last_completed: datetime | None,
     days_in_playlist: int,
+    recent_outcomes: list[bool] | None = None,
 ) -> float:
     """
     Beregner janitering-score for en sang i en spilleliste.
@@ -30,25 +31,46 @@ def calculate_janitor_score(
     Score er et tall mellom 0.0 og 1.0 der høy score indikerer at sangen
     bør foreslås fjernet. Beregnes som en vektet sum av fire komponenter:
 
-        Komponent            Vekt   Høy score når…
-        ─────────────────── ──────  ────────────────────────────────────
-        skip_component       0.40   Skip-raten er høy
-        consistency_component 0.30  Sangen aldri lyttes ferdig
-        recency_component    0.20   Det er lenge siden siste fullføring
-        reliability          0.10   Det finnes mye data (≥ 3 avspillinger)
+        Komponent             Vekt   Høy score når…
+        ──────────────────── ──────  ────────────────────────────────────
+        skip_component        0.40   Skip-raten er høy
+        consistency_component 0.30   Sangen aldri lyttes ferdig
+        recency_component     0.20   Det er lenge siden siste fullføring
+        reliability           0.10   Det finnes mye data (≥ 3 avspillinger)
+
+    Benådnings-regler (returnerer alltid 0.0):
+        - Sangen ble fullført i løpet av de siste 7 dagene, ELLER
+        - De siste 3 avspillingene var alle komplette (recent_outcomes = [False, False, False])
 
     Parametere:
-        skip_count       Antall skippede avspillinger i denne spillelisten
-        play_count       Totalt antall avspillinger i denne spillelisten
-        last_completed   Tidspunkt for siste fullførte avspilling, eller None
-        days_in_playlist Antall dager sangen har vært i spillelisten
+        skip_count        Antall skippede avspillinger i denne spillelisten
+        play_count        Totalt antall avspillinger i denne spillelisten
+        last_completed    Tidspunkt for siste fullførte avspilling, eller None
+        days_in_playlist  Antall dager sangen har vært i spillelisten
+        recent_outcomes   Liste over de nyeste avspillingenes skip-status (True=skip).
+                          Brukes til å sjekke om de siste 3 var alle komplette.
 
     Returnerer:
         float mellom 0.0 og 1.0, rundet til 4 desimaler.
-        Returnerer 0.0 dersom play_count == 0 (ingen data).
+        Returnerer 0.0 dersom play_count == 0 (ingen data) eller benådning utløses.
     """
     if play_count == 0:
         return 0.0
+
+    now = datetime.now(tz=timezone.utc)
+
+    # --- Benådnings-sjekk 1: fullført i løpet av de siste 7 dagene ---
+    if last_completed is not None:
+        lc = last_completed
+        if lc.tzinfo is None:
+            lc = lc.replace(tzinfo=timezone.utc)
+        if (now - lc).days <= 7:
+            return 0.0
+
+    # --- Benådnings-sjekk 2: de siste 3 avspillingene var alle komplette ---
+    if recent_outcomes is not None and len(recent_outcomes) >= 3:
+        if not any(recent_outcomes[-3:]):  # ingen av de 3 siste var skip
+            return 0.0
 
     skip_rate = skip_count / play_count
 
@@ -65,11 +87,10 @@ def calculate_janitor_score(
     if last_completed is None:
         recency_component = 1.0
     else:
-        now = datetime.now(tz=timezone.utc)
-        # Gjør last_completed timezone-aware dersom den er naive
-        if last_completed.tzinfo is None:
-            last_completed = last_completed.replace(tzinfo=timezone.utc)
-        days_since = (now - last_completed).days
+        lc = last_completed
+        if lc.tzinfo is None:
+            lc = lc.replace(tzinfo=timezone.utc)
+        days_since = (now - lc).days
         recency_component = min(1.0, days_since / 180)
 
     # Komponent 4: Datapålitelighet (minst 3 avspillinger gir maks score)
@@ -85,38 +106,59 @@ def calculate_janitor_score(
     return round(score, 4)
 
 
+def _confidence_level(play_count: int) -> str:
+    if play_count >= 10:
+        return "Nesten sikkert at du er lei denne"
+    if play_count >= 5:
+        return "Sterk kandidat"
+    return "Mulig kandidat"
+
+
+def _category(score: float) -> str:
+    if score >= 0.75:
+        return "Remove"
+    if score >= 0.50:
+        return "Candidate"
+    if score >= 0.30:
+        return "Watchlist"
+    return "Keep"
+
+
 def get_janitor_candidates(
     conn,
     playlist_id: str,
     track_uris: list[str],
-    min_score: float = 0.70,
-    min_plays: int = 3,
+    min_score: float = 0.0,
+    min_plays: int = 2,
 ) -> list[dict]:
     """
-    Returnerer sanger fra spillelisten som kvalifiserer for fjerning.
+    Returnerer alle sanger fra spillelisten med beregnet score, kategori og
+    konfidensnivå. Ingen øvre filtrering på score — kategorisering overlates
+    til kallende kode og frontend.
 
     Henter aggregert avspillingsdata fra databasen for de oppgitte URI-ene
-    innenfor den spesifikke spilleliste-konteksten, beregner janitering-score
-    for hver sang og filtrerer bort de under terskelen.
+    innenfor den spesifikke spilleliste-konteksten.
 
     Parametere:
         conn         Aktiv database-tilkobling
         playlist_id  Spotify-playlist-ID (uten "spotify:playlist:"-prefiks)
         track_uris   Liste over Spotify-URI-er for sangene i spillelisten
-        min_score    Minimum score for å inkludere en sang (standard 0.70)
-        min_plays    Minimum antall avspillinger (standard 3)
+        min_score    Minimum score for å inkludere (standard 0.0 = alt)
+        min_plays    Minimum antall avspillinger (standard 2)
 
     Returnerer:
         Liste av dicts sortert etter score (høyest først). Hvert element:
         {
-            "uri":            str,
-            "title":          str | None,
-            "artists":        str | None,
-            "play_count":     int,
-            "skip_count":     int,
-            "skip_rate":      float,
-            "last_completed": str | None,  # ISO 8601
-            "score":          float,
+            "uri":              str,
+            "title":            str | None,
+            "artists":          str | None,
+            "play_count":       int,
+            "skip_count":       int,
+            "skip_rate":        float,
+            "last_completed":   str | None,  # ISO 8601
+            "score":            float,
+            "category":         str,         # "Remove"|"Candidate"|"Watchlist"|"Keep"
+            "confidence_level": str,
         }
     """
     if not track_uris:
@@ -165,11 +207,28 @@ def get_janitor_candidates(
         else:
             days_in_playlist = 0
 
+        # Hent de 3 nyeste avspillingene for benådnings-sjekk
+        try:
+            recent_rows = execute(
+                conn,
+                """
+                SELECT skipped FROM plays
+                WHERE uri = %s AND context_uri = %s
+                ORDER BY timestamp DESC
+                LIMIT 3
+                """,
+                (uri, context_uri),
+            ).fetchall()
+            recent_outcomes = [bool(r[0]) for r in recent_rows]
+        except Exception:
+            recent_outcomes = None
+
         score = calculate_janitor_score(
             skip_count=skip_count,
             play_count=play_count,
             last_completed=last_completed,
             days_in_playlist=days_in_playlist,
+            recent_outcomes=recent_outcomes,
         )
 
         if score >= min_score:
@@ -184,6 +243,8 @@ def get_janitor_candidates(
                     last_completed.isoformat() if last_completed is not None else None
                 ),
                 "score": score,
+                "category": _category(score),
+                "confidence_level": _confidence_level(play_count),
             })
 
     return sorted(candidates, key=lambda x: x["score"], reverse=True)
@@ -277,8 +338,17 @@ def run_janitor(
                 "results": [],
             }
 
+    logger.info("=" * 60)
     logger.info(
-        "Janitor: analyserer %d spilleliste(r)%s.",
+        "JANITOR START — %s",
+        datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+    )
+    logger.info(
+        "Parametere: min_score=%.2f  min_plays=%d  dry_run=%s  filter=%s",
+        min_score, min_plays, dry_run, playlist_filter or "(alle)",
+    )
+    logger.info(
+        "Analyserer %d spilleliste(r)%s.",
         len(playlists),
         " [DRY RUN — ingen DB-skriving]" if dry_run else "",
     )
@@ -336,11 +406,14 @@ def run_janitor(
     conn.close()
 
     logger.info(
-        "Janitor ferdig: %d spilleliste(r) analysert, %d kandidat(er) totalt%s.",
+        "JANITOR FERDIG — %d spilleliste(r) analysert, %d hoppet over, "
+        "%d kandidat(er) totalt%s.",
         len(playlists),
+        playlists_skipped,
         total_candidates,
-        " (ingen DB-endringer, dry_run=True)" if dry_run else " lagret i janitor_suggestions",
+        " (ingen DB-endringer, dry_run=True)" if dry_run else " — lagret i janitor_suggestions",
     )
+    logger.info("=" * 60)
 
     return {
         "playlists_analysed": len(playlists),

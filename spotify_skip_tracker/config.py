@@ -40,7 +40,15 @@ WRAPPED_PATH = APP_DIR / "wrapped.html"
 # ---------------------------------------------------------------------------
 
 REDIRECT_URI = "http://127.0.0.1:8888/callback"
-SCOPE = "user-read-currently-playing user-read-playback-state user-modify-playback-state"
+SCOPE = (
+    "user-read-currently-playing "
+    "user-read-playback-state "
+    "user-modify-playback-state "
+    "playlist-modify-public "
+    "playlist-modify-private "
+    "playlist-read-private "
+    "playlist-read-collaborative"
+)
 
 # ---------------------------------------------------------------------------
 # Tracker-innstillinger

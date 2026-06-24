@@ -12,11 +12,14 @@ from pathlib import Path
 
 import logging
 
-from flask import Flask, Response, jsonify, send_from_directory
+import requests as http_requests
+
+from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 from .stats import compute_stats
 from .database import pooled_connection, execute
+from .spotify_api import get_access_token, load_creds
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +157,138 @@ def create_flask_app() -> Flask:
         ]
 
         return jsonify({"config": config, "history": history})
+
+    @app.route("/api/janitor/suggestions")
+    def janitor_suggestions():
+        from .janitor import _confidence_level, _category
+
+        try:
+            with pooled_connection() as conn:
+                rows = execute(
+                    conn,
+                    """
+                    SELECT
+                        id, playlist_id, playlist_name, uri,
+                        title, artists, skip_rate, janitor_score,
+                        suggested_at, status,
+                        (
+                            SELECT COUNT(*) FROM plays p
+                            WHERE p.uri = js.uri
+                              AND p.context_uri = 'spotify:playlist:' || js.playlist_id
+                        ) AS play_count
+                    FROM janitor_suggestions js
+                    WHERE status IN ('pending', 'rejected')
+                    ORDER BY janitor_score DESC, playlist_name
+                    LIMIT 200
+                    """,
+                ).fetchall()
+        except Exception as exc:
+            logger.exception("Feil i /api/janitor/suggestions: %s", exc)
+            return jsonify({"error": "Kunne ikke hente Janitor-forslag"}), 500
+
+        return jsonify([
+            {
+                "id": r[0],
+                "playlist_id": r[1],
+                "playlist_name": r[2],
+                "uri": r[3],
+                "title": r[4],
+                "artists": r[5],
+                "skip_rate": float(r[6]) if r[6] is not None else None,
+                "janitor_score": float(r[7]) if r[7] is not None else None,
+                "suggested_at": r[8].isoformat() if r[8] else None,
+                "status": r[9],
+                "play_count": int(r[10]) if r[10] is not None else 0,
+                "confidence_level": _confidence_level(int(r[10] or 0)),
+                "category": _category(float(r[7] or 0)),
+            }
+            for r in rows
+        ])
+
+    @app.route("/api/janitor/remove", methods=["POST"])
+    def janitor_remove():
+        body = request.get_json(silent=True) or {}
+        playlist_id = body.get("playlist_id")
+        track_uri = body.get("track_uri")
+
+        if not playlist_id or not track_uri:
+            return jsonify({"error": "playlist_id og track_uri er påkrevd"}), 400
+
+        try:
+            creds = load_creds()
+            token = get_access_token(creds)
+
+            spotify_resp = http_requests.delete(
+                f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                json={"tracks": [{"uri": track_uri}]},
+                timeout=15,
+            )
+            spotify_resp.raise_for_status()
+
+            snapshot_id = spotify_resp.json().get("snapshot_id", "")
+
+            with pooled_connection() as conn:
+                # Hent metadata fra eksisterende forslag for å berike fjernings-loggen
+                suggestion = execute(
+                    conn,
+                    """
+                    SELECT id, title, artists, playlist_name
+                    FROM janitor_suggestions
+                    WHERE playlist_id = %s AND uri = %s
+                    LIMIT 1
+                    """,
+                    (playlist_id, track_uri),
+                ).fetchone()
+
+                suggestion_id   = suggestion[0] if suggestion else None
+                title           = suggestion[1] if suggestion else None
+                artists         = suggestion[2] if suggestion else None
+                playlist_name   = suggestion[3] if suggestion else None
+
+                # Merk forslaget som fjernet
+                execute(
+                    conn,
+                    """
+                    UPDATE janitor_suggestions
+                    SET status = 'removed', acted_at = NOW(),
+                        snapshot_id = %s
+                    WHERE playlist_id = %s AND uri = %s
+                    """,
+                    (snapshot_id, playlist_id, track_uri),
+                )
+
+                # Logg fjerningen i audit-tabellen
+                execute(
+                    conn,
+                    """
+                    INSERT INTO janitor_removals
+                        (suggestion_id, playlist_id, playlist_name,
+                         uri, title, artists, snapshot_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (suggestion_id, playlist_id, playlist_name,
+                     track_uri, title, artists, snapshot_id),
+                )
+
+                conn.commit()
+
+        except http_requests.HTTPError as exc:
+            logger.error(
+                "Spotify-feil ved fjerning av %s fra %s: %s",
+                track_uri, playlist_id, exc,
+            )
+            return jsonify({"error": str(exc)}), 500
+        except Exception as exc:
+            logger.exception(
+                "Uventet feil i /api/janitor/remove: %s", exc
+            )
+            return jsonify({"error": str(exc)}), 500
+
+        return jsonify({"success": True, "snapshot_id": snapshot_id}), 200
 
     # ------------------------------------------------------------------
     # Statisk serving: React-build hvis tilgjengelig, ellers gammel HTML

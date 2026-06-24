@@ -4,9 +4,10 @@ import { api } from "./api";
 import { NowPlaying } from "./components/NowPlaying";
 import { StatCardsRow } from "./components/StatCards";
 import { SkipHeatmap } from "./components/SkipHeatmap";
-import { SkippedTable, MostPlayedTable, MostCompletedTable, TopArtistsTable, AutoSkipPreviewTable } from "./components/Tables";
+import { SkippedTable, MostCompletedTable, AutoSkipPreviewTable } from "./components/Tables";
 import { SmartSkipperPanel } from "./components/SmartSkipperPanel";
-import { ArtistChart, ContextChart, HourlyChart, WeekdayChart, HourlyRateChart, WeekdayRateChart } from "./components/Charts";
+import { PlaylistJanitorPanel } from "./components/PlaylistJanitorPanel";
+import { ArtistChart, ContextChart, HourlyChart, WeekdayRateChart } from "./components/Charts";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
 function SectionDivider({ label }: { label: string }) {
@@ -29,8 +30,8 @@ export default function App() {
 
   const { visible, toggle } = useSectionVisibility();
 
-  const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayChart", "hourRateChart", "weekdayRateChart"].some((id) => visible[id]);
-  const hasMore = ["mostPlayed", "mostCompleted", "topArtists"].some((id) => visible[id]);
+  const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayRateChart"].some((id) => visible[id]);
+  const hasMore = visible.mostCompleted;
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-[#eee]">
@@ -112,7 +113,7 @@ export default function App() {
 
             {/* Graf-grid */}
             <AnimatePresence mode="sync">
-              {(visible.artistChart || visible.contextChart || visible.hourChart || visible.weekdayChart || visible.hourRateChart || visible.weekdayRateChart) && (
+              {(visible.artistChart || visible.contextChart || visible.hourChart || visible.weekdayRateChart) && (
                 <motion.div
                   key="graphs"
                   initial={{ opacity: 0 }}
@@ -129,8 +130,6 @@ export default function App() {
                     />
                   )}
                   {visible.hourChart && <HourlyChart hourly={data.hourly} />}
-                  {visible.weekdayChart && <WeekdayChart weekday={data.weekday} />}
-                  {visible.hourRateChart && <HourlyRateChart hourly={data.hourly} />}
                   {visible.weekdayRateChart && <WeekdayRateChart weekday={data.weekday} />}
                 </motion.div>
               )}
@@ -138,23 +137,11 @@ export default function App() {
 
             {hasMore && <SectionDivider label="Mer statistikk" />}
 
-            {/* Nedre tabeller — to kolonner */}
-            <AnimatePresence mode="sync">
-              {(visible.mostPlayed || visible.mostCompleted) && (
-                <motion.div
-                  key="tables"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10"
-                >
-                  {visible.mostPlayed && <MostPlayedTable tracks={data.most_played} />}
-                  {visible.mostCompleted && <MostCompletedTable tracks={data.most_completed} />}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {visible.topArtists && <TopArtistsTable artists={data.top_listened_artists} />}
+            {visible.mostCompleted && (
+              <div className="mb-10">
+                <MostCompletedTable tracks={data.most_completed} />
+              </div>
+            )}
 
             {/* Smart Skipper — kontrollpanel + forhåndsvisning */}
             <SectionDivider label="Smart Skipper" />
@@ -163,6 +150,14 @@ export default function App() {
               candidates={data.auto_skip_candidates ?? []}
               threshold={data.smart_skipper_threshold ?? 0.85}
             />
+
+            {/* Playlist Janitor */}
+            {visible.playlistJanitor && (
+              <>
+                <SectionDivider label="Playlist Janitor" />
+                <PlaylistJanitorPanel />
+              </>
+            )}
           </motion.div>
         )}
       </div>
