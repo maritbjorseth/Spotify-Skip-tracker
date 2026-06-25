@@ -34,6 +34,7 @@
    - 5.1 [OAuth-scope-utvidelse](#51-oauth-scope-utvidelse)
    - 5.2 [Rate limiting og køsystem](#52-rate-limiting-og-køsystem)
    - 5.3 [Audit-logg](#53-audit-logg)
+   - 5.4 [Tilgangskontroll for eksterne brukere (Passordvegg)](#54-tilgangskontroll-for-eksterne-brukere-passordvegg)
 6. [Deployment og konfigurasjon på Railway](#6-deployment-og-konfigurasjon-på-railway)
 7. [Anbefalt utviklingsrekkefølge](#7-anbefalt-utviklingsrekkefølge)
 8. [Fase G — Musikkcoach og Avansert Innsikt (Insights)](#8-fase-g--musikkcoach-og-avansert-innsikt-insights)
@@ -1866,6 +1867,180 @@ def get_action_log(conn, limit: int = 50) -> list[dict]:
         }
         for r in rows
     ]
+```
+
+### 5.4 Tilgangskontroll for eksterne brukere (Passordvegg)
+
+**Status:** Implementert og i produksjon (juni 2026).
+
+Appen er og forblir en **singel-bruker-app** låst til eierens Spotify-konto. Tracking-arkitekturen er uendret — Railway poller én konto, Neon lagrer alle avspillinger tagget med én `user_id`. Passordveggen gir venner og familie lesetilgang til dashbordet uten å involvere Spotify-autorisasjon på klientsiden.
+
+#### Arkitekturbeslutning
+
+Alternativet (ekte multi-user med Spotify-OAuth per gjest) ble vurdert og forkastet: det hadde krevd parallell tracking per bruker, registrering av alle gjester i Spotify Developer Dashboard, og en fundamental omskriving av polling-loopen. For et personlig dashbord er en felles passord-cookie det rette virkemiddelet.
+
+---
+
+#### Backend: Flask-sesjon med kryss-domene-sikkerhet
+
+**Miljøvariabler (settes i Railway):**
+
+```
+DASHBOARD_PASSWORD = <valgt passord>
+SECRET_KEY         = <lang tilfeldig streng, f.eks. secrets.token_hex(32)>
+```
+
+Begge leses i `config.py`:
+
+```python
+import secrets as _secrets
+
+DASHBOARD_PASSWORD: str | None = os.environ.get("DASHBOARD_PASSWORD") or None
+FLASK_SECRET_KEY: str = os.environ.get("SECRET_KEY") or _secrets.token_hex(32)
+```
+
+> **Viktig:** `SECRET_KEY` må settes som en *fast* verdi i Railway. Uten dette genereres en ny tilfeldig nøkkel ved hver omstart, noe som ugyldiggjør alle aktive sesjoner og tvinger alle gjester til å logge inn på nytt etter hver deploy.
+
+**Flask-sesjonskonfigurasjon i `web.py`:**
+
+```python
+app.secret_key = FLASK_SECRET_KEY
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+```
+
+`SameSite=None` + `Secure=True` er et krav i alle moderne nettlesere for at en cookie skal sendes på tvers av domener. Uten disse to innstillingene ignorerer Safari og Chrome `Set-Cookie`-headeren fullstendig når Vercel-frontenden (domain A) kaller Railway-API-et (domain B). `HttpOnly` forhindrer JavaScript-tilgang til cookien.
+
+**CORS med credential-støtte:**
+
+```python
+CORS(app, supports_credentials=True, origins=[FRONTEND_URL, "http://localhost:5173", "http://localhost:5000"])
+```
+
+`supports_credentials=True` gjør at Flask sender `Access-Control-Allow-Credentials: true` i alle svar. Uten dette ignorerer nettleseren `Set-Cookie` uansett, selv om cookie-innstillingene er riktige. Merk at `origins` *aldri* kan være `*` når `supports_credentials=True` — det er et sikkerhetskrav i CORS-standarden.
+
+**Passord-endepunktet (`POST /api/auth/password`):**
+
+```python
+@app.route("/api/auth/password", methods=["POST"])
+def auth_password():
+    if DASHBOARD_PASSWORD is None:
+        session["authenticated"] = True      # åpen modus lokalt
+        return jsonify({"success": True})
+
+    candidate = str((request.get_json(silent=True) or {}).get("password", ""))
+
+    if not hmac.compare_digest(candidate, DASHBOARD_PASSWORD):
+        return jsonify({"error": "Feil passord"}), 401
+
+    session["authenticated"] = True
+    return jsonify({"success": True})
+```
+
+`hmac.compare_digest` brukes fremfor enkel `==`-sammenligning for å eliminere tidsbaserte angrepsforsøk (*timing attacks*): en vanlig strengsammenligning avslutter i det øyeblikket den finner første feil tegn, noe som i prinsippet lar et automatisert angrep avdekke passordet tegn for tegn ved å måle responstid. `hmac.compare_digest` bruker alltid nøyaktig like lang tid uavhengig av input.
+
+**Status-endepunktet (`GET /api/auth/status`):**
+
+```python
+@app.route("/api/auth/status")
+def auth_status():
+    if DASHBOARD_PASSWORD is None:
+        return jsonify({"authenticated": True, "user_id": _resolve_user_id()})
+    if session.get("authenticated"):
+        return jsonify({"authenticated": True, "user_id": _resolve_user_id()})
+    return jsonify({"authenticated": False, "user_id": None})
+```
+
+Endepunktet kaller *ikke* Spotify API — det sjekker kun sesjons-cookien. Spotify-legitimasjonen (eierens token) er alltid gyldig via `SPOTIFY_REFRESH_TOKEN`-env-variabelen på Railway; den er ikke relevant for gjestenes tilgang.
+
+**Åpen modus for lokal utvikling:** Dersom `DASHBOARD_PASSWORD` ikke er satt (typisk lokalt), returnerer `/api/auth/status` alltid `authenticated: true` og `/api/auth/password` setter alltid sesjonen. Ingen cookie eller passord er nødvendig under utvikling.
+
+**Logout (`POST /api/auth/logout`):**
+
+```python
+@app.route("/api/auth/logout", methods=["POST"])
+def auth_logout():
+    session.clear()
+    return jsonify({"success": True})
+```
+
+`session.clear()` sletter all data fra den signerte cookie-nyttelasten. Neste `GET /api/auth/status` ser ingen `authenticated`-nøkkel og returnerer `false`.
+
+---
+
+#### Frontend: `api.ts`, `LoginScreen.tsx` og auth-gate i `App.tsx`
+
+**Global `credentials: 'include'` i `api.ts`:**
+
+```typescript
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(BASE + path, {
+    credentials: "include",   // send session-cookie på tvers av domener
+    ...init,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+  return res.json() as Promise<T>;
+}
+```
+
+`credentials: 'include'` er lagt direkte inn i base-fetch-funksjonen med `...init`-spread etterpå, slik at alle eksisterende kall arver innstillingen automatisk. Uten dette sender nettleseren aldri session-cookien med på forespørsler til Railway, og sesjonen brytes etter første sideinnlasting.
+
+**`LoginScreen.tsx` — passordskjema:**
+
+Komponenten erstatter den tidligere Spotify OAuth-knappen. Den bruker `useMutation` fra React Query for å sende passordet:
+
+```typescript
+const loginMutation = useMutation({
+  mutationFn: (pw: string) => api.passwordLogin(pw),
+  onSuccess: () => {
+    // Ugyldiggjør auth-cachen → App.tsx re-fetcher → dashbordet vises
+    queryClient.invalidateQueries({ queryKey: ["authStatus"] });
+  },
+});
+```
+
+Feilhåndtering: `loginMutation.isError` viser en rød feilmelding, og `loginMutation.reset()` kalles automatisk når brukeren begynner å skrive igjen — slik at feilmeldingen forsvinner uten at brukeren trenger å lukke den manuelt. Passordfeltet har `autoFocus` via `useRef` og `useEffect` for å spare ett museklikk ved innlasting.
+
+**Auth-gate i `App.tsx`:**
+
+```typescript
+const { data: authData, isLoading: authLoading } = useQuery({
+  queryKey: ["authStatus"],
+  queryFn: api.authStatus,
+  staleTime: 5 * 60_000,       // re-bruk cachet svar i 5 min
+  refetchInterval: 10 * 60_000, // sjekk på nytt hvert 10. min
+});
+
+const logoutMutation = useMutation({
+  mutationFn: api.logout,
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authStatus"] }),
+});
+
+if (authLoading) return <Spinner />;
+if (!authData?.authenticated) return <LoginScreen />;
+// ... resten av dashbordet
+```
+
+`stats`-queryen har `enabled: authData?.authenticated === true` slik at den aldri forsøker å hente data for uinnloggede brukere. Logout-knappen sitter ved siden av `SectionToggle` øverst til høyre; å trykke den kaller `api.logout()` og ugyldiggjør auth-cachen, noe som returnerer brukeren til loginskjermen uten sideinnlasting.
+
+---
+
+#### Oppsummering: dataflyten for en gjestepålogging
+
+```
+1. Gjest åpner https://spotify-skip-tracker.vercel.app
+2. App.tsx: GET /api/auth/status → {authenticated: false}
+3. App.tsx: viser <LoginScreen />
+4. Gjest skriver inn passord → POST /api/auth/password (credentials: include)
+5. Flask: hmac.compare_digest() OK → session["authenticated"] = True
+   Flask: Set-Cookie: session=<signert JWT-lignende payload>; SameSite=None; Secure; HttpOnly
+6. Nettleser: lagrer cookie for railway.app-domenet
+7. useMutation.onSuccess: invalidateQueries(["authStatus"])
+8. React Query: GET /api/auth/status (credentials: include) → cookie følger med
+   Flask: session.get("authenticated") == True → {authenticated: true, user_id: "ulrik_xyz"}
+9. App.tsx: viser dashbordet med alle data
+10. Alle påfølgende API-kall sender automatisk cookie (credentials: include i fetchJson)
 ```
 
 ---
