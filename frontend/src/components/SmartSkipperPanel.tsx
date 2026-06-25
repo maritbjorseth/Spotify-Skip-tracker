@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import type { AutoSkipHistoryEntry, SmartSkipperConfig } from "../types";
+import { AlgorithmTooltip } from "./AlgorithmTooltip";
+
+const SMART_SKIPPER_EXPLANATION =
+  "Smart Skipper ser på din historiske skip-data og oppdager sanger du nesten alltid hopper over. " +
+  "Når en sang har blitt skippet i minst 85 % av avspillingene — og med minst 3 avspillinger som grunnlag — " +
+  "venter den noen sekunder og hopper automatisk videre for deg. " +
+  "Du bestemmer selv terskel og kan skru funksjonen av og på via CLI.";
 
 // ---------------------------------------------------------------------------
 // Status-badge
@@ -159,9 +166,12 @@ export function SmartSkipperPanel() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-base font-semibold text-[#f97316]">
-            Smart Skipper — kontrollpanel
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-[#f97316]">
+              Smart Skipper — kontrollpanel
+            </h2>
+            <AlgorithmTooltip text={SMART_SKIPPER_EXPLANATION} color="#f97316" />
+          </div>
           <p className="text-xs text-[#555] mt-0.5">
             Automatisk hopping basert på din historiske skip-data.
           </p>

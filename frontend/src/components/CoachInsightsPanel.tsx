@@ -15,6 +15,13 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Insight } from "../types";
 import { api } from "../api";
+import { AlgorithmTooltip } from "./AlgorithmTooltip";
+
+const COACH_EXPLANATION =
+  "Musikkcoach identifiserer mønstre i lyttedataene dine: hvilke sanger du alltid skipper, " +
+  "når på dagen du er mest tålmodig, og om spillelistene dine trenger opprydding. " +
+  "Innsiktene er basert på din faktiske lyttehistorikk — ikke anbefalingsalgoritmer fra Spotify. " +
+  "Jo mer data som samles inn, jo mer presise blir observasjonene.";
 
 // ---------------------------------------------------------------------------
 // Ikoner per kategori
@@ -157,9 +164,12 @@ export function CoachInsightsPanel() {
 
   return (
     <div className="mb-8">
-      <p className="text-xs font-semibold uppercase tracking-widest text-[#444] mb-3">
-        Innsikter
-      </p>
+      <div className="flex items-center gap-2 mb-3">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[#444]">
+          Innsikter
+        </p>
+        <AlgorithmTooltip text={COACH_EXPLANATION} color="#6b7280" />
+      </div>
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
         {insights.map((insight) => (
           <InsightCard key={insight.id} insight={insight} />

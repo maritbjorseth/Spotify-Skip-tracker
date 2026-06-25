@@ -2,6 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import type { JanitorCandidate, JanitorCategory } from "../types";
+import { AlgorithmTooltip } from "./AlgorithmTooltip";
+
+const JANITOR_EXPLANATION =
+  "Playlist Janitor analyserer spillelistene dine og rangerer sanger etter en kombinasjon av " +
+  "skip-rate, konsistens og tid siden du hørte dem ferdig sist. " +
+  "Sanger i «Fjern»-kategorien er de du konsekvent hopper over — fjerner du dem, " +
+  "forsvinner de kun fra denne spillelisten og er fortsatt tilgjengelige i Spotify og andre lister.";
 
 // ---------------------------------------------------------------------------
 // Kategori-konfigurasjon
@@ -290,7 +297,10 @@ export function PlaylistJanitorPanel() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-base font-semibold text-[#a78bfa]">Playlist Janitor</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-[#a78bfa]">Playlist Janitor</h2>
+            <AlgorithmTooltip text={JANITOR_EXPLANATION} color="#a78bfa" />
+          </div>
           <p className="text-xs text-[#555] mt-0.5">
             Sanger du konsekvent hopper over — kategorisert etter risiko.
           </p>

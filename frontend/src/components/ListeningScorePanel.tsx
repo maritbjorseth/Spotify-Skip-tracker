@@ -1,5 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
+import { AlgorithmTooltip } from "./AlgorithmTooltip";
+
+const SCORE_EXPLANATION =
+  "Lytte-scoren viser hvor stor andel av musikken du faktisk hører ferdig, beregnet over de siste 30 dagene. " +
+  "En score på 80 eller høyere betyr at du sjelden skipper. " +
+  "Scoren oppdateres automatisk etter hvert som du lytter — " +
+  "det er ingen «riktig» verdi, men en pekepinn på ditt nåværende lyttemønster.";
 
 // ---------------------------------------------------------------------------
 // Hjelpefunksjoner
@@ -87,9 +94,12 @@ export function ListeningScorePanel() {
             <IconMusic />
           </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-[#555]">
-              Lytte-score
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-medium uppercase tracking-widest text-[#555]">
+                Lytte-score
+              </p>
+              <AlgorithmTooltip text={SCORE_EXPLANATION} color={color} />
+            </div>
             <p className="text-xs text-[#444] mt-0.5">{scoreLabel(score)}</p>
           </div>
         </div>
