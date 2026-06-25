@@ -183,6 +183,7 @@ export function StatCardsRow({
         label="Totalt skippet"
         value={totalSkips}
         color="#aaa"
+        tooltip="Totalt antall sanger du har skippet siden tracking startet."
       />
       <StatCard
         icon={<span style={{ color: rateColor }}><IconTrendingUp className="w-5 h-5" /></span>}
@@ -197,6 +198,7 @@ export function StatCardsRow({
         label="Avspillinger logget"
         value={totalPlays}
         color="#1db954"
+        tooltip="Totalt antall avspillinger registrert — inkluderer både fullhørte sanger og skips."
       />
       <StatCard
         icon={<IconDisc className="w-5 h-5 text-blue-500/70" />}
