@@ -226,7 +226,8 @@ export function SkippedTable({
       </div>
 
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead className="bg-[#161616]">
             <tr>
               <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
@@ -287,6 +288,7 @@ export function SkippedTable({
             </AnimatePresence>
           </tbody>
         </table>
+        </div>
       </div>
       <Pagination page={page} total={filtered.length} pageSize={PAGE} onPage={setPage} />
     </section>
@@ -306,7 +308,8 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
     <section>
       <h2 className="mb-3 text-base font-semibold text-[#4a9eff]">Mest spilt totalt</h2>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px]">
           <thead className="bg-[#161616]">
             <tr>
               <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
@@ -332,6 +335,7 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
       <Pagination page={page} total={tracks.length} pageSize={PAGE} onPage={setPage} />
     </section>
@@ -348,7 +352,8 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
       <h2 className="mb-1 text-base font-semibold text-[#1db954]">Sanger du nesten aldri skipper</h2>
       <p className="text-xs text-[#555] mb-3">Låter du som regel lytter til helt ferdig.</p>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px]">
           <thead className="bg-[#161616]">
             <tr>
               <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
@@ -375,6 +380,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </section>
   );
@@ -406,7 +412,8 @@ export function AutoSkipPreviewTable({
         Sanger med høy nok skip-rate til at Smart Skipper ville hoppet over dem automatisk.
       </p>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[500px]">
           <thead className="bg-[#161616]">
             <tr>
               <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
@@ -464,6 +471,7 @@ export function AutoSkipPreviewTable({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </section>
   );
@@ -478,7 +486,8 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
     <section>
       <h2 className="mb-3 text-base font-semibold text-[#4a9eff]">Artister du hører mest på</h2>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[400px]">
           <thead className="bg-[#161616]">
             <tr>
               <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
@@ -501,6 +510,7 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </section>
   );

@@ -69,7 +69,8 @@ function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
-      <table className="w-full">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[520px]">
         <thead className="bg-[#161616]">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">
@@ -145,6 +146,7 @@ function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
