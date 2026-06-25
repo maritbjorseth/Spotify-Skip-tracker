@@ -52,6 +52,17 @@ SCOPE = (
 )
 
 # ---------------------------------------------------------------------------
+# Spotify-bruker-ID (for data-migrasjon)
+# ---------------------------------------------------------------------------
+
+# Sett SPOTIFY_USER_ID til din faktiske Spotify-ID (f.eks. "ulrikj") i Railway.
+# Brukes av bootstrap-migrasjonen i database.py til å flytte historiske
+# 'default_user'-rader til riktig ID dersom trackeren ikke har kjørt ennå.
+# Ikke strengt nødvendig dersom trackeren allerede har logget minst én
+# avspilling med ekte ID — migrasjonen finner den da automatisk.
+SPOTIFY_USER_ID: str | None = os.environ.get("SPOTIFY_USER_ID") or None
+
+# ---------------------------------------------------------------------------
 # Dashboard-tilgangskontroll
 # ---------------------------------------------------------------------------
 

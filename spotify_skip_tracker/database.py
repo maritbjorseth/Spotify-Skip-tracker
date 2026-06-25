@@ -169,6 +169,7 @@ def _migrate(conn) -> None:
     _migrate_smart_skipper(conn)
     _migrate_janitor(conn)
     _migrate_add_user_id(conn)
+    _migrate_default_user_to_spotify_id(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -491,3 +492,92 @@ def _migrate_add_user_id(conn) -> None:
         logger.warning(
             "Kunne ikke oppgradere janitor-constraint — rullet tilbake SAVEPOINT: %s", exc
         )
+
+
+def _migrate_default_user_to_spotify_id(conn) -> None:
+    """
+    Bootstrap-migrasjon: slår sammen historiske 'default_user'-rader med den
+    ekte Spotify-bruker-IDen i alle kjernetabeller.
+
+    Scenariet den løser
+    -------------------
+    1. _migrate_add_user_id() la til kolonnen med DEFAULT 'default_user',
+       slik at alle eksisterende rader fikk user_id = 'default_user'.
+    2. tracker.py ble oppdatert til å hente ekte ID fra /v1/me ved oppstart,
+       og nye avspillinger lagres med den ekte ID-en.
+    3. Statistikk-spørringer filtrerer på ekte ID → historikk forsvinner.
+
+    Algoritme
+    ---------
+    Prioritet 1: hent ekte ID fra de nyeste 'plays'-radene som allerede
+                 er riktig tagget (trackeren har kjørt etter oppdateringen).
+    Prioritet 2: les SPOTIFY_USER_ID-miljøvariabelen som fallback dersom
+                 trackeren ikke har kjørt ennå.
+    Ingen ID funnet → logg en veiledende advarsel og hopp over.
+
+    Er idempotent: kjøres ved hver oppstart, gjør ingenting dersom det ikke
+    finnes 'default_user'-rader.
+    """
+    # --- Sjekk om det er noe å gjøre ---
+    pending = execute(
+        conn,
+        "SELECT COUNT(*) FROM plays WHERE user_id = 'default_user'",
+    ).fetchone()
+
+    if not pending or int(pending[0]) == 0:
+        return  # Alt er allerede migrert
+
+    n_pending = int(pending[0])
+
+    # --- Prioritet 1: auto-detekter fra nyeste riktig taggede rad ---
+    real_id_row = execute(
+        conn,
+        """
+        SELECT user_id FROM plays
+        WHERE user_id != 'default_user'
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+    ).fetchone()
+
+    if real_id_row:
+        real_user_id = real_id_row[0]
+    else:
+        # --- Prioritet 2: les fra miljøvariabel ---
+        from .config import SPOTIFY_USER_ID
+        if not SPOTIFY_USER_ID:
+            logger.warning(
+                "Bootstrap-migrasjon: %d avspillinger ligger under 'default_user' "
+                "og er usynlige på dashbordet. "
+                "Sett miljøvariabelen SPOTIFY_USER_ID til din Spotify-bruker-ID "
+                "i Railway for å kjøre migrasjonen automatisk ved neste oppstart. "
+                "Alternativt: kjør SQL-skriptet i UTVIKLINGSPLAN.md seksjon 5.4 "
+                "direkte i Neon-konsollen.",
+                n_pending,
+            )
+            return
+        real_user_id = SPOTIFY_USER_ID
+
+    logger.info(
+        "Bootstrap-migrasjon: oppdaterer %d rader fra 'default_user' → '%s' …",
+        n_pending,
+        real_user_id,
+    )
+
+    _TABLES = [
+        "plays",
+        "janitor_suggestions",
+        "janitor_removals",
+        "smart_skipper_config",
+    ]
+
+    for table in _TABLES:
+        cur = execute(
+            conn,
+            f"UPDATE {table} SET user_id = %s WHERE user_id = 'default_user'",
+            (real_user_id,),
+        )
+        if cur.rowcount:
+            logger.info("  → %s: %d rad(er) oppdatert.", table, cur.rowcount)
+
+    logger.info("Bootstrap-migrasjon fullført — all historikk er nå synlig på dashbordet.")
