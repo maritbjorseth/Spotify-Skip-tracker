@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { skipRateColor } from "../theme";
 
 // ---------------------------------------------------------------------------
 // Inline SVG-ikoner – tynne streker, strokeWidth 1.5, ingen fill
@@ -173,19 +174,18 @@ export function StatCardsRow({
   uniqueTracks: number;
 }) {
   const skipRate = totalPlays > 0 ? Math.round((totalSkips / totalPlays) * 100) : 0;
-  const rateColor = skipRate >= 50 ? "#ff6b35" : "#1db954";
-  const rateTailwind = skipRate >= 50 ? "text-orange-500/70" : "text-emerald-500/70";
+  const rateColor = skipRateColor(skipRate, totalPlays);
 
   return (
     <div className="flex gap-4 flex-wrap mb-16">
       <StatCard
-        icon={<IconSkipForward className="w-5 h-5 text-orange-500/70" />}
+        icon={<IconSkipForward className="w-5 h-5 text-[#6b7280]" />}
         label="Totalt skippet"
         value={totalSkips}
-        color="#ff6b35"
+        color="#aaa"
       />
       <StatCard
-        icon={<IconTrendingUp className={`w-5 h-5 ${rateTailwind}`} />}
+        icon={<span style={{ color: rateColor }}><IconTrendingUp className="w-5 h-5" /></span>}
         label="Skip-rate"
         value={skipRate}
         format={(n) => `${n}%`}

@@ -125,15 +125,15 @@ def _insight_weekly_skip_rate(conn, user_id: str) -> Insight | None:
 
     if delta < -0.02:
         trend, tip = "down", True
-        context = f"↓ {delta_pp} pp lavere enn forrige uke ({lw_pct}%)"
+        context = f"Forrige uke: {lw_pct}% — du er i bedring"
         explanation = "Du hører mer musikk ferdig enn forrige uke"
     elif delta > 0.02:
         trend, tip = "up", False
-        context = f"↑ {delta_pp} pp høyere enn forrige uke ({lw_pct}%)"
-        explanation = "Du er mer utålmodig denne uken enn forrige"
+        context = f"Forrige uke: {lw_pct}% — du er mer utålmodig nå"
+        explanation = None
     else:
         trend, tip = "stable", None
-        context = f"Stabilt fra forrige uke ({lw_pct}%)"
+        context = f"Stabilt — forrige uke var det også {lw_pct}%"
         explanation = None
 
     return Insight(
@@ -182,7 +182,7 @@ def _insight_impatient_day(conn, user_id: str) -> Insight | None:
     observation = f"{day_name} er din mest utålmodige dag ({day_pct}% skip-rate)"
 
     if delta_pp >= 5:
-        context = f"{delta_pp} pp over ditt daglige snitt ({avg_pct}%)"
+        context = f"Ditt daglige snitt er {avg_pct}%"
         return Insight(
             id="impatient_day", category="pattern", stadium=2,
             observation=observation, context=context,
@@ -236,7 +236,7 @@ def _insight_peak_hour(conn, user_id: str) -> Insight | None:
     observation = f"Du skipper mest rundt kl. {hour}:00 ({rate_pct}% skip-rate)"
 
     if delta_pp >= 5:
-        context = f"{delta_pp} pp over ditt timessnitt ({avg_pct}%)"
+        context = f"Gjennomsnitt for alle timer: {avg_pct}%"
         return Insight(
             id="peak_hour", category="pattern", stadium=2,
             observation=observation, context=context,
@@ -400,7 +400,7 @@ def _insight_session_start_pattern(conn, user_id: str) -> Insight | None:
             id="session_start_pattern", category="session", stadium=3,
             observation=f"Du starter lyttesesjoner utålmodig ({first_pct}% skip på første sang)",
             context=f"Etter første sang faller skip-raten til {rest_pct}%",
-            explanation=f"De første sangene i en sesjon har {delta} pp høyere skip-rate enn resten",
+            explanation=f"De første sangene i en sesjon skippes langt oftere enn resten",
             action="Vurder å lage spillelister med trygge, kjente sanger som åpning",
             value=float(first_pct), trend_is_positive=False,
         )

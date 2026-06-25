@@ -11,6 +11,7 @@ import {
   Cell,
 } from "recharts";
 import type { Artist, Context, HourlyStats, WeekdayStats } from "../types";
+import { C, skipRateColor } from "../theme";
 
 // ---------------------------------------------------------------------------
 // Delt tema
@@ -76,10 +77,10 @@ function RateTooltip({
   );
 }
 
-function ChartCard({ title, subtitle, color, children }: { title: string; subtitle?: string; color: string; children: ReactNode }) {
+function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-6">
-      <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color }}>
+      <h2 className="text-sm font-semibold uppercase tracking-widest text-[#888]">
         {title}
       </h2>
       {subtitle && (
@@ -109,7 +110,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
   const chartHeight = Math.max(300, data.length * 56);
 
   return (
-    <ChartCard title="Mest skippede artister" subtitle="Artister du har lavest tålmodighet for." color="#ff6b35">
+    <ChartCard title="Mest skippede artister" subtitle="Artister du har lavest tålmodighet for.">
       <div style={{ height: chartHeight + 80 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -125,7 +126,8 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
               {data.map((_, i) => (
                 <Cell
                   key={i}
-                  fill={`hsl(${20 + i * 6}, 90%, ${65 - i * 2}%)`}
+                  fill={C.neutral}
+                  fillOpacity={1 - i * 0.06}
                 />
               ))}
               {/* Artistnavn rendres rett over sin søyle */}
@@ -207,7 +209,7 @@ export function ContextChart({
   const chartHeight = Math.max(200, data.length * 40);
 
   return (
-    <ChartCard title="Høyest skip-rate per spilleliste/album" color="#ff6b35">
+    <ChartCard title="Høyest skip-rate per spilleliste/album">
       {/* Filter-bryterrekke */}
       <div className="flex gap-1 mb-4">
         {FILTER_BUTTONS.map(({ id, label }) => (
@@ -256,8 +258,8 @@ export function ContextChart({
               {data.map((d, i) => (
                 <Cell
                   key={i}
-                  fill={d.rate > 25 ? "#e11d48" : "#1db954"}
-                  fillOpacity={0.85 - i * 0.04}
+                  fill={skipRateColor(d.rate, d.plays)}
+                  fillOpacity={0.9 - i * 0.04}
                 />
               ))}
               <LabelList
@@ -284,11 +286,10 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
     plays: h.plays,
   }));
 
-  const max = Math.max(...data.map((d) => d.skip), 1);
   const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
   return (
-    <ChartCard title="Skips etter tidspunkt på døgnet" color="#9b59b6">
+    <ChartCard title="Skips etter tidspunkt på døgnet">
       {totalSkips === 0 ? (
         <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
           Ingen data ennå – tracker samler data i sanntid.
@@ -307,11 +308,8 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
           <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
           <Bar dataKey="skip" name="Skip" radius={[3, 3, 0, 0]}>
-            {data.map((d, i) => (
-              <Cell
-                key={i}
-                fill={`hsl(280, 60%, ${35 + (d.skip / max) * 30}%)`}
-              />
+            {data.map((_, i) => (
+              <Cell key={i} fill={C.neutral} fillOpacity={0.85} />
             ))}
           </Bar>
         </BarChart>
@@ -334,11 +332,10 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
     plays: w.plays,
   }));
 
-  const max = Math.max(...data.map((d) => d.skip), 1);
   const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
   return (
-    <ChartCard title="Skip-antall etter ukedag" color="#9b59b6">
+    <ChartCard title="Skip-antall etter ukedag">
       {totalSkips === 0 ? (
         <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
           Ingen data ennå – tracker samler data i sanntid.
@@ -350,11 +347,8 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
           <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
           <Bar dataKey="skip" name="Skip" radius={[3, 3, 0, 0]}>
-            {data.map((d, i) => (
-              <Cell
-                key={i}
-                fill={`hsl(280, 60%, ${30 + (d.skip / max) * 35}%)`}
-              />
+            {data.map((_, i) => (
+              <Cell key={i} fill={C.neutral} fillOpacity={0.85} />
             ))}
           </Bar>
         </BarChart>
@@ -376,16 +370,8 @@ export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
     plays: h.plays,
   }));
 
-  // Farger: lav rate → grønn, høy rate → oransje (matching ContextChart-logikk)
-  function barColor(rate: number, plays: number): string {
-    if (plays === 0) return "#2a2a2a";
-    if (rate < 25) return `hsl(140, 60%, ${28 + rate * 0.4}%)`;
-    if (rate < 50) return `hsl(${140 - (rate - 25) * 3.6}, 65%, 38%)`;
-    return `hsl(${25 - (rate - 50) * 0.2}, 85%, 48%)`;
-  }
-
   return (
-    <ChartCard title="Skip-rate per time på døgnet" color="#4a9eff">
+    <ChartCard title="Skip-rate per time på døgnet">
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="12%">
           <XAxis
@@ -409,7 +395,7 @@ export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
             {data.map((d, i) => (
               <Cell
                 key={i}
-                fill={barColor(d.rate, d.plays)}
+                fill={skipRateColor(d.rate, d.plays)}
                 fillOpacity={d.plays === 0 ? 0.35 : 0.9}
               />
             ))}
@@ -435,15 +421,8 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
     plays: w.plays,
   }));
 
-  function barColor(rate: number, plays: number): string {
-    if (plays === 0) return "#2a2a2a";
-    if (rate < 25) return `hsl(140, 60%, ${28 + rate * 0.4}%)`;
-    if (rate < 50) return `hsl(${140 - (rate - 25) * 3.6}, 65%, 38%)`;
-    return `hsl(${25 - (rate - 50) * 0.2}, 85%, 48%)`;
-  }
-
   return (
-    <ChartCard title="Skip-rate per ukedag" color="#1db954">
+    <ChartCard title="Skip-rate per ukedag">
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />
@@ -460,7 +439,7 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
             {data.map((d, i) => (
               <Cell
                 key={i}
-                fill={barColor(d.rate, d.plays)}
+                fill={skipRateColor(d.rate, d.plays)}
                 fillOpacity={d.plays === 0 ? 0.35 : 0.9}
               />
             ))}
