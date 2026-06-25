@@ -92,6 +92,10 @@ FRONTEND_URL: str = os.environ.get("FRONTEND_URL", "https://spotify-skip-tracker
 
 POLL_SECONDS: int = 7
 
+# Antall minutter uten aktivitet før en ny lyttesesjon regnes som startet.
+# Brukes av tracker.py (sanntid) og database.py (backfill av historiske data).
+SESSION_GAP_MINUTES: int = 30
+
 # Andel av sangen som må ha spilt for at trackbytte IKKE teller som skip
 SKIP_THRESHOLD: float = 0.9
 

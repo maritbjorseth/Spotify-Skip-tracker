@@ -25,6 +25,7 @@ from flask import Flask, Response, jsonify, redirect, request, send_from_directo
 from flask_cors import CORS
 
 from .stats import compute_stats, compute_insight_stats, calculate_listening_score
+from .insights import generate_insights
 from .database import pooled_connection, execute
 from .spotify_api import get_access_token, load_creds
 from .config import (
@@ -393,21 +394,21 @@ def create_flask_app() -> Flask:
     @app.route("/api/coach/insights")
     def coach_insights():
         """
-        Returnerer musikkcoach-innsikter basert på historiske avspillingsdata.
+        Returnerer strukturerte Insight-objekter for Musikkcoach-panelet.
 
-        Eksempel-respons:
-        {
-            "top_skipped_hour": 22,
-            "most_impatient_day": "Fredag",
-            "weekday_skip_rate": 0.74,
-            "janitor_pending_count": 12
-        }
+        Hvert objekt har feltene: id, category, stadium, observation,
+        context, explanation, action, value, trend, trend_is_positive.
+
+        Stadium angir informasjonsnivå:
+          1 = observasjon (hva er tallet?)
+          2 = kontekst    (hva betyr det vs. noe annet?)
+          3 = forklaring  (hvorfor, og hva kan du gjøre?)
+
+        Responsen er en JSON-liste sortert med høyeste stadium øverst.
         """
         try:
-            with pooled_connection() as conn:
-                cursor = conn.cursor()
-                insights = compute_insight_stats(cursor, _resolve_user_id())
-            return jsonify(insights)
+            insights = generate_insights(_resolve_user_id())
+            return jsonify([i.to_dict() for i in insights])
         except Exception as exc:
             logger.exception("Feil i /api/coach/insights: %s", exc)
             return jsonify({"error": "Kunne ikke hente coach-innsikter"}), 500

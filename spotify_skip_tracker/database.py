@@ -170,6 +170,7 @@ def _migrate(conn) -> None:
     _migrate_janitor(conn)
     _migrate_add_user_id(conn)
     _migrate_default_user_to_spotify_id(conn)
+    _migrate_add_session_id(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -581,3 +582,95 @@ def _migrate_default_user_to_spotify_id(conn) -> None:
             logger.info("  → %s: %d rad(er) oppdatert.", table, cur.rowcount)
 
     logger.info("Bootstrap-migrasjon fullført — all historikk er nå synlig på dashbordet.")
+
+
+def _migrate_add_session_id(conn) -> None:
+    """
+    Legger til session_id-kolonnen i plays-tabellen og backfiller
+    eksisterende rader basert på tidsgap mellom avspillinger.
+
+    En lyttesesjon defineres som en sammenhengende rekke avspillinger
+    der ingen to påfølgende avspillinger er mer enn SESSION_GAP_MINUTES
+    (30 min) fra hverandre. Nye sesjoner tildeles en tilfeldig UUID.
+
+    Er idempotent: kjøres trygt ved hver oppstart.
+    """
+    # --- Steg 1: Legg til kolonne hvis den mangler ---
+    cur = execute(
+        conn,
+        """
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'plays' AND column_name = 'session_id'
+        """,
+    )
+    if cur.fetchone() is None:
+        logger.info("Legger til session_id-kolonne i plays …")
+        execute(conn, "ALTER TABLE plays ADD COLUMN session_id TEXT")
+        conn.commit()
+
+    # --- Steg 2: Backfill rader som mangler session_id ---
+    pending = execute(
+        conn, "SELECT COUNT(*) FROM plays WHERE session_id IS NULL"
+    ).fetchone()
+
+    if not pending or int(pending[0]) == 0:
+        return
+
+    from .config import SESSION_GAP_MINUTES
+
+    n = int(pending[0])
+    logger.info("Backfiller session_id for %d avspillinger (gap=%d min) …", n, SESSION_GAP_MINUTES)
+    _backfill_session_ids(conn, gap_seconds=SESSION_GAP_MINUTES * 60)
+    logger.info("session_id backfill fullført.")
+
+
+def _backfill_session_ids(conn, gap_seconds: int = 1800) -> None:
+    """
+    Tildeler session_id til alle plays-rader som mangler det.
+
+    Algoritme per bruker:
+    - Hent alle rader uten session_id sortert etter timestamp.
+    - Start ny sesjon (ny UUID) når avstand til forrige avspilling
+      overskrider gap_seconds.
+    - Batch-oppdater med executemany for effektivitet.
+    """
+    import uuid as _uuid
+
+    users = execute(
+        conn,
+        "SELECT DISTINCT user_id FROM plays WHERE session_id IS NULL",
+    ).fetchall()
+
+    db_cur = conn.cursor()
+
+    for (user_id,) in users:
+        plays = execute(
+            conn,
+            """
+            SELECT id, timestamp FROM plays
+            WHERE user_id = %s AND session_id IS NULL
+            ORDER BY timestamp ASC
+            """,
+            (user_id,),
+        ).fetchall()
+
+        if not plays:
+            continue
+
+        current_session = str(_uuid.uuid4())
+        prev_ts = None
+        updates: list[tuple[str, int]] = []
+
+        for play_id, ts in plays:
+            if prev_ts is None or (ts - prev_ts).total_seconds() > gap_seconds:
+                current_session = str(_uuid.uuid4())
+            updates.append((current_session, play_id))
+            prev_ts = ts
+
+        db_cur.executemany(
+            "UPDATE plays SET session_id = %s WHERE id = %s",
+            updates,
+        )
+        logger.debug("  → '%s': %d avspillinger tagget.", user_id, len(updates))
+
+    conn.commit()

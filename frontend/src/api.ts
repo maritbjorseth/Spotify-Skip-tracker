@@ -1,4 +1,4 @@
-import type { StatsResponse, NowPlayingResponse, SmartSkipperResponse, JanitorCandidate, CoachInsights, ListeningScore, AuthStatus } from "./types";
+import type { StatsResponse, NowPlayingResponse, SmartSkipperResponse, JanitorCandidate, Insight, ListeningScore, AuthStatus } from "./types";
 
 const BASE =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
@@ -29,7 +29,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playlist_id: playlistId, track_uri: trackUri }),
     }),
-  coachInsights:   () => fetchJson<CoachInsights>("/api/coach/insights"),
+  coachInsights:   () => fetchJson<Insight[]>("/api/coach/insights"),
   listeningScore:  () => fetchJson<ListeningScore>("/api/stats/score"),
   authStatus:      () => fetchJson<AuthStatus>("/api/auth/status"),
   logout:          () => fetchJson<{ success: boolean }>("/api/auth/logout", { method: "POST" }),

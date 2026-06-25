@@ -9,12 +9,13 @@ Håndterer:
 
 import logging
 import time
+import uuid as _uuid
 from datetime import datetime, timezone
 
 import psycopg2
 import requests
 
-from .config import MIN_REMAINING_MS, POLL_SECONDS, SKIP_THRESHOLD
+from .config import MIN_REMAINING_MS, POLL_SECONDS, SESSION_GAP_MINUTES, SKIP_THRESHOLD
 from .database import connect, execute, init_db, reconnect
 from .smart_skipper import SmartSkipper
 from .spotify_api import get_access_token, get_context_name, load_creds
@@ -64,6 +65,7 @@ def log_play(
     ratio: float,
     image_url: str | None,
     user_id: str = "default_user",
+    session_id: str | None = None,
 ) -> None:
     """Logger én avspilling (ferdig eller skippet) til databasen."""
     execute(
@@ -71,8 +73,8 @@ def log_play(
         """
         INSERT INTO plays
             (uri, title, album, artists, context_uri, skipped, progress_ratio,
-             timestamp, image_url, user_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             timestamp, image_url, user_id, session_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             uri,
@@ -85,6 +87,7 @@ def log_play(
             datetime.now(timezone.utc),
             image_url,
             user_id,
+            session_id,
         ),
     )
     conn.commit()
@@ -132,6 +135,12 @@ def polling_loop() -> None:
 
     # Smart Skipper — instansieres én gang og lever hele sesjonen
     skipper = SmartSkipper()
+
+    # Sesjons-sporing — ny UUID starter ved oppstart og ved gap > SESSION_GAP_MINUTES
+    _session_gap_seconds = SESSION_GAP_MINUTES * 60
+    current_session_id: str = str(_uuid.uuid4())
+    last_play_logged_at: datetime | None = None
+    logger.info("Lyttesesjon startet: %s", current_session_id)
 
     # Tilstand fra forrige poll-syklus
     last_uri: str | None = None
@@ -205,6 +214,16 @@ def polling_loop() -> None:
                     skipped = is_skip(ratio, remaining_ms, shuffle_toggled, context_switched)
 
                     try:
+                        # Start ny sesjon dersom det er lenge siden forrige avspilling
+                        now = datetime.now(timezone.utc)
+                        if (
+                            last_play_logged_at is None
+                            or (now - last_play_logged_at).total_seconds() > _session_gap_seconds
+                        ):
+                            current_session_id = str(_uuid.uuid4())
+                            logger.info("Ny lyttesesjon startet: %s", current_session_id)
+                        last_play_logged_at = now
+
                         log_play(
                             conn,
                             last_uri,
@@ -216,6 +235,7 @@ def polling_loop() -> None:
                             ratio,
                             last_image_url,
                             user_id,
+                            current_session_id,
                         )
                         # Fortell Smart Skipper om utfallet slik at utålmodighets-
                         # logikken (Fase G) kan holde styr på de siste 3 sangene.

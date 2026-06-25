@@ -44,6 +44,10 @@
 9. [Fase H — Smart Score og Rapportering (Wrapped)](#9-fase-h--smart-score-og-rapportering-wrapped)
    - 9.1 [Listening Score](#91-listening-score)
    - 9.2 [Månedlig Skip Wrapped](#92-månedlig-skip-wrapped)
+10. [Fase J — Sesjonsbegrep og Innsiktsmotor](#10-fase-j--sesjonsbegrep-og-innsiktsmotor)
+    - 10.1 [session_id i datamodellen](#101-session_id-i-datamodellen)
+    - 10.2 [Strukturerte Insight-objekter](#102-strukturerte-insight-objekter)
+    - 10.3 [Innsiktsgeneratorer](#103-innsiktsgeneratorer)
 
 ---
 
@@ -3139,6 +3143,68 @@ CREATE TABLE IF NOT EXISTS skip_wrapped_cache (
 ```
 
 Bygger automatisk cache for forrige måned den 1. i hver ny måned, trigget av samme daemon-tråd som Listening Score-historikken. Rapporten for inneværende måned genereres alltid ferskt fra databasen og caches ikke.
+
+---
+
+## 10. Fase J — Sesjonsbegrep og Innsiktsmotor
+
+**Status:** Implementert juni 2026.
+
+Fase J introduserer to fundamentale arkitekturgrep: et sesjonsbegrep i datamodellen og en strukturert innsiktsmotor som gradvis kan gå fra å *vise* data til å *forklare* data — uten å endre API-kontrakten underveis.
+
+### 10.1 session_id i datamodellen
+
+**Motivasjon:** Musikklytting skjer i sesjoner — sammenhengende rekker av avspillinger. Uten sesjonsbegrepet kan systemet ikke svare på spørsmål som "har du høyere skip-rate tidlig i en sesjon?" eller "hva er din gjennomsnittlige sesjonslengde?". Det er en fundamental blindflekk i analysemotoren.
+
+**Implementasjon:**
+
+En `session_id TEXT`-kolonne er lagt til `plays`-tabellen. En lyttesesjon defineres som en sammenhengende rekke avspillinger der ingen to påfølgende avspillinger (per bruker) er mer enn `SESSION_GAP_MINUTES` (30 min) fra hverandre. Nye sesjoner tildeles en UUID.
+
+```
+plays
+├── id
+├── uri, title, artists, ...
+├── user_id
+├── session_id   ← NY: UUID, identifiserer lyttesesjonen
+└── timestamp
+```
+
+`_migrate_add_session_id()` i `database.py` legger til kolonnen og backfiller all historisk data. `_backfill_session_ids()` itererer over avspillinger per bruker sortert etter timestamp og tildeler session-UUIDs basert på tidsgap. Er idempotent — behandler kun rader med `session_id IS NULL`.
+
+I `tracker.py` spores den gjeldende sesjonen med `current_session_id` og `last_play_logged_at`. Ny UUID genereres ved oppstart og ved gap > `SESSION_GAP_MINUTES` mellom to loggede avspillinger.
+
+### 10.2 Strukturerte Insight-objekter
+
+**Motivasjon:** Ferdige tekststrenger fra backenden er låste på ett informasjonsnivå. Strukturerte objekter lar backenden gradvis *oppgradere* innsiktene fra observasjon til forklaring uten at frontend-koden endres.
+
+**Tre modningsstadier:**
+
+| Stadium | Beskrivelse | Eksempel |
+|---|---|---|
+| 1 | Observasjon — hva er tallet? | "Din skip-rate denne uken er 34%" |
+| 2 | Kontekst — hva betyr det? | "↓ 4 pp lavere enn forrige uke (38%)" |
+| 3 | Forklaring + handling | "Du er mer tålmodig. 3 pp fra målet ditt." |
+
+`Insight`-dataklassen i `insights.py` har feltene `id`, `category`, `stadium`, `observation`, `context`, `explanation`, `action`, `value`, `trend` og `trend_is_positive`. Frontenden rendrer kun feltene som er fylt ut.
+
+`GET /api/coach/insights` returnerer en JSON-liste av serialiserte `Insight`-objekter, sortert med høyeste stadium øverst.
+
+### 10.3 Innsiktsgeneratorer
+
+Seks generatorer er implementert. Hver er en isolert funksjon — feil i én påvirker ikke de andre.
+
+| Generator | Kategori | Stadium | Aktiveres av |
+|---|---|---|---|
+| `_insight_weekly_skip_rate` | skip_rate | 1–2 | ≥ 5 avspillinger to uker på rad |
+| `_insight_impatient_day` | pattern | 1–2 | ≥ 5 avspillinger per ukedag |
+| `_insight_peak_hour` | pattern | 1–2 | ≥ 5 avspillinger per time |
+| `_insight_best_streak` | streak | 1–2 | ≥ 3 sanger i strekk uten skip |
+| `_insight_janitor_status` | janitor | 1–2 | alltid |
+| `_insight_session_start_pattern` | session | 2–3 | ≥ 10 sesjoner med session_id-data |
+
+`_insight_session_start_pattern` er den første stadium-3-generatoren. Den sammenligner skip-rate på første sang i en sesjon med resten — et mønster som bare er synlig med sesjonsbegrepet på plass.
+
+Ny innsikt legges til ved å implementere én funksjon og registrere den i `generators`-listen i `generate_insights()`.
 
 ---
 

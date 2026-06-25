@@ -117,11 +117,27 @@ export interface AuthStatus {
   user_id: string | null;
 }
 
-export interface CoachInsights {
-  top_skipped_hour: number | null;
-  most_impatient_day: string | null;
-  weekday_skip_rate: number | null;
-  janitor_pending_count: number;
+/**
+ * Strukturert innsiktsobjekt fra /api/coach/insights.
+ *
+ * Feltene bygger oppå hverandre i stadier:
+ *   Stadium 1: kun observation
+ *   Stadium 2: observation + context + trend
+ *   Stadium 3: alle fire felt
+ *
+ * Frontenden rendrer kun feltene som er fylt ut.
+ */
+export interface Insight {
+  id: string;
+  category: "skip_rate" | "streak" | "session" | "janitor" | "pattern";
+  stadium: 1 | 2 | 3;
+  observation: string;
+  context: string | null;
+  explanation: string | null;
+  action: string | null;
+  value: number | null;
+  trend: "up" | "down" | "stable" | null;
+  trend_is_positive: boolean | null;
 }
 
 export interface NowPlayingResponse {
