@@ -336,8 +336,7 @@ def _insight_janitor_status(conn, user_id: str) -> Insight | None:
         return Insight(
             id="janitor_status", category="janitor", stadium=2,
             observation=observation,
-            context="Spillelistene dine trenger oppmerksomhet",
-            action="Gå til Playlist Janitor og gjennomgå forslagene",
+            context="Markert for gjennomgang i spillelistene dine",
             value=float(count), trend_is_positive=False,
         )
     if count >= 3:

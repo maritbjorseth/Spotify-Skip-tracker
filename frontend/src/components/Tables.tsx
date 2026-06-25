@@ -400,10 +400,10 @@ export function AutoSkipPreviewTable({
           <circle cx="7.5" cy="7.5" r="6.5" stroke="#f97316" strokeWidth="1.25" />
           <path d="M7.5 5v.5M7.5 7v3" stroke="#f97316" strokeWidth="1.25" strokeLinecap="round" />
         </svg>
-        Forhåndsvisning: Smarte skips
+        Kandidater for automatisk hopp
       </h2>
       <p className="text-xs text-[#666] mb-4">
-        Sanger trackeren vil autoskippe i fremtiden basert på din historikk.
+        Sanger med høy nok skip-rate til at Smart Skipper ville hoppet over dem automatisk.
       </p>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
         <table className="w-full">
@@ -454,9 +454,9 @@ export function AutoSkipPreviewTable({
                         color: "#555",
                         border: "1px solid #333",
                       }}
-                      title="Aktiver Smart Skipper for å aktivere automatisk hopping"
-                    >
-                      Dry-run aktiv
+                       title="Slå av prøvemodus for å aktivere automatiske hopp"
+                     >
+                       Prøvemodus
                     </button>
                   </td>
                 </tr>
