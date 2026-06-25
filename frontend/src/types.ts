@@ -112,6 +112,11 @@ export interface ListeningScore {
   score: number;
 }
 
+export interface AuthStatus {
+  authenticated: boolean;
+  user_id: string | null;
+}
+
 export interface CoachInsights {
   top_skipped_hour: number | null;
   most_impatient_day: string | null;

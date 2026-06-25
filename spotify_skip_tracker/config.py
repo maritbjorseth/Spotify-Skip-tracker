@@ -51,6 +51,17 @@ SCOPE = (
 )
 
 # ---------------------------------------------------------------------------
+# Web OAuth (valgfritt — kun nødvendig for browser-basert innlogging)
+# ---------------------------------------------------------------------------
+
+# Callback-URL som er registrert i Spotify Developer Dashboard for web-OAuth.
+# Eksempel: https://spotify-skip-tracker-production.up.railway.app/api/auth/callback
+REDIRECT_URI_WEB: str | None = os.environ.get("REDIRECT_URI_WEB")
+
+# URL til Vercel-frontenden — hit sendes brukeren etter vellykket innlogging.
+FRONTEND_URL: str = os.environ.get("FRONTEND_URL", "https://spotify-skip-tracker.vercel.app")
+
+# ---------------------------------------------------------------------------
 # Tracker-innstillinger
 # ---------------------------------------------------------------------------
 

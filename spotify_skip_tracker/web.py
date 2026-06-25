@@ -9,18 +9,27 @@ Endepunkter:
 
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+import json as _json
+import secrets
 import threading
+import time as _time
+import urllib.parse
 
 import logging
 
 import requests as http_requests
 
-from flask import Flask, Response, jsonify, request, send_from_directory
+from flask import Flask, Response, jsonify, redirect, request, send_from_directory
 from flask_cors import CORS
 
 from .stats import compute_stats, compute_insight_stats, calculate_listening_score
 from .database import pooled_connection, execute
 from .spotify_api import get_access_token, load_creds
+from .config import (
+    SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
+    REDIRECT_URI_WEB, FRONTEND_URL,
+    APP_DIR, CREDS_PATH, SCOPE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +47,9 @@ except FileNotFoundError:
 
 _cached_user_id: str | None = None
 _user_id_lock = threading.Lock()
+
+# Sett med éngangskoder brukt for å hindre CSRF under web-OAuth-flyten.
+_oauth_states: set[str] = set()
 
 
 def _resolve_user_id() -> str:
@@ -77,6 +89,137 @@ def _resolve_user_id() -> str:
 def create_flask_app() -> Flask:
     app = Flask(__name__, static_folder=None)
     CORS(app, origins=["https://spotify-skip-tracker.vercel.app", "http://localhost:5173", "http://localhost:5000"])
+
+    # ------------------------------------------------------------------
+    # Autentiserings-endepunkter
+    # ------------------------------------------------------------------
+
+    @app.route("/api/auth/status")
+    def auth_status():
+        """
+        Sjekker om backenden har et gyldig Spotify-token ved å kalle /v1/me live.
+        Returnerer { authenticated: true/false, user_id: string | null }.
+        Bruker aldri den cachede user_id-en — ønsker alltid et ferskt svar.
+        """
+        try:
+            creds = load_creds()
+            token = get_access_token(creds)
+            resp = http_requests.get(
+                "https://api.spotify.com/v1/me",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                user_id = resp.json().get("id") or "default_user"
+                return jsonify({"authenticated": True, "user_id": user_id})
+            return jsonify({"authenticated": False, "user_id": None})
+        except Exception as exc:
+            logger.info("Auth-sjekk: ikke autentisert (%s).", exc)
+            return jsonify({"authenticated": False, "user_id": None})
+
+    @app.route("/api/auth/logout", methods=["POST"])
+    def auth_logout():
+        """
+        Nullstiller den cachede Spotify-bruker-ID-en slik at neste kall
+        til _resolve_user_id() gjør et ferskt oppslag (eller feiler rent).
+        For Railway/produksjon med env-var-legitimasjon vil status-endepunktet
+        fortsatt returnere authenticated=true — logout er primært nyttig
+        lokalt eller ved bytte av konto.
+        """
+        global _cached_user_id
+        with _user_id_lock:
+            _cached_user_id = None
+        logger.info("Auth-cache nullstilt via /api/auth/logout.")
+        return jsonify({"success": True})
+
+    @app.route("/api/auth/login")
+    def auth_login():
+        """
+        Starter web-OAuth-flyten mot Spotify.
+        Krever at REDIRECT_URI_WEB er satt i miljøvariabler og er registrert
+        i Spotify Developer Dashboard.
+        Genererer en CSRF-state og redirecter nettleseren til Spotify.
+        """
+        if not REDIRECT_URI_WEB or not SPOTIFY_CLIENT_ID:
+            return jsonify({
+                "error": (
+                    "REDIRECT_URI_WEB og SPOTIFY_CLIENT_ID må være satt "
+                    "i miljøvariabler for å bruke web-OAuth."
+                )
+            }), 501
+
+        state = secrets.token_urlsafe(16)
+        _oauth_states.add(state)
+
+        auth_url = "https://accounts.spotify.com/authorize?" + urllib.parse.urlencode({
+            "client_id": SPOTIFY_CLIENT_ID,
+            "response_type": "code",
+            "redirect_uri": REDIRECT_URI_WEB,
+            "scope": SCOPE,
+            "state": state,
+        })
+        return redirect(auth_url)
+
+    @app.route("/api/auth/callback")
+    def auth_callback():
+        """
+        Tar imot Spotifys redirect etter vellykket OAuth-autorisasjon.
+        Bytter autorisasjonskoden mot tokens, lagrer legitimasjonen lokalt
+        (nyttig for lokal utvikling), tømmer bruker-ID-cachen og sender
+        nettleseren tilbake til frontenden.
+        """
+        code = request.args.get("code")
+        state = request.args.get("state")
+        error = request.args.get("error")
+
+        if error or not state or state not in _oauth_states:
+            logger.warning("OAuth-callback avvist: error=%s, state=%s", error, state)
+            return redirect(f"{FRONTEND_URL}?auth_error=1")
+
+        _oauth_states.discard(state)
+
+        if not REDIRECT_URI_WEB or not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+            return redirect(f"{FRONTEND_URL}?auth_error=1")
+
+        try:
+            token_resp = http_requests.post(
+                "https://accounts.spotify.com/api/token",
+                data={
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "redirect_uri": REDIRECT_URI_WEB,
+                    "client_id": SPOTIFY_CLIENT_ID,
+                    "client_secret": SPOTIFY_CLIENT_SECRET,
+                },
+                timeout=15,
+            )
+            token_resp.raise_for_status()
+            token_data = token_resp.json()
+
+            new_creds = {
+                "client_id": SPOTIFY_CLIENT_ID,
+                "client_secret": SPOTIFY_CLIENT_SECRET,
+                "refresh_token": token_data["refresh_token"],
+                "access_token": token_data["access_token"],
+                "expires_at": _time.time() + token_data.get("expires_in", 3600),
+            }
+
+            # Lagre til fil (virker for lokal utvikling og Railway-containere
+            # som ikke bruker refresh-token-env-variabelen).
+            APP_DIR.mkdir(parents=True, exist_ok=True)
+            CREDS_PATH.write_text(_json.dumps(new_creds, indent=2))
+            logger.info("Web-OAuth fullført — legitimasjon lagret i %s.", CREDS_PATH)
+
+        except Exception as exc:
+            logger.error("Token-bytte feilet i OAuth-callback: %s", exc)
+            return redirect(f"{FRONTEND_URL}?auth_error=1")
+
+        # Tøm cache slik at neste kall henter riktig bruker-ID
+        global _cached_user_id
+        with _user_id_lock:
+            _cached_user_id = None
+
+        return redirect(FRONTEND_URL)
 
     # ------------------------------------------------------------------
     # API-endepunkter

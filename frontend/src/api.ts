@@ -1,4 +1,4 @@
-import type { StatsResponse, NowPlayingResponse, SmartSkipperResponse, JanitorCandidate, CoachInsights, ListeningScore } from "./types";
+import type { StatsResponse, NowPlayingResponse, SmartSkipperResponse, JanitorCandidate, CoachInsights, ListeningScore, AuthStatus } from "./types";
 
 const BASE =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
@@ -24,4 +24,6 @@ export const api = {
     }),
   coachInsights:   () => fetchJson<CoachInsights>("/api/coach/insights"),
   listeningScore:  () => fetchJson<ListeningScore>("/api/stats/score"),
+  authStatus:      () => fetchJson<AuthStatus>("/api/auth/status"),
+  logout:          () => fetchJson<{ success: boolean }>("/api/auth/logout", { method: "POST" }),
 };

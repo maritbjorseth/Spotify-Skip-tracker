@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "./api";
 import { NowPlaying } from "./components/NowPlaying";
@@ -9,6 +9,7 @@ import { SmartSkipperPanel } from "./components/SmartSkipperPanel";
 import { PlaylistJanitorPanel } from "./components/PlaylistJanitorPanel";
 import { CoachInsightsPanel } from "./components/CoachInsightsPanel";
 import { ListeningScorePanel } from "./components/ListeningScorePanel";
+import { LoginScreen } from "./components/LoginScreen";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayRateChart } from "./components/Charts";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
@@ -22,18 +23,64 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
+function LogoutButton({ onLogout }: { onLogout: () => void }) {
+  return (
+    <button
+      onClick={onLogout}
+      className="rounded-lg border border-[#2a2a2a] bg-[#181818] px-3 py-1.5 text-xs text-[#666] transition-all duration-150 hover:border-[#444] hover:text-[#aaa]"
+    >
+      Logg ut
+    </button>
+  );
+}
+
 export default function App() {
+  const queryClient = useQueryClient();
+
+  // Auth-sjekk — kjøres alltid, uavhengig av annen data
+  const { data: authData, isLoading: authLoading } = useQuery({
+    queryKey: ["authStatus"],
+    queryFn: api.authStatus,
+    retry: 1,
+    staleTime: 5 * 60_000,    // re-bruk cached svar i 5 min
+    refetchInterval: 10 * 60_000, // sjekk på nytt hvert 10. min
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: api.logout,
+    onSuccess: () => {
+      // Ugyldiggjør auth-cachen → App viser LoginScreen umiddelbart
+      queryClient.invalidateQueries({ queryKey: ["authStatus"] });
+    },
+  });
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["stats"],
     queryFn: api.stats,
     refetchInterval: 10_000,
     staleTime: 5_000,
+    // Ikke hent stats-data før vi vet at brukeren er autentisert
+    enabled: authData?.authenticated === true,
   });
 
   const { visible, toggle } = useSectionVisibility();
 
   const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayRateChart"].some((id) => visible[id]);
   const hasMore = visible.mostCompleted;
+
+  // Viser ingenting mens vi venter på auth-svar (unngår blink av LoginScreen)
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
+        <div className="w-5 h-5 rounded-full border-2 border-[#1db954] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // Ikke autentisert → vis login-skjerm
+  if (!authData?.authenticated) {
+    return <LoginScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-[#eee]">
@@ -62,7 +109,10 @@ export default function App() {
               })}
             </span>
           </div>
-          <SectionToggle visible={visible} onToggle={toggle} />
+          <div className="flex items-center gap-3">
+            <LogoutButton onLogout={() => logoutMutation.mutate()} />
+            <SectionToggle visible={visible} onToggle={toggle} />
+          </div>
         </motion.div>
 
         {/* Spiller nå */}
