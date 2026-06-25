@@ -40,6 +40,20 @@ export function NowPlaying() {
           Kan ikke nå serveren — viser sist kjente data.
         </motion.div>
       )}
+      {data && !data.is_playing && !error && (
+        <motion.div
+          key="idle"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="mb-4 flex items-center gap-2 rounded-lg border border-[#2a2a2a] px-4 py-2 text-xs text-[#555]"
+        >
+          <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
+          </svg>
+          Spill musikk i Spotify for å se hva som spilles nå.
+        </motion.div>
+      )}
       {data?.is_playing ? (
         <motion.div
           key="playing"
