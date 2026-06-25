@@ -4,6 +4,7 @@ Alle miljøvariabler og innstillinger samles her.
 """
 
 import os
+import secrets as _secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -49,6 +50,19 @@ SCOPE = (
     "playlist-read-private "
     "playlist-read-collaborative"
 )
+
+# ---------------------------------------------------------------------------
+# Dashboard-tilgangskontroll
+# ---------------------------------------------------------------------------
+
+# Sett DASHBOARD_PASSWORD i Railway-miljøet for å beskytte dashbordet med passord.
+# Hvis variabelen ikke er satt, er dashbordet åpent (praktisk lokalt).
+DASHBOARD_PASSWORD: str | None = os.environ.get("DASHBOARD_PASSWORD") or None
+
+# Flask trenger en stabil SECRET_KEY for å signere sesjonscookies.
+# Sett SECRET_KEY som en fast tilfeldig streng i Railway — ellers ugyldiggjøres
+# alle sesjoner ved hver omstart / ny deploy.
+FLASK_SECRET_KEY: str = os.environ.get("SECRET_KEY") or _secrets.token_hex(32)
 
 # ---------------------------------------------------------------------------
 # Web OAuth (valgfritt — kun nødvendig for browser-basert innlogging)

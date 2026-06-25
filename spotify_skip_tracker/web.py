@@ -9,7 +9,9 @@ Endepunkter:
 
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+import hmac
 import json as _json
+import os
 import secrets
 import threading
 import time as _time
@@ -19,7 +21,7 @@ import logging
 
 import requests as http_requests
 
-from flask import Flask, Response, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, jsonify, redirect, request, send_from_directory, session
 from flask_cors import CORS
 
 from .stats import compute_stats, compute_insight_stats, calculate_listening_score
@@ -29,6 +31,7 @@ from .config import (
     SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
     REDIRECT_URI_WEB, FRONTEND_URL,
     APP_DIR, CREDS_PATH, SCOPE,
+    FLASK_SECRET_KEY, DASHBOARD_PASSWORD,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,7 +91,24 @@ def _resolve_user_id() -> str:
 
 def create_flask_app() -> Flask:
     app = Flask(__name__, static_folder=None)
-    CORS(app, origins=["https://spotify-skip-tracker.vercel.app", "http://localhost:5173", "http://localhost:5000"])
+
+    # -------------------------------------------------------------------
+    # Session-konfigurasjon for cross-domain cookies (Vercel → Railway)
+    #
+    # SameSite=None + Secure=True er påkrevd for at nettleseren skal sende
+    # cookien på tvers av domener. I lokal utvikling uten DASHBOARD_PASSWORD
+    # brukes aldri session, så dette er ufarlig for dev-miljøet.
+    # -------------------------------------------------------------------
+    app.secret_key = FLASK_SECRET_KEY
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+
+    _allowed_origins = [
+        o for o in [FRONTEND_URL, "http://localhost:5173", "http://localhost:5000"]
+        if o
+    ]
+    CORS(app, supports_credentials=True, origins=_allowed_origins)
 
     # ------------------------------------------------------------------
     # Autentiserings-endepunkter
@@ -97,39 +117,51 @@ def create_flask_app() -> Flask:
     @app.route("/api/auth/status")
     def auth_status():
         """
-        Sjekker om backenden har et gyldig Spotify-token ved å kalle /v1/me live.
-        Returnerer { authenticated: true/false, user_id: string | null }.
-        Bruker aldri den cachede user_id-en — ønsker alltid et ferskt svar.
+        Sjekker om denne nettleseren har en gyldig dashbordsesjon.
+
+        Tilgangsmodi:
+          - DASHBOARD_PASSWORD ikke satt (lokal utvikling) → alltid authenticated
+          - DASHBOARD_PASSWORD satt → krever at session['authenticated'] er True
         """
-        try:
-            creds = load_creds()
-            token = get_access_token(creds)
-            resp = http_requests.get(
-                "https://api.spotify.com/v1/me",
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=10,
-            )
-            if resp.status_code == 200:
-                user_id = resp.json().get("id") or "default_user"
-                return jsonify({"authenticated": True, "user_id": user_id})
-            return jsonify({"authenticated": False, "user_id": None})
-        except Exception as exc:
-            logger.info("Auth-sjekk: ikke autentisert (%s).", exc)
-            return jsonify({"authenticated": False, "user_id": None})
+        if DASHBOARD_PASSWORD is None:
+            # Åpen modus — ingen passord konfigurert
+            return jsonify({"authenticated": True, "user_id": _resolve_user_id()})
+
+        if session.get("authenticated"):
+            return jsonify({"authenticated": True, "user_id": _resolve_user_id()})
+
+        return jsonify({"authenticated": False, "user_id": None})
+
+    @app.route("/api/auth/password", methods=["POST"])
+    def auth_password():
+        """
+        Validerer dashbordpassordet fra POST-body.
+
+        Bruker hmac.compare_digest for konstant-tid-sammenligning slik at
+        timingbaserte angrepsforsøk ikke gir informasjon om passordet.
+        Setter session['authenticated'] = True ved suksess.
+        """
+        if DASHBOARD_PASSWORD is None:
+            # Ingen passord konfigurert — la alle inn
+            session["authenticated"] = True
+            return jsonify({"success": True})
+
+        body = request.get_json(silent=True) or {}
+        candidate = str(body.get("password", ""))
+
+        if not hmac.compare_digest(candidate, DASHBOARD_PASSWORD):
+            logger.warning("Feil dashbordpassord forsøkt fra %s.", request.remote_addr)
+            return jsonify({"error": "Feil passord"}), 401
+
+        session["authenticated"] = True
+        logger.info("Dashbordsesjon opprettet.")
+        return jsonify({"success": True})
 
     @app.route("/api/auth/logout", methods=["POST"])
     def auth_logout():
-        """
-        Nullstiller den cachede Spotify-bruker-ID-en slik at neste kall
-        til _resolve_user_id() gjør et ferskt oppslag (eller feiler rent).
-        For Railway/produksjon med env-var-legitimasjon vil status-endepunktet
-        fortsatt returnere authenticated=true — logout er primært nyttig
-        lokalt eller ved bytte av konto.
-        """
-        global _cached_user_id
-        with _user_id_lock:
-            _cached_user_id = None
-        logger.info("Auth-cache nullstilt via /api/auth/logout.")
+        """Avslutter dashbordsesjonen ved å tømme session-cookien."""
+        session.clear()
+        logger.info("Dashbordsesjon avsluttet.")
         return jsonify({"success": True})
 
     @app.route("/api/auth/login")

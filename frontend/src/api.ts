@@ -6,7 +6,14 @@ const BASE =
     : "https://spotify-skip-tracker-production.up.railway.app";
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(BASE + path, init);
+  // credentials: 'include' er påkrevd for at nettleseren sender session-cookien
+  // på tvers av domener (Vercel → Railway). Uten dette vil aldri sesjonen
+  // følge med på noen av kall-ene, og auth-gaten vil alltid falle tilbake til
+  // "ikke autentisert" etter sideinnlasting.
+  const res = await fetch(BASE + path, {
+    credentials: "include",
+    ...init,
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
   return res.json() as Promise<T>;
 }
@@ -26,4 +33,10 @@ export const api = {
   listeningScore:  () => fetchJson<ListeningScore>("/api/stats/score"),
   authStatus:      () => fetchJson<AuthStatus>("/api/auth/status"),
   logout:          () => fetchJson<{ success: boolean }>("/api/auth/logout", { method: "POST" }),
+  passwordLogin:   (password: string) =>
+    fetchJson<{ success: boolean }>("/api/auth/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    }),
 };
