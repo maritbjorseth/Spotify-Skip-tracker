@@ -23,6 +23,59 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
+function EmptyDashboard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="rounded-xl border border-[#2a2a2a] bg-[#141414] px-8 py-12 text-center max-w-lg mx-auto mt-8"
+    >
+      {/* Ikon */}
+      <div
+        className="inline-flex items-center justify-center rounded-full mb-6"
+        style={{ width: 56, height: 56, background: "#1db95418", color: "#1db954" }}
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>
+      </div>
+
+      <h2 className="text-lg font-semibold text-[#eee] mb-2">
+        Trackeren er klar
+      </h2>
+      <p className="text-sm text-[#888] leading-relaxed mb-6">
+        Ingen avspillinger er logget ennå. Sett på musikk i Spotify — trackeren
+        registrerer automatisk hva du hører på og hva du hopper over.
+        Data vises her etter første lyttesesjon.
+      </p>
+
+      <div className="flex flex-col gap-3 text-left">
+        <div className="flex items-start gap-3 rounded-lg bg-[#1c1c1c] px-4 py-3">
+          <span className="text-[#1db954] font-bold text-sm mt-0.5 shrink-0">1</span>
+          <p className="text-xs text-[#888] leading-relaxed">
+            Spill en sang i Spotify — på hvilken som helst enhet.
+          </p>
+        </div>
+        <div className="flex items-start gap-3 rounded-lg bg-[#1c1c1c] px-4 py-3">
+          <span className="text-[#1db954] font-bold text-sm mt-0.5 shrink-0">2</span>
+          <p className="text-xs text-[#888] leading-relaxed">
+            Hopp over sangen før den er ferdig — trackeren oppdager skipet automatisk.
+          </p>
+        </div>
+        <div className="flex items-start gap-3 rounded-lg bg-[#1c1c1c] px-4 py-3">
+          <span className="text-[#1db954] font-bold text-sm mt-0.5 shrink-0">3</span>
+          <p className="text-xs text-[#888] leading-relaxed">
+            Kom tilbake hit etter noen sanger — statistikken oppdateres i sanntid.
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function LogoutButton({ onLogout }: { onLogout: () => void }) {
   return (
     <button
@@ -130,7 +183,9 @@ export default function App() {
           </div>
         )}
 
-        {data && (
+        {data && data.total_plays === 0 && <EmptyDashboard />}
+
+        {data && data.total_plays > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
