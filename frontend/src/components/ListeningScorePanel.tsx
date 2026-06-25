@@ -95,12 +95,12 @@ export function ListeningScorePanel() {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="text-xs font-medium uppercase tracking-widest text-[#555]">
+              <p className="text-xs font-medium uppercase tracking-widest text-[#888]">
                 Lytte-score
               </p>
               <AlgorithmTooltip text={SCORE_EXPLANATION} color={color} />
             </div>
-            <p className="text-xs text-[#444] mt-0.5">{scoreLabel(score)}</p>
+            <p className="text-xs text-[#777] mt-0.5">{scoreLabel(score)}</p>
           </div>
         </div>
 
@@ -112,7 +112,7 @@ export function ListeningScorePanel() {
           >
             {score}
           </span>
-          <span className="text-lg text-[#444] font-normal ml-0.5">/100</span>
+          <span className="text-lg text-[#777] font-normal ml-0.5">/100</span>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export function ListeningScorePanel() {
       <ScoreBar score={score} color={color} />
 
       {/* Motiverende melding */}
-      <p className="text-xs text-[#666] mt-3 leading-relaxed">
+      <p className="text-xs text-[#888] mt-3 leading-relaxed">
         {scoreMessage(score)}
       </p>
     </div>

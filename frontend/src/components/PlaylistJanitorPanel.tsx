@@ -114,7 +114,7 @@ function TrackRow({
           <ConfidenceBadge label={candidate.confidence_level} />
         </div>
         <p
-          className="text-xs text-[#666] truncate mt-0.5"
+          className="text-xs text-[#888] truncate mt-0.5"
           title={candidate.artists}
         >
           {candidate.artists || "—"}
@@ -178,7 +178,7 @@ function PlaylistGroup({
   return (
     <div className="mb-2 last:mb-0">
       <div className="flex items-center gap-2 px-4 py-2 bg-[#161616] border-b border-[#252525]">
-        <svg className="h-3.5 w-3.5 text-[#444] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="h-3.5 w-3.5 text-[#666] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round"
             d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
           />
@@ -186,7 +186,7 @@ function PlaylistGroup({
         <span className="text-xs font-semibold text-[#777] uppercase tracking-wider truncate">
           {name}
         </span>
-        <span className="ml-auto text-xs text-[#444] flex-shrink-0">
+        <span className="ml-auto text-xs text-[#777] flex-shrink-0">
           {candidates.length}
         </span>
       </div>
@@ -218,7 +218,7 @@ function TabContent({
   if (candidates.length === 0) {
     return (
       <div className="py-10 text-center">
-        <p className="text-sm text-[#444]">Ingen sanger i denne kategorien.</p>
+        <p className="text-sm text-[#777]">Ingen sanger i denne kategorien.</p>
       </div>
     );
   }
@@ -235,9 +235,9 @@ function TabContent({
     <div>
       {/* Kolonne-header */}
       <div className="hidden md:flex items-center gap-3 px-4 py-2.5 bg-[#111] border-b border-[#252525]">
-        <span className="flex-1 text-xs font-semibold text-[#444] uppercase tracking-wider">Sang / artist</span>
-        <span className="flex-shrink-0 w-12 text-xs font-semibold text-[#444] uppercase tracking-wider text-center hidden sm:block">Skip%</span>
-        <span className="flex-shrink-0 w-24 text-xs font-semibold text-[#444] uppercase tracking-wider text-right">Score</span>
+        <span className="flex-1 text-xs font-semibold text-[#888] uppercase tracking-wider">Sang / artist</span>
+        <span className="flex-shrink-0 w-12 text-xs font-semibold text-[#888] uppercase tracking-wider text-center hidden sm:block">Skip%</span>
+        <span className="flex-shrink-0 w-24 text-xs font-semibold text-[#888] uppercase tracking-wider text-right">Score</span>
         <span className="flex-shrink-0 w-[72px]" />
       </div>
       {[...grouped.entries()].map(([name, cands]) => (
@@ -301,12 +301,12 @@ export function PlaylistJanitorPanel() {
             <h2 className="text-base font-semibold text-[#a78bfa]">Playlist Janitor</h2>
             <AlgorithmTooltip text={JANITOR_EXPLANATION} color="#a78bfa" />
           </div>
-          <p className="text-xs text-[#555] mt-0.5">
+          <p className="text-xs text-[#888] mt-0.5">
             Sanger du konsekvent hopper over — kategorisert etter risiko.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {lastUpdated && <span className="text-xs text-[#555]">Oppdatert {lastUpdated}</span>}
+          {lastUpdated && <span className="text-xs text-[#888]">Oppdatert {lastUpdated}</span>}
           {data && data.length > 0 && (
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
@@ -321,7 +321,7 @@ export function PlaylistJanitorPanel() {
 
       {/* Laster */}
       {isLoading && (
-        <p className="text-sm text-[#555] py-6 text-center">Analyserer spillelister…</p>
+        <p className="text-sm text-[#888] py-6 text-center">Analyserer spillelister…</p>
       )}
 
       {/* Feil */}
@@ -340,8 +340,8 @@ export function PlaylistJanitorPanel() {
           <svg className="h-8 w-8 mx-auto mb-3 text-[#333]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-sm text-[#555]">Ingen kandidater funnet.</p>
-          <p className="text-xs text-[#444] mt-1">
+          <p className="text-sm text-[#888]">Ingen kandidater funnet.</p>
+          <p className="text-xs text-[#777] mt-1">
             Kjør{" "}
             <code className="rounded bg-[#1c1c1c] px-1.5 py-0.5 text-[#888]">
               python3 -m spotify_skip_tracker janitor
@@ -367,7 +367,7 @@ export function PlaylistJanitorPanel() {
                   onClick={() => setActiveTab(cat)}
                   className="flex items-center gap-2 px-4 py-3 text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0"
                   style={{
-                    color: isActive ? cfg.fg : "#555",
+                    color: isActive ? cfg.fg : "#888",
                     borderBottom: isActive ? `2px solid ${cfg.dot}` : "2px solid transparent",
                     background: isActive ? cfg.bg : "transparent",
                   }}
@@ -381,7 +381,7 @@ export function PlaylistJanitorPanel() {
                       className="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
                       style={{
                         background: isActive ? cfg.dot + "33" : "#2a2a2a",
-                        color: isActive ? cfg.fg : "#555",
+                        color: isActive ? cfg.fg : "#888",
                       }}
                     >
                       {count}

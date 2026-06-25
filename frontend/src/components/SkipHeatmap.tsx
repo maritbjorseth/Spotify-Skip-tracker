@@ -105,7 +105,7 @@ export function SkipHeatmap({ daily }: Props) {
         Skip-aktivitet siste år
         <span
           title="Viser hvor mange sanger du skipper per dag i et kalender-heatmap."
-          className="text-[#444] hover:text-[#888] cursor-help transition-colors text-[10px] font-normal normal-case tracking-normal"
+          className="text-[#666] hover:text-[#999] cursor-help transition-colors text-[10px] font-normal normal-case tracking-normal"
         >
           ⓘ
         </span>
@@ -122,7 +122,7 @@ export function SkipHeatmap({ daily }: Props) {
               <div
                 key={i}
                 style={{ height: CELL, lineHeight: `${CELL}px`, fontSize: 9 }}
-                className="text-[#555] text-right pr-1 w-6"
+                className="text-[#888] text-right pr-1 w-6"
               >
                 {label}
               </div>
@@ -135,7 +135,7 @@ export function SkipHeatmap({ daily }: Props) {
               {monthLabels.map(({ month, col }) => (
                 <span
                   key={`${month}-${col}`}
-                  className="absolute text-[#555]"
+                  className="absolute text-[#888]"
                   style={{ left: col * STEP, fontSize: 9, top: 4 }}
                 >
                   {MONTH_NAMES[month]}
@@ -191,7 +191,7 @@ export function SkipHeatmap({ daily }: Props) {
       </div>
 
       {/* Fargelegende */}
-      <div className="flex items-center gap-2 mt-4 text-[#555] text-xs">
+      <div className="flex items-center gap-2 mt-4 text-[#888] text-xs">
         <span>Færre</span>
         {["#1a1a1a", "#1a3d25", "#1db954", "#e07b3a", "#ff6b35"].map((c) => (
           <div key={c} className="w-3 h-3 rounded-sm" style={{ background: c }} />

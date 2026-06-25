@@ -35,7 +35,7 @@ export function NowPlaying() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="mb-4 rounded-lg border border-[#2a2a2a] px-4 py-2 text-xs text-[#555]"
+          className="mb-4 rounded-lg border border-[#2a2a2a] px-4 py-2 text-xs text-[#888]"
         >
           Kan ikke nå serveren — viser sist kjente data.
         </motion.div>
@@ -46,7 +46,7 @@ export function NowPlaying() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="mb-4 flex items-center gap-2 rounded-lg border border-[#2a2a2a] px-4 py-2 text-xs text-[#555]"
+          className="mb-4 flex items-center gap-2 rounded-lg border border-[#2a2a2a] px-4 py-2 text-xs text-[#888]"
         >
           <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
@@ -118,7 +118,7 @@ export function NowPlaying() {
 
             {/* Fremgangslinje */}
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-[#666] tabular-nums w-9 text-right">
+              <span className="text-xs text-[#888] tabular-nums w-9 text-right">
                 {formatMs(localProgress)}
               </span>
               <div className="flex-1 h-1 rounded-full bg-[#2a2a2a] overflow-hidden">
@@ -131,7 +131,7 @@ export function NowPlaying() {
                   transition={{ duration: 0.9, ease: "linear" }}
                 />
               </div>
-              <span className="text-xs text-[#666] tabular-nums w-9">
+              <span className="text-xs text-[#888] tabular-nums w-9">
                 {formatMs(data.duration_ms)}
               </span>
             </div>

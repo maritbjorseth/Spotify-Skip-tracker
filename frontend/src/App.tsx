@@ -17,7 +17,7 @@ function SectionDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-4 mb-8 mt-16">
       <div className="h-px flex-1 bg-[#2a2a2a]" />
-      <span className="text-sm font-semibold uppercase tracking-widest text-[#666]">{label}</span>
+      <span className="text-sm font-semibold uppercase tracking-widest text-[#888]">{label}</span>
       <div className="h-px flex-1 bg-[#2a2a2a]" />
     </div>
   );
@@ -97,7 +97,7 @@ export default function App() {
             <h1 className="text-3xl font-bold tracking-tight text-[#1db954]">
               Skip Stats
             </h1>
-            <p className="text-sm text-[#555] mt-1">
+            <p className="text-sm text-[#888] mt-1">
               Hva skipper du egentlig?
             </p>
             <span className="text-xs text-neutral-500 mt-1 block">
@@ -120,7 +120,7 @@ export default function App() {
 
         {/* Lasting / feil */}
         {isLoading && (
-          <div className="flex items-center justify-center py-24 text-[#555] text-sm">
+          <div className="flex items-center justify-center py-24 text-[#888] text-sm">
             Laster statistikk…
           </div>
         )}

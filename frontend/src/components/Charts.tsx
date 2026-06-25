@@ -17,7 +17,7 @@ import { C, skipRateColor } from "../theme";
 // Delt tema
 // ---------------------------------------------------------------------------
 
-const TICK_STYLE = { fill: "#666", fontSize: 11 };
+const TICK_STYLE = { fill: "#888", fontSize: 11 };
 
 interface TooltipPayload {
   name: string;
@@ -68,10 +68,10 @@ function RateTooltip({
       <p className="font-semibold text-white mb-1">{label}</p>
       <p style={{ color: row.color }}>{row.value}% skip-rate</p>
       {plays > 0 && (
-        <p className="text-[#555] mt-0.5">{skips} skip / {plays} avsp.</p>
+        <p className="text-[#888] mt-0.5">{skips} skip / {plays} avsp.</p>
       )}
       {plays === 0 && (
-        <p className="text-[#444] mt-0.5 italic">Ingen avspillinger</p>
+        <p className="text-[#777] mt-0.5 italic">Ingen avspillinger</p>
       )}
     </div>
   );
@@ -84,7 +84,7 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
         {title}
       </h2>
       {subtitle && (
-        <p className="text-xs text-[#555] mt-1 mb-5">{subtitle}</p>
+        <p className="text-xs text-[#888] mt-1 mb-5">{subtitle}</p>
       )}
       {!subtitle && <div className="mb-5" />}
       {children}
@@ -229,7 +229,7 @@ export function ContextChart({
       </div>
 
       {data.length === 0 ? (
-        <div className="flex items-center justify-center h-[120px] text-xs text-[#444] italic">
+        <div className="flex items-center justify-center h-[120px] text-xs text-[#777] italic">
           Ingen data for dette filteret ennå.
         </div>
       ) : (
@@ -291,7 +291,7 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
   return (
     <ChartCard title="Skips etter tidspunkt på døgnet">
       {totalSkips === 0 ? (
-        <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
+        <div className="flex items-center justify-center h-[200px] text-xs text-[#777] italic">
           Ingen data ennå – tracker samler data i sanntid.
         </div>
       ) : (
@@ -337,7 +337,7 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
   return (
     <ChartCard title="Skip-antall etter ukedag">
       {totalSkips === 0 ? (
-        <div className="flex items-center justify-center h-[200px] text-xs text-[#444] italic">
+        <div className="flex items-center justify-center h-[200px] text-xs text-[#777] italic">
           Ingen data ennå – tracker samler data i sanntid.
         </div>
       ) : (

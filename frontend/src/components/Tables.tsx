@@ -107,7 +107,7 @@ function Pagination({
       >
         ← Forrige
       </button>
-      <span className="text-sm text-[#666]">
+        <span className="text-sm text-[#888]">
         Side {page} av {totalPages} ({total})
       </span>
       <button
@@ -180,7 +180,7 @@ export function SkippedTable({
     return (
       <th
         onClick={() => sort(k)}
-        className={`px-4 py-3 ${align === "right" ? "text-right" : "text-left"} text-xs font-semibold text-[#666] uppercase tracking-wider cursor-pointer select-none hover:text-[#999] transition-colors`}
+        className={`px-4 py-3 ${align === "right" ? "text-right" : "text-left"} text-xs font-semibold text-[#888] uppercase tracking-wider cursor-pointer select-none hover:text-[#bbb] transition-colors`}
       >
         {label}
         {active && <span className="ml-1 text-[#1db954]">{sortDir === -1 ? "↓" : "↑"}</span>}
@@ -244,7 +244,7 @@ export function SkippedTable({
             <AnimatePresence mode="sync">
               {page_rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm italic text-[#555]">
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm italic text-[#888]">
                     Ingen data ennå
                   </td>
                 </tr>
@@ -312,18 +312,18 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
         <table className="w-full min-w-[560px]">
           <thead className="bg-[#161616]">
             <tr>
-              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#777] uppercase tracking-wider w-10">#</th>
               <th className="px-4 py-3" />
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Spilt</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Skip-rate</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">Tittel</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">Artist</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Spilt</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Skip-rate</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((t, i) => (
               <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
-                <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
+                <td className="px-3 py-5 text-right text-xs text-[#777] tabular-nums w-10">
                   {(page - 1) * PAGE + i + 1}
                 </td>
                 <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
@@ -350,24 +350,24 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
   return (
     <section>
       <h2 className="mb-1 text-base font-semibold text-[#1db954]">Sanger du nesten aldri skipper</h2>
-      <p className="text-xs text-[#555] mb-3">Låter du som regel lytter til helt ferdig.</p>
+      <p className="text-xs text-[#888] mb-3">Låter du som regel lytter til helt ferdig.</p>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[560px]">
           <thead className="bg-[#161616]">
             <tr>
-              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#777] uppercase tracking-wider w-10">#</th>
               <th className="px-4 py-3" />
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Spilt</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Skip-rate</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">Tittel</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">Artist</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Spilt</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Skip-rate</th>
             </tr>
           </thead>
           <tbody>
             {tracks.map((t, i) => (
               <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
-                <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
+                <td className="px-3 py-5 text-right text-xs text-[#777] tabular-nums w-10">{i + 1}</td>
                 <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
                 <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
@@ -376,7 +376,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
               </tr>
             ))}
             {tracks.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-sm italic text-[#555]">Ingen data ennå</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-sm italic text-[#888]">Ingen data ennå</td></tr>
             )}
           </tbody>
         </table>
@@ -408,7 +408,7 @@ export function AutoSkipPreviewTable({
         </svg>
         Kandidater for automatisk hopp
       </h2>
-      <p className="text-xs text-[#666] mb-4">
+      <p className="text-xs text-[#888] mb-4">
         Sanger med høy nok skip-rate til at Smart Skipper ville hoppet over dem automatisk.
       </p>
       <div className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1c1c1c]">
@@ -416,18 +416,18 @@ export function AutoSkipPreviewTable({
         <table className="w-full min-w-[500px]">
           <thead className="bg-[#161616]">
             <tr>
-              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#777] uppercase tracking-wider w-10">#</th>
               <th className="px-4 py-3 w-14" />
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Tittel</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Skip-rate</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">Tittel</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">Artist</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Skip-rate</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Status</th>
             </tr>
           </thead>
           <tbody>
             {candidates.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm italic text-[#555]">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm italic text-[#888]">
                   Ingen kandidater — ingen sanger overskrider {pct}%-terskelen ennå.
                 </td>
               </tr>
@@ -437,7 +437,7 @@ export function AutoSkipPreviewTable({
                   key={c.uri}
                   className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150"
                 >
-                  <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
+                  <td className="px-3 py-5 text-right text-xs text-[#777] tabular-nums w-10">
                     {i + 1}
                   </td>
                   <td className="px-4 py-5 w-14">
@@ -490,10 +490,10 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
         <table className="w-full min-w-[400px]">
           <thead className="bg-[#161616]">
             <tr>
-              <th className="px-3 py-3 text-right text-xs font-semibold text-[#444] uppercase tracking-wider w-10">#</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">Artist</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Totalt spilt</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">Skip-rate</th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-[#777] uppercase tracking-wider w-10">#</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">Artist</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Totalt spilt</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">Skip-rate</th>
             </tr>
           </thead>
           <tbody>
@@ -506,7 +506,7 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
               </tr>
             ))}
             {artists.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm italic text-[#555]">Ingen data ennå</td></tr>
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm italic text-[#888]">Ingen data ennå</td></tr>
             )}
           </tbody>
         </table>

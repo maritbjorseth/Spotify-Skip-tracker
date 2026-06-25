@@ -81,7 +81,7 @@ export function LoginScreen() {
             Spotify Skip Tracker
             <span className="text-[#1db954]"> & Coach</span>
           </h1>
-          <p className="text-sm text-[#555] mt-2">
+          <p className="text-sm text-[#888] mt-2">
             Skriv inn tilgangspassordet for å se dashbordet.
           </p>
         </div>
@@ -134,7 +134,7 @@ export function LoginScreen() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-[#333] mt-8">
+        <p className="text-center text-xs text-[#555] mt-8">
           Spotify Skip Tracker & Coach · Personlig dashbord
         </p>
       </div>

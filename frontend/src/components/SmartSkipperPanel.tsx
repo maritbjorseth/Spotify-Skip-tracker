@@ -61,7 +61,7 @@ function StatusBadge({ config }: { config: SmartSkipperConfig }) {
 function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
   if (rows.length === 0) {
     return (
-      <p className="text-sm italic text-[#555] py-6 text-center">
+      <p className="text-sm italic text-[#888] py-6 text-center">
         Ingen automatiske hopp registrert ennå.
       </p>
     );
@@ -73,19 +73,19 @@ function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
       <table className="w-full min-w-[520px]">
         <thead className="bg-[#161616]">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">
               Tittel
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-[#888] uppercase tracking-wider">
               Artist
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">
               Skip-rate
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">
               Tidspunkt
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-[#666] uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-[#888] uppercase tracking-wider">
               Modus
             </th>
           </tr>
@@ -126,7 +126,7 @@ function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
                       : "—"}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-sm text-[#666] text-right tabular-nums whitespace-nowrap">
+                <td className="px-4 py-4 text-sm text-[#888] text-right tabular-nums whitespace-nowrap">
                   {ts}
                 </td>
                 <td className="px-4 py-4 text-right">
@@ -134,7 +134,7 @@ function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
                     className="rounded-full px-2 py-0.5 text-xs font-medium"
                     style={
                       isDryRun
-                        ? { background: "#2a2a2a", color: "#555" }
+                        ? { background: "#2a2a2a", color: "#888" }
                         : { background: "#1db95422", color: "#1db954" }
                     }
                   >
@@ -174,7 +174,7 @@ export function SmartSkipperPanel() {
             </h2>
             <AlgorithmTooltip text={SMART_SKIPPER_EXPLANATION} color="#f97316" />
           </div>
-          <p className="text-xs text-[#555] mt-0.5">
+          <p className="text-xs text-[#888] mt-0.5">
             Automatisk hopping basert på din historiske skip-data.
           </p>
         </div>
@@ -182,7 +182,7 @@ export function SmartSkipperPanel() {
       </div>
 
       {isLoading && (
-        <p className="text-sm text-[#555] py-4">Laster Smart Skipper-data…</p>
+        <p className="text-sm text-[#888] py-4">Laster Smart Skipper-data…</p>
       )}
 
       {error && (
@@ -195,7 +195,7 @@ export function SmartSkipperPanel() {
         <>
           {/* Aktiveringshjelp */}
           {!data.config.enabled && (
-            <p className="mt-3 text-xs text-[#555]">
+            <p className="mt-3 text-xs text-[#888]">
               Aktiver via CLI:{" "}
               <code className="rounded bg-[#1c1c1c] px-1.5 py-0.5 text-[#888]">
                 python3 -m spotify_skip_tracker smart-skipper enable
@@ -203,7 +203,7 @@ export function SmartSkipperPanel() {
             </p>
           )}
           {data.config.enabled && data.config.dry_run && (
-            <p className="mt-3 text-xs text-[#555]">
+            <p className="mt-3 text-xs text-[#888]">
               Slå av prøvemodus for ekte hopp:{" "}
               <code className="rounded bg-[#1c1c1c] px-1.5 py-0.5 text-[#888]">
                 python3 -m spotify_skip_tracker smart-skipper dry-run off
@@ -212,7 +212,7 @@ export function SmartSkipperPanel() {
           )}
 
           {/* Historikk */}
-          <h3 className="text-xs font-semibold text-[#666] uppercase tracking-wider mt-6 mb-3">
+          <h3 className="text-xs font-semibold text-[#888] uppercase tracking-wider mt-6 mb-3">
             Siste 20 automatiske hopp
           </h3>
           <HistoryTable rows={data.history} />

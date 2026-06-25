@@ -109,7 +109,7 @@ function InsightCard({ insight }: { insight: Insight }) {
       <div className="min-w-0 flex-1">
 
         {/* Kategori-etikett */}
-        <p className="text-xs font-medium uppercase tracking-widest text-[#444] mb-1">
+        <p className="text-xs font-medium uppercase tracking-widest text-[#777] mb-1">
           {insight.category === "skip_rate" && "Skip-rate"}
           {insight.category === "streak"    && "Streak"}
           {insight.category === "session"   && "Sesjonsmønster"}
@@ -132,7 +132,7 @@ function InsightCard({ insight }: { insight: Insight }) {
 
         {/* Forklaring — stadium 3 */}
         {insight.explanation && (
-          <p className="text-xs text-[#666] mt-1 leading-snug italic">
+          <p className="text-xs text-[#888] mt-1 leading-snug italic">
             {insight.explanation}
           </p>
         )}
@@ -165,7 +165,7 @@ export function CoachInsightsPanel() {
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-[#444]">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[#777]">
           Innsikter
         </p>
         <AlgorithmTooltip text={COACH_EXPLANATION} color="#6b7280" />

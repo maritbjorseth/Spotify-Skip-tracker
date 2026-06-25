@@ -138,12 +138,12 @@ export function StatCard({ label, value, format, color = "#1db954", icon, toolti
     >
       {/* Øverste rad: etikett til venstre, ikon til høyre */}
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-medium uppercase tracking-wider text-[#666] flex items-center gap-1">
+        <span className="text-xs font-medium uppercase tracking-wider text-[#888] flex items-center gap-1">
           {label}
           {tooltip && (
             <span
               title={tooltip}
-              className="text-[#444] hover:text-[#888] cursor-help transition-colors text-[10px]"
+              className="text-[#666] hover:text-[#999] cursor-help transition-colors text-[10px]"
             >
               ⓘ
             </span>
