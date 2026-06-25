@@ -65,10 +65,6 @@ export function LoginScreen() {
     }
   }
 
-  const isWrongPassword =
-    loginMutation.isError ||
-    (loginMutation.isSuccess === false && loginMutation.error != null);
-
   return (
     <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
