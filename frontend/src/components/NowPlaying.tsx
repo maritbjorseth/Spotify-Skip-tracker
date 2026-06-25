@@ -105,6 +105,11 @@ export function NowPlaying() {
                     background: data.skip_rate >= 0.5 ? "#ff6b3520" : "#1db95420",
                     color: data.skip_rate >= 0.5 ? "#ff6b35" : "#1db954",
                   }}
+                  title={
+                    data.skip_rate >= 0.5
+                      ? "Du hopper vanligvis over denne sangen"
+                      : "Du hører vanligvis denne sangen ferdig"
+                  }
                 >
                   {Math.round(data.skip_rate * 100)}% skip-rate
                 </span>

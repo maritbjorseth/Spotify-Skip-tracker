@@ -30,6 +30,13 @@ const TAB_ORDER: JanitorCategory[] = ["Remove", "Candidate", "Watchlist"];
 // Skip-rate badge
 // ---------------------------------------------------------------------------
 
+function skipRateLabel(pct: number): string {
+  if (pct >= 90) return "Svært høy skip-rate";
+  if (pct >= 75) return "Høy skip-rate";
+  if (pct >= 60) return "Moderat skip-rate";
+  return "Lav skip-rate";
+}
+
 function SkipRateBadge({ rate }: { rate: number }) {
   const pct = Math.round(rate * 100);
   let bg: string;
@@ -42,6 +49,7 @@ function SkipRateBadge({ rate }: { rate: number }) {
     <span
       className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
       style={{ background: bg, color: fg }}
+      title={`${pct}% — ${skipRateLabel(pct)}`}
     >
       {pct}%
     </span>
