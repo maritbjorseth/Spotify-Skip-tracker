@@ -13,14 +13,17 @@ const MONTH_NAMES = [
 ];
 const DAY_LABELS = ["", "man", "", "ons", "", "fre", ""];
 
-function getColor(skips: number, maxSkips: number): string {
-  if (skips === 0) return "#1a1a1a";
+// plays = 0  →  ingen data registrert (mørkt nøytralt)
+// plays > 0, skips = 0  →  aktiv lytting uten skip (subtilt blå-grått tint)
+// skips > 0  →  amber → rød etter intensitet (konsistent med skipRateColor)
+function getColor(skips: number, plays: number, maxSkips: number): string {
+  if (plays === 0) return "#1a1a1a";
+  if (skips === 0)  return "#1a2535";
   const t = Math.min(1, skips / Math.max(maxSkips * 0.6, 1));
-  // Gradient: mørkegrønn → lys oransje for høye skip-tall
-  if (t < 0.33) return "#1a3d25";
-  if (t < 0.66) return "#1db954";
-  if (t < 0.85) return "#e07b3a";
-  return "#ff6b35";
+  if (t < 0.33) return "#78350f";
+  if (t < 0.66) return "#f59e0b";
+  if (t < 0.85) return "#ef4444";
+  return "#dc2626";
 }
 
 interface Props {
@@ -153,7 +156,7 @@ export function SkipHeatmap({ daily }: Props) {
                   width={CELL}
                   height={CELL}
                   rx={2}
-                  fill={getColor(c.skips, maxSkips)}
+                  fill={getColor(c.skips, c.plays, maxSkips)}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: (c.col * 7 + c.row) * 0.0005 }}
@@ -183,7 +186,7 @@ export function SkipHeatmap({ daily }: Props) {
               }}
             >
               <div className="font-semibold text-white mb-0.5">{tooltip.date}</div>
-              <div className="text-[#ff6b35]">{tooltip.skips} skip</div>
+              <div className="text-[#f59e0b]">{tooltip.skips} skip</div>
               <div className="text-[#999]">{tooltip.plays} avspillinger</div>
             </div>
           )}
@@ -193,7 +196,7 @@ export function SkipHeatmap({ daily }: Props) {
       {/* Fargelegende */}
       <div className="flex items-center gap-2 mt-4 text-[#888] text-xs">
         <span>Færre</span>
-        {["#1a1a1a", "#1a3d25", "#1db954", "#e07b3a", "#ff6b35"].map((c) => (
+        {["#1a1a1a", "#1a2535", "#78350f", "#f59e0b", "#ef4444"].map((c) => (
           <div key={c} className="w-3 h-3 rounded-sm" style={{ background: c }} />
         ))}
         <span>Flere skip</span>
