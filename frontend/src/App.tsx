@@ -15,7 +15,7 @@ import { useSectionVisibility, SectionToggle } from "./components/SectionToggle"
 
 function SectionDivider({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-4 mb-8 mt-16">
+    <div className="flex items-center gap-4 mb-5 mt-10">
       <div className="h-px flex-1 bg-[#2a2a2a]" />
       <span className="text-sm font-semibold uppercase tracking-widest text-[#888]">{label}</span>
       <div className="h-px flex-1 bg-[#2a2a2a]" />
@@ -137,14 +137,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-[#eee]">
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="max-w-6xl mx-auto px-6 py-6">
 
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8 flex items-start justify-between"
+          className="mb-5 flex items-start justify-between"
         >
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-[#1db954]">
@@ -200,14 +200,14 @@ export default function App() {
 
             {/* Heatmap */}
             {visible.heatmap && (
-              <div className="mb-6">
+              <div className="mb-4">
                 <SkipHeatmap daily={data.daily} />
               </div>
             )}
 
             {/* Mest skippede sanger */}
             {visible.skipped && (
-              <div className="mb-6">
+              <div className="mb-4">
                 <SkippedTable
                 tracks={data.tracks}
                 playlistContexts={data.playlist_contexts ?? data.contexts ?? []}
@@ -226,7 +226,7 @@ export default function App() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6"
                 >
                   {visible.artistChart && <ArtistChart artists={data.top_artists} />}
                   {visible.contextChart && (
@@ -245,7 +245,7 @@ export default function App() {
             {hasMore && <SectionDivider label="Mer statistikk" />}
 
             {visible.mostCompleted && (
-              <div className="mb-10">
+              <div className="mb-6">
                 <MostCompletedTable tracks={data.most_completed} />
               </div>
             )}

@@ -79,14 +79,14 @@ function RateTooltip({
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-6">
+    <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-4">
       <h2 className="text-sm font-semibold uppercase tracking-widest text-[#888]">
         {title}
       </h2>
       {subtitle && (
-        <p className="text-xs text-[#888] mt-1 mb-5">{subtitle}</p>
+        <p className="text-xs text-[#888] mt-1 mb-3">{subtitle}</p>
       )}
-      {!subtitle && <div className="mb-5" />}
+      {!subtitle && <div className="mb-3" />}
       {children}
     </div>
   );
@@ -107,22 +107,22 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
     };
   });
 
-  const chartHeight = Math.max(300, data.length * 56);
+  const chartHeight = Math.max(240, data.length * 48);
 
   return (
     <ChartCard title="Mest skippede artister" subtitle="Artister du har lavest tålmodighet for.">
-      <div style={{ height: chartHeight + 80 }}>
+      <div style={{ height: chartHeight + 64 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
             layout="vertical"
             barCategoryGap="35%"
-            margin={{ top: 20, right: 120, bottom: 20, left: 20 }}
+            margin={{ top: 16, right: 112, bottom: 16, left: 16 }}
           >
             <XAxis type="number" hide />
             <YAxis type="category" dataKey="name" hide />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
-            <Bar dataKey="skip" radius={[0, 4, 4, 0]} barSize={24}>
+            <Bar dataKey="skip" radius={[0, 4, 4, 0]} barSize={22}>
               {data.map((_, i) => (
                 <Cell
                   key={i}
@@ -295,7 +295,7 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
           Ingen data ennå – tracker samler data i sanntid.
         </div>
       ) : (
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={180}>
         <BarChart data={data} margin={{ left: -16, right: 4 }} barCategoryGap="12%">
           <XAxis
             dataKey="hour"
@@ -423,7 +423,7 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
 
   return (
     <ChartCard title="Skip-rate per ukedag">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <YAxis
