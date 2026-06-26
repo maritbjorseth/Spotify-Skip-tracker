@@ -97,22 +97,26 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 // ---------------------------------------------------------------------------
 
 export function ArtistChart({ artists }: { artists: Artist[] }) {
-  const data = artists.map((a) => {
-    const first = a.artists.split(",")[0].trim();
-    const ratePct = Math.round(a.skip_rate * 100);
-    return {
-      name: a.artists.includes(",") ? first + " m.fl." : first,
-      skips: a.skip_count,
-      rate: ratePct,
-      plays: a.play_count,
-      label: `${ratePct}% (${a.skip_count} skip)`,
-    };
-  });
+  // Sorter ASC klientsiden: Recharts vertical layout rendrer data[0] NEDERST,
+  // så lavest rate går først i arrayet → vises nederst, høyest rate sist → vises øverst.
+  const data = [...artists]
+    .sort((a, b) => a.skip_rate - b.skip_rate)
+    .map((a) => {
+      const first = a.artists.split(",")[0].trim();
+      const ratePct = Math.round(a.skip_rate * 100);
+      return {
+        name: a.artists.includes(",") ? first + " m.fl." : first,
+        skips: a.skip_count,
+        rate: ratePct,
+        plays: a.play_count,
+        label: `${ratePct}% (${a.skip_count} skip)`,
+      };
+    });
 
   const chartHeight = Math.max(240, data.length * 48);
 
   return (
-    <ChartCard title="Mest skippede artister" subtitle="Rangert etter skip-rate (min. 5 avspillinger).">
+    <ChartCard title="Høyest skip-rate per artist" subtitle="Rangert etter skip-rate (min. 5 avspillinger).">
       <div style={{ height: chartHeight + 64 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

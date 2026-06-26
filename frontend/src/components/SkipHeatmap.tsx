@@ -13,17 +13,18 @@ const MONTH_NAMES = [
 ];
 const DAY_LABELS = ["", "man", "", "ons", "", "fre", ""];
 
-// plays = 0  →  ingen data registrert (mørkt nøytralt)
-// plays > 0, skips = 0  →  aktiv lytting uten skip (grønn — konsistent med skipRateColor)
-// skips > 0  →  gul → oransje → rød etter intensitet (grønn=bra, rød=dårlig)
-function getColor(skips: number, plays: number, maxSkips: number): string {
+// plays = 0       →  ingen data registrert (mørkt nøytralt)
+// plays > 0, skips = 0  →  aktiv lytting uten skip (grønn)
+// skips > 0       →  gul → oransje → rød basert på SKIP-RATE (skips / plays),
+//                    ikke absolutt antall skips — konsistent med skipRateColor i theme.ts
+function getColor(skips: number, plays: number): string {
   if (plays === 0) return "#1a1a1a";
-  if (skips === 0)  return "#1db954";
-  const t = Math.min(1, skips / Math.max(maxSkips * 0.6, 1));
-  if (t < 0.33) return "#eab308";
-  if (t < 0.66) return "#f97316";
-  if (t < 0.85) return "#ef4444";
-  return "#dc2626";
+  if (skips === 0) return "#1db954";
+  const rate = skips / plays;          // 0.0 – 1.0
+  if (rate <= 0.25) return "#eab308";  // lav skip-rate  — gul    (≤ 25 %)
+  if (rate <= 0.50) return "#f97316";  // middels        — oransje (26–50 %)
+  if (rate <= 0.75) return "#ef4444";  // høy            — rød    (51–75 %)
+  return "#dc2626";                     // svært høy      — mørk rød (> 75 %)
 }
 
 interface Props {
@@ -39,7 +40,7 @@ export function SkipHeatmap({ daily }: Props) {
     plays: number;
   } | null>(null);
 
-  const { cells, monthLabels, maxSkips } = useMemo(() => {
+  const { cells, monthLabels } = useMemo(() => {
     // Bygg et grid bakover fra i dag, 53 uker.
     //
     // Feil vi fikset: den gamle koden beregnet startDay som
@@ -71,7 +72,6 @@ export function SkipHeatmap({ daily }: Props) {
       row: number;
     }> = [];
 
-    let maxSkips = 1;
     const monthPos: Array<{ month: number; col: number }> = [];
     let lastMonth = -1;
 
@@ -84,7 +84,6 @@ export function SkipHeatmap({ daily }: Props) {
         // Bruk Oslo-tidssone for å matche backend sin DATE(...AT TIME ZONE 'Europe/Oslo')
         const key = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Oslo" }).format(date);
         const stats = daily[key] ?? { skips: 0, plays: 0 };
-        if (stats.skips > maxSkips) maxSkips = stats.skips;
 
         cells.push({ date: key, skips: stats.skips, plays: stats.plays, col: w, row: d });
 
@@ -96,7 +95,7 @@ export function SkipHeatmap({ daily }: Props) {
       }
     }
 
-    return { cells, monthLabels: monthPos, maxSkips };
+    return { cells, monthLabels: monthPos };
   }, [daily]);
 
   const width = WEEKS * STEP;
@@ -156,7 +155,7 @@ export function SkipHeatmap({ daily }: Props) {
                   width={CELL}
                   height={CELL}
                   rx={2}
-                  fill={getColor(c.skips, c.plays, maxSkips)}
+                  fill={getColor(c.skips, c.plays)}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: (c.col * 7 + c.row) * 0.0005 }}
