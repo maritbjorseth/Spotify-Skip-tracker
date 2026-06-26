@@ -103,6 +103,8 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
     return {
       name: a.artists.includes(",") ? first + " m.fl." : first,
       skip: a.skip_count,
+      rate: ratePct,
+      plays: a.play_count,
       label: `${a.skip_count} skips (${ratePct}%)`,
     };
   });
@@ -123,11 +125,11 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
             <YAxis type="category" dataKey="name" hide />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
             <Bar dataKey="skip" radius={[0, 4, 4, 0]} barSize={22}>
-              {data.map((_, i) => (
+              {data.map((d, i) => (
                 <Cell
                   key={i}
-                  fill={C.neutral}
-                  fillOpacity={1 - i * 0.06}
+                  fill={skipRateColor(d.rate, d.plays)}
+                  fillOpacity={0.9 - i * 0.04}
                 />
               ))}
               {/* Artistnavn rendres rett over sin søyle */}
