@@ -103,17 +103,17 @@ function Pagination({
       <button
         disabled={page <= 1}
         onClick={() => onPage(page - 1)}
-        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 enabled:hover:border-[#444] transition-colors"
+        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 disabled:cursor-default enabled:hover:border-[#444] enabled:cursor-pointer transition-colors"
       >
         ← Forrige
       </button>
-        <span className="text-sm text-[#888]">
+      <span className="text-sm text-[#888]">
         Side {page} av {totalPages} ({total})
       </span>
       <button
         disabled={page >= totalPages}
         onClick={() => onPage(page + 1)}
-        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 enabled:hover:border-[#444] transition-colors"
+        className="rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] px-3 py-1.5 text-sm text-[#ccc] disabled:opacity-30 disabled:cursor-default enabled:hover:border-[#444] enabled:cursor-pointer transition-colors"
       >
         Neste →
       </button>
@@ -274,9 +274,9 @@ export function SkippedTable({
                       {t.context_name ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-sm font-bold text-[#ff6b35]">{t.skip_count}</span>
+                      <span className="text-sm font-bold text-[#ff6b35] tabular-nums">{t.skip_count}</span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#999] text-right">
+                    <td className="px-4 py-3 text-sm text-[#999] text-right tabular-nums">
                       {t.play_count}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -329,7 +329,7 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
                 <td className="px-4 py-3 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
                 <td className="px-4 py-3 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-3 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
-                <td className="px-4 py-3 text-sm text-[#4a9eff] font-semibold text-right">{t.play_count}</td>
+                <td className="px-4 py-3 text-sm text-[#4a9eff] font-semibold text-right tabular-nums">{t.play_count}</td>
                 <td className="px-4 py-3 text-right"><SkipBadge rate={t.skip_rate} /></td>
               </tr>
             ))}
@@ -371,7 +371,7 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
                 <td className="px-4 py-3 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
                 <td className="px-4 py-3 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
                 <td className="px-4 py-3 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
-                <td className="px-4 py-3 text-sm text-[#1db954] font-semibold text-right">{t.play_count}</td>
+                <td className="px-4 py-3 text-sm text-[#1db954] font-semibold text-right tabular-nums">{t.play_count}</td>
                 <td className="px-4 py-3 text-right"><SkipBadge rate={t.skip_rate} /></td>
               </tr>
             ))}
@@ -501,7 +501,7 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
               <tr key={a.artists} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
                 <td className="px-3 py-3 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
                 <td className="px-4 py-3 text-sm font-medium">{a.artists}</td>
-                <td className="px-4 py-3 text-sm text-[#4a9eff] font-semibold text-right">{a.play_count}</td>
+                <td className="px-4 py-3 text-sm text-[#4a9eff] font-semibold text-right tabular-nums">{a.play_count}</td>
                 <td className="px-4 py-3 text-right"><SkipBadge rate={a.skip_rate} /></td>
               </tr>
             ))}

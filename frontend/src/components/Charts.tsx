@@ -223,7 +223,7 @@ function ContextDrillDown({
           </p>
           <button
             onClick={onClose}
-            className="shrink-0 text-[#666] hover:text-[#bbb] transition-colors text-sm leading-none px-1"
+            className="shrink-0 text-[#666] hover:text-[#bbb] transition-colors text-sm leading-none px-1 cursor-pointer"
             aria-label="Lukk"
           >
             ✕
@@ -350,7 +350,7 @@ export function ContextChart({
             key={id}
             onClick={() => handleFilterChange(id)}
             className={[
-              "rounded-md border px-3 py-1 text-xs font-medium transition-all duration-150",
+              "rounded-md border px-3 py-1 text-xs font-medium transition-all duration-150 cursor-pointer",
               filter === id
                 ? "border-[#1db954] bg-[#1db95420] text-[#1db954]"
                 : "border-[#2e2e2e] bg-[#1c1c1c] text-[#666] hover:border-[#555] hover:text-[#aaa]",

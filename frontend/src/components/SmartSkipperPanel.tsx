@@ -120,7 +120,7 @@ function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
                   {r.artists ?? "—"}
                 </td>
                 <td className="px-4 py-4 text-right">
-                  <span className="text-sm font-semibold text-[#f97316]">
+                  <span className="text-sm font-semibold text-[#f97316] tabular-nums">
                     {r.skip_rate != null
                       ? `${Math.round(r.skip_rate * 100)}%`
                       : "—"}

@@ -170,8 +170,18 @@ export function SkipTrendChart({
         <h2 className="text-sm font-semibold uppercase tracking-widest text-[#888] mb-3">
           Skip-rate over tid
         </h2>
-        <div className="flex items-center justify-center h-[100px] text-xs text-[#777] italic">
-          Trenger minst 3 ukers data for å vise trenden.
+        <div className="flex flex-col items-center justify-center h-[140px] gap-2.5">
+          <svg
+            width="28" height="28" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="1.4"
+            strokeLinecap="round" strokeLinejoin="round"
+            className="text-[#333]"
+            aria-hidden="true"
+          >
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <p className="text-sm text-[#555] font-medium">Ikke nok data ennå</p>
+          <p className="text-xs text-[#444]">Trenger minst 3 ukers registrert aktivitet</p>
         </div>
       </div>
     );
