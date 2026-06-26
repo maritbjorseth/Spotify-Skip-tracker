@@ -59,18 +59,36 @@ body {
  * Denne teknikken er spek-kompatibel og påvirker ikke andre elementer.
  */
 
-/* Undertrykk nettleserens native ring og tap-highlight på Recharts-SVG.
- * -webkit-tap-highlight-color fjerner den blå tap-glow på macOS Chrome/Safari
- * som oppstår uavhengig av CSS outline-regler. */
+/* Recharts z-indeks-portallag
+ *
+ * ZIndexPortal.js i Recharts setter tabIndex="-1" på <g>-elementene som brukes
+ * som React-portalanker for z-indeksering (klasse "recharts-zIndex-layer_N").
+ * Kommentaren i kildekoden sier "these g elements should not be tabbable".
+ *
+ * tabIndex="-1" forhindrer Tab-navigasjon, men gjør elementene fokuserbare
+ * ved museklikk. Nettleseren bruker da outline: auto med currentColor
+ * (arvet fra body: color = #eeeeee), noe som gir den synlige hvite rammen.
+ *
+ * Disse <g>-elementene er rene portalbeholdere — ikke interaktive kontroller.
+ * Det er trygt å fjerne fokusringen uten å bryte tilgjengelighet.
+ */
+.recharts-surface g[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* Undertrykk i tillegg nettleserens tap-highlight på rotflaten.
+ * -webkit-tap-highlight-color styrer den blå glow som oppstår
+ * uavhengig av CSS outline-regler på macOS Chrome/Safari. */
 .recharts-surface {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Rot-SVG-en skal heller ikke vise nettleserens ring */
 .recharts-surface:focus {
   outline: none;
 }
 
-/* Vis tematilpasset ring kun under tastaturnavigasjon (Tab) */
+/* Tastaturnavigasjon: vis tematilpasset ring på rot-SVG ved Tab */
 body:not([data-pointer]) .recharts-surface:focus {
   outline: 2px solid var(--color-green);
   outline-offset: 3px;
