@@ -97,8 +97,8 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 // ---------------------------------------------------------------------------
 
 export function ArtistChart({ artists }: { artists: Artist[] }) {
-  // Behold sortering DESC (høyest skip-rate først = data[0]).
-  // YAxis har reversed={true} slik at data[0] vises øverst — Recharts sin løsning.
+  // Sort DESC (høyest skip-rate først = data[0]).
+  // Recharts layout="vertical" rendrer data[0] øverst som standard — ingen reversed nødvendig.
   const data = [...artists]
     .sort((a, b) => b.skip_rate - a.skip_rate)
     .map((a) => {
@@ -126,7 +126,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
             margin={{ top: 16, right: 112, bottom: 16, left: 16 }}
           >
             <XAxis type="number" domain={[0, 100]} hide />
-            <YAxis type="category" dataKey="name" hide reversed />
+            <YAxis type="category" dataKey="name" hide />
             <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08" }} />
             <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={22}>
               {data.map((d, i) => (
