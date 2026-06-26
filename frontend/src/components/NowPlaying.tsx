@@ -61,7 +61,7 @@ export function NowPlaying() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-4 rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-8"
+          className="flex items-center gap-4 rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-4"
         >
           {/* Albumcover med pulserende ring */}
           <div className="relative flex-shrink-0">
