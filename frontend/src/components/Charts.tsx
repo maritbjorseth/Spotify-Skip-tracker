@@ -208,7 +208,7 @@ export function ContextChart({
     label: `${Math.round(c.skip_rate * 100)}%`,
   }));
 
-  const chartHeight = Math.max(200, data.length * 40);
+  const chartHeight = Math.max(160, data.length * 34);
 
   return (
     <ChartCard title="Høyest skip-rate per spilleliste/album">
@@ -236,15 +236,8 @@ export function ContextChart({
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={chartHeight}>
-          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 120, bottom: 4, left: 8 }}>
-            <XAxis
-              type="number"
-              domain={[0, 100]}
-              tick={TICK_STYLE}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v: number) => `${v}%`}
-            />
+          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 100, bottom: 0, left: 8 }}>
+            <XAxis type="number" domain={[0, 100]} hide />
             <YAxis
               type="category"
               dataKey="name"
@@ -256,7 +249,7 @@ export function ContextChart({
               tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 17) + "…" : v}
             />
             <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08" }} />
-            <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={20}>
+            <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={18}>
               {data.map((d, i) => (
                 <Cell
                   key={i}
