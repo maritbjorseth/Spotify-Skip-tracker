@@ -100,7 +100,7 @@ export function SkipHeatmap({ daily }: Props) {
   const height = 7 * STEP;
 
   return (
-    <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-6 mb-8">
+    <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-4">
       <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest mb-4 flex items-center gap-1.5">
         Skip-aktivitet siste år
         <span
