@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import type { JanitorCandidate, JanitorCategory } from "../types";
 import { AlgorithmTooltip } from "./AlgorithmTooltip";
+import { skipRateColor } from "../theme";
 
 const JANITOR_EXPLANATION =
   "Playlist Janitor analyserer spillelistene dine og rangerer sanger etter en kombinasjon av " +
@@ -31,24 +32,18 @@ const TAB_ORDER: JanitorCategory[] = ["Remove", "Candidate", "Watchlist"];
 // ---------------------------------------------------------------------------
 
 function skipRateLabel(pct: number): string {
-  if (pct >= 90) return "Svært høy skip-rate";
-  if (pct >= 75) return "Høy skip-rate";
-  if (pct >= 60) return "Moderat skip-rate";
+  if (pct >= 50) return "Høy skip-rate";
+  if (pct >= 25) return "Moderat skip-rate";
   return "Lav skip-rate";
 }
 
 function SkipRateBadge({ rate }: { rate: number }) {
   const pct = Math.round(rate * 100);
-  let bg: string;
-  let fg: string;
-  if (pct >= 90)      { bg = "#ef444422"; fg = "#ef4444"; }
-  else if (pct >= 75) { bg = "#f9731622"; fg = "#f97316"; }
-  else if (pct >= 60) { bg = "#eab30822"; fg = "#eab308"; }
-  else                { bg = "#1db95422"; fg = "#1db954"; }
+  const fg  = skipRateColor(pct);
   return (
     <span
       className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
-      style={{ background: bg, color: fg }}
+      style={{ background: fg + "22", color: fg }}
       title={`${pct}% — ${skipRateLabel(pct)}`}
     >
       {pct}%

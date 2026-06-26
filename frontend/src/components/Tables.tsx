@@ -1,34 +1,25 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Track, Artist, AutoSkipCandidate } from "../types";
+import { skipRateColor } from "../theme";
 
 // ---------------------------------------------------------------------------
 // Hjelpefunksjoner
 // ---------------------------------------------------------------------------
 
-function skipBadgeColor(rate: number): { bg: string; fg: string } {
-  if (rate < 0.1)  return { bg: "#1db95422", fg: "#1db954" };
-  if (rate < 0.3)  return { bg: "#8bc34a22", fg: "#8bc34a" };
-  if (rate < 0.5)  return { bg: "#ffc10722", fg: "#ffc107" };
-  if (rate < 0.8)  return { bg: "#ff6b3522", fg: "#ff6b35" };
-  return             { bg: "#ef444422", fg: "#ef4444" };
-}
-
 function skipRateLabel(rate: number): string {
-  if (rate < 0.1) return "Svært lav skip-rate";
-  if (rate < 0.3) return "Lav skip-rate";
-  if (rate < 0.5) return "Moderat skip-rate";
-  if (rate < 0.8) return "Høy skip-rate";
-  return "Svært høy skip-rate";
+  if (rate < 0.25) return "Lav skip-rate";
+  if (rate < 0.5)  return "Moderat skip-rate";
+  return "Høy skip-rate";
 }
 
 function SkipBadge({ rate }: { rate: number }) {
   const pct = Math.round(rate * 100);
-  const { bg, fg } = skipBadgeColor(rate);
+  const fg  = skipRateColor(pct);
   return (
     <span
       className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
-      style={{ background: bg, color: fg }}
+      style={{ background: fg + "22", color: fg }}
       title={`${pct}% — ${skipRateLabel(rate)}`}
     >
       {pct}%
