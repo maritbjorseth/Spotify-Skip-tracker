@@ -116,6 +116,14 @@ export default function App() {
     enabled: authData?.authenticated === true,
   });
 
+  // Brukes kun for å gate "Musikkcoach"-divider — React Query deduper requesten
+  const { data: scoreData } = useQuery({
+    queryKey: ["listeningScore"],
+    queryFn: api.listeningScore,
+    staleTime: 60_000,
+    enabled: authData?.authenticated === true,
+  });
+
   const { visible, toggle } = useSectionVisibility();
 
   const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayRateChart"].some((id) => visible[id]);
@@ -250,10 +258,14 @@ export default function App() {
               </div>
             )}
 
-            {/* Musikkcoach — lyttescore + innsiktskort */}
-            <SectionDivider label="Musikkcoach" />
-            <ListeningScorePanel />
-            <CoachInsightsPanel />
+            {/* Musikkcoach — lyttescore + innsiktskort (vises kun når score-data er tilgjengelig) */}
+            {scoreData && (
+              <>
+                <SectionDivider label="Musikkcoach" />
+                <ListeningScorePanel />
+                <CoachInsightsPanel />
+              </>
+            )}
 
             {/* Smart Skipper — kontrollpanel + forhåndsvisning */}
             <SectionDivider label="Smart Skipper" />
