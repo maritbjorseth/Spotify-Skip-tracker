@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import type { JanitorCandidate, JanitorCategory } from "../types";
@@ -102,6 +102,14 @@ function TrackRow({
   isRemoving: boolean;
 }) {
   const cfg = CATEGORY_CONFIG[candidate.category];
+  const [confirming, setConfirming] = useState(false);
+
+  const handleRemoveClick = useCallback(() => setConfirming(true), []);
+  const handleCancel      = useCallback(() => setConfirming(false), []);
+  const handleConfirm     = useCallback(() => {
+    setConfirming(false);
+    onRemove(candidate.playlist_id, candidate.uri);
+  }, [candidate.playlist_id, candidate.uri, onRemove]);
 
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[#1e1e1e] last:border-b-0 hover:bg-white/[0.02] transition-colors">
@@ -136,26 +144,47 @@ function TrackRow({
 
       {/* Fjern-knapp — kun for Remove og Candidate */}
       {cfg.canRemove ? (
-        <button
-          type="button"
-          disabled={isRemoving}
-          onClick={() => {
-            if (window.confirm("Fjerne sangen permanent fra spillelisten?")) {
-              onRemove(candidate.playlist_id, candidate.uri);
-            }
-          }}
-          className="flex-shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150
-            border border-red-900/50 bg-red-900/10 text-red-400
-            hover:bg-red-900/25 hover:border-red-700/70 hover:text-red-300
-            active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-          {isRemoving ? "…" : "Fjern"}
-        </button>
+        confirming ? (
+          /* Inline bekreftelse — erstatter window.confirm() */
+          <div className="flex-shrink-0 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={isRemoving}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-150
+                border border-red-700/70 bg-red-900/25 text-red-300
+                hover:bg-red-900/40 active:scale-95 disabled:opacity-40"
+            >
+              {isRemoving ? "…" : "Bekreft"}
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-150
+                border border-[#333] bg-[#1c1c1c] text-[#888]
+                hover:border-[#555] hover:text-[#bbb] active:scale-95"
+            >
+              Avbryt
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={isRemoving}
+            onClick={handleRemoveClick}
+            className="flex-shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150
+              border border-red-900/50 bg-red-900/10 text-red-400
+              hover:bg-red-900/25 hover:border-red-700/70 hover:text-red-300
+              active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            {isRemoving ? "…" : "Fjern"}
+          </button>
+        )
       ) : (
         <div className="flex-shrink-0 w-[72px]" />
       )}
