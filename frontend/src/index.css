@@ -45,23 +45,27 @@ body {
 }
 
 /*
- * SVG-fokusring (Recharts-grafer)
+ * Recharts-fokusring — input-mode-styrt
  *
- * Recharts legger tabIndex=0 på <svg> for tastaturnavigasjon. Nettleseren
- * viser da sin native fokusring ved *alle* fokuseringer — inkludert museklikk —
- * noe som ser forstyrrende ut i dark mode.
+ * Recharts v3 rendrer <svg class="recharts-surface" role="application" tabIndex=0>.
+ * CSS :focus-visible fungerer ikke for SVG-noder: Chrome sin heuristikk
+ * gjelder kun HTMLElement og returnerer alltid true for SVG, uavhengig av
+ * om fokus kom fra mus eller tastatur.
  *
- * :focus:not(:focus-visible)  → kom fra mus/peker → ingen ring
- * :focus-visible               → kom fra tastatur  → tematilpasset ring
+ * Løsning bruker data-pointer-attributtet som settes av JS i main.tsx:
+ *   [data-pointer] → peker-interaksjon → ingen ring
+ *   (ingen data-pointer) → tastaturnavigasjon → tematilpasset ring
  *
- * Dette er standard WCAG-kompatibel teknikk for å skille
- * mus- og tastaturinteraksjon.
+ * Denne teknikken er spek-kompatibel og påvirker ikke andre elementer.
  */
-svg:focus:not(:focus-visible) {
+
+/* Undertrykk alltid nettleserens native ring på Recharts-SVG */
+.recharts-surface:focus {
   outline: none;
 }
 
-svg:focus-visible {
+/* Vis tematilpasset ring kun under tastaturnavigasjon (Tab) */
+body:not([data-pointer]) .recharts-surface:focus {
   outline: 2px solid var(--color-green);
   outline-offset: 3px;
   border-radius: 4px;
