@@ -59,7 +59,13 @@ body {
  * Denne teknikken er spek-kompatibel og påvirker ikke andre elementer.
  */
 
-/* Undertrykk alltid nettleserens native ring på Recharts-SVG */
+/* Undertrykk nettleserens native ring og tap-highlight på Recharts-SVG.
+ * -webkit-tap-highlight-color fjerner den blå tap-glow på macOS Chrome/Safari
+ * som oppstår uavhengig av CSS outline-regler. */
+.recharts-surface {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .recharts-surface:focus {
   outline: none;
 }

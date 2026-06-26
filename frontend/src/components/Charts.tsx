@@ -132,7 +132,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
           >
             <XAxis type="number" domain={[0, 100]} hide />
             <YAxis type="category" dataKey="name" hide />
-            <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08" }} />
+            <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08", stroke: "none" }} />
             <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={22}>
               {data.map((d, i) => (
                 <Cell
@@ -383,7 +383,7 @@ export function ContextChart({
               dx={-132}
               tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 17) + "…" : v}
             />
-            <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08" }} />
+            <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08", stroke: "none" }} />
             <Bar
               dataKey="rate"
               radius={[0, 4, 4, 0]}
@@ -457,7 +457,7 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
             tickFormatter={(v: string) => v.split(":")[0]}
           />
           <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08", stroke: "none" }} />
           <Bar dataKey="skip" name="Skip" radius={[3, 3, 0, 0]}>
             {data.map((_, i) => (
               <Cell key={i} fill={C.neutral} fillOpacity={0.85} />
@@ -496,7 +496,7 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
         <BarChart data={data} margin={{ left: -16, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />
           <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08", stroke: "none" }} />
           <Bar dataKey="skip" name="Skip" radius={[3, 3, 0, 0]}>
             {data.map((_, i) => (
               <Cell key={i} fill={C.neutral} fillOpacity={0.85} />
@@ -541,7 +541,7 @@ export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
             tickFormatter={(v: number) => `${v}%`}
             width={34}
           />
-          <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08" }} />
+          <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08", stroke: "none" }} />
           <Bar dataKey="rate" name="Skip-rate" radius={[3, 3, 0, 0]}>
             {data.map((d, i) => (
               <Cell
@@ -585,7 +585,7 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
             tickFormatter={(v: number) => `${v}%`}
             width={34}
           />
-          <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08" }} />
+          <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08", stroke: "none" }} />
           <Bar dataKey="rate" name="Skip-rate" radius={[3, 3, 0, 0]}>
             {data.map((d, i) => (
               <Cell

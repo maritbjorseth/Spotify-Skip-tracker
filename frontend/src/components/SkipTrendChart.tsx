@@ -235,7 +235,7 @@ export function SkipTrendChart({
             tickLine={false}
             width={34}
           />
-          <Tooltip content={<TrendTooltip />} cursor={{ fill: "#ffffff06" }} />
+          <Tooltip content={<TrendTooltip />} cursor={{ fill: "#ffffff06", stroke: "none" }} />
 
           {/* Totalsnitt-referanselinje */}
           <ReferenceLine
