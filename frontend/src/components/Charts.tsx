@@ -102,17 +102,17 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
     const ratePct = Math.round(a.skip_rate * 100);
     return {
       name: a.artists.includes(",") ? first + " m.fl." : first,
-      skip: a.skip_count,
+      skips: a.skip_count,
       rate: ratePct,
       plays: a.play_count,
-      label: `${a.skip_count} skips (${ratePct}%)`,
+      label: `${ratePct}% (${a.skip_count} skip)`,
     };
   });
 
   const chartHeight = Math.max(240, data.length * 48);
 
   return (
-    <ChartCard title="Mest skippede artister" subtitle="Artister du har lavest tålmodighet for.">
+    <ChartCard title="Mest skippede artister" subtitle="Rangert etter skip-rate (min. 5 avspillinger).">
       <div style={{ height: chartHeight + 64 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -121,10 +121,10 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
             barCategoryGap="35%"
             margin={{ top: 16, right: 112, bottom: 16, left: 16 }}
           >
-            <XAxis type="number" hide />
+            <XAxis type="number" domain={[0, 100]} hide />
             <YAxis type="category" dataKey="name" hide />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
-            <Bar dataKey="skip" radius={[0, 4, 4, 0]} barSize={22}>
+            <Tooltip content={<RateTooltip />} cursor={{ fill: "#ffffff08" }} />
+            <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={22}>
               {data.map((d, i) => (
                 <Cell
                   key={i}
@@ -153,7 +153,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
                   );
                 }}
               />
-              {/* Skip-teller til høyre for søylen */}
+              {/* Skip-rate til høyre for søylen */}
               <LabelList
                 dataKey="label"
                 position="right"

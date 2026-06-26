@@ -14,14 +14,14 @@ const MONTH_NAMES = [
 const DAY_LABELS = ["", "man", "", "ons", "", "fre", ""];
 
 // plays = 0  →  ingen data registrert (mørkt nøytralt)
-// plays > 0, skips = 0  →  aktiv lytting uten skip (subtilt blå-grått tint)
-// skips > 0  →  amber → rød etter intensitet (konsistent med skipRateColor)
+// plays > 0, skips = 0  →  aktiv lytting uten skip (grønn — konsistent med skipRateColor)
+// skips > 0  →  gul → oransje → rød etter intensitet (grønn=bra, rød=dårlig)
 function getColor(skips: number, plays: number, maxSkips: number): string {
   if (plays === 0) return "#1a1a1a";
-  if (skips === 0)  return "#1a2535";
+  if (skips === 0)  return "#1db954";
   const t = Math.min(1, skips / Math.max(maxSkips * 0.6, 1));
-  if (t < 0.33) return "#78350f";
-  if (t < 0.66) return "#f59e0b";
+  if (t < 0.33) return "#eab308";
+  if (t < 0.66) return "#f97316";
   if (t < 0.85) return "#ef4444";
   return "#dc2626";
 }
@@ -195,11 +195,11 @@ export function SkipHeatmap({ daily }: Props) {
 
       {/* Fargelegende */}
       <div className="flex items-center gap-2 mt-4 text-[#888] text-xs">
-        <span>Færre</span>
-        {["#1a1a1a", "#1a2535", "#78350f", "#f59e0b", "#ef4444"].map((c) => (
+        <span>Ingen data</span>
+        {["#1a1a1a", "#1db954", "#eab308", "#f97316", "#ef4444"].map((c) => (
           <div key={c} className="w-3 h-3 rounded-sm" style={{ background: c }} />
         ))}
-        <span>Flere skip</span>
+        <span>Mange skip</span>
       </div>
     </div>
   );

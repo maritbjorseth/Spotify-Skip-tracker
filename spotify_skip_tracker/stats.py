@@ -278,8 +278,9 @@ def _compute(conn, user_id: str) -> dict:
         WHERE user_id = %s
           AND artists IS NOT NULL AND artists != ''
         GROUP BY artists
-        HAVING SUM(CASE WHEN skipped THEN 1 ELSE 0 END) > 0
-        ORDER BY skip_count DESC
+        HAVING COUNT(*) >= 5
+          AND SUM(CASE WHEN skipped THEN 1 ELSE 0 END) > 0
+        ORDER BY (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) DESC
         LIMIT 10
         """,
         (user_id,),
