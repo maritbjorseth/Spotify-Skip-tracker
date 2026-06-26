@@ -100,7 +100,11 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
   // Sort DESC (høyest skip-rate først = data[0]).
   // Recharts layout="vertical" rendrer data[0] øverst som standard — ingen reversed nødvendig.
   const data = [...artists]
-    .sort((a, b) => b.skip_rate - a.skip_rate)
+    .sort((a, b) =>
+      b.skip_rate - a.skip_rate ||          // 1. skip-rate DESC
+      b.skip_count - a.skip_count ||        // 2. antall skips DESC
+      a.artists.localeCompare(b.artists, "nb") // 3. artistnavn A–Å
+    )
     .map((a) => {
       const first = a.artists.split(",")[0].trim();
       const ratePct = Math.round(a.skip_rate * 100);
