@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
+import { skipRateColor } from "../theme";
 
 function formatMs(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -102,13 +103,15 @@ export function NowPlaying() {
                 <span
                   className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full"
                   style={{
-                    background: data.skip_rate >= 0.5 ? "#ff6b3520" : "#1db95420",
-                    color: data.skip_rate >= 0.5 ? "#ff6b35" : "#1db954",
+                    color: skipRateColor(Math.round(data.skip_rate * 100)),
+                    background: skipRateColor(Math.round(data.skip_rate * 100)) + "20",
                   }}
                   title={
-                    data.skip_rate >= 0.5
+                    data.skip_rate > 0.5
                       ? "Du hopper vanligvis over denne sangen"
-                      : "Du hører vanligvis denne sangen ferdig"
+                      : data.skip_rate > 0.25
+                        ? "Du hopper av og til over denne sangen"
+                        : "Du hører vanligvis denne sangen ferdig"
                   }
                 >
                   {Math.round(data.skip_rate * 100)}% skip-rate
