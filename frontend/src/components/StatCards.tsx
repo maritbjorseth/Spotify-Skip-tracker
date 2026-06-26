@@ -182,7 +182,7 @@ export function StatCardsRow({
         icon={<IconSkipForward className="w-5 h-5 text-[#6b7280]" />}
         label="Totalt skippet"
         value={totalSkips}
-        color="#aaa"
+        color="#eeeeee"
         tooltip="Totalt antall sanger du har skippet siden tracking startet."
       />
       <StatCard
