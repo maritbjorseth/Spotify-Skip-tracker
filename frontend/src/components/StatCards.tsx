@@ -177,7 +177,7 @@ export function StatCardsRow({
   const rateColor = skipRateColor(skipRate, totalPlays);
 
   return (
-    <div className="flex gap-4 flex-wrap mb-16">
+    <div className="flex gap-4 flex-wrap mb-6">
       <StatCard
         icon={<IconSkipForward className="w-5 h-5 text-[#6b7280]" />}
         label="Totalt skippet"
