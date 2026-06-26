@@ -21,6 +21,7 @@ Prioritert etter brukerverdi. Basert på design-audit av hele frontend (juni 202
 | 11 | Tabellrader py-5 → py-3 (tettere, konsistent med kort) | `50a5853` |
 | 12 | NowPlaying skip-rate: 3 nivåer via skipRateColor() | `9532cc9` |
 | 13 | ContextChart filter-aktiv: orange → Spotify-grønn | `581a499` |
+| 14 | Heatmap: amber/rød for skips, blågrå for 0-skips-dager, skiller ingen-data vs aktiv dag | `ec2beee` |
 
 ---
 
@@ -41,8 +42,8 @@ Viktige forbedringer, men ikke blokkerende for lansering.
 | ~~8~~ | ~~Betingede SectionDividers for Musikkcoach/Smart Skipper~~ | ✅ Ferdig (#10) |
 | 9 | Felles `<EmptyState>`-komponent for alle tomtilstander | `Tables.tsx`, `SmartSkipperPanel.tsx` |
 | 10 | Laste-tilstander: skeleton/spinner for Score og Insights | `ListeningScorePanel.tsx`, `CoachInsightsPanel.tsx` |
-| 11 | Heatmap: semantisk riktig fargeskala (mer skips = rød, ikke grønn) | `SkipHeatmap.tsx:16` |
-| 12 | Heatmap: skill mellom "0 skips" og "ingen data"-celler | `SkipHeatmap.tsx` |
+| ~~11~~ | ~~Heatmap: semantisk riktig fargeskala~~ | ✅ Ferdig (#14) |
+| ~~12~~ | ~~Heatmap: skill mellom "0 skips" og "ingen data"-celler~~ | ✅ Ferdig (#14) |
 | ~~13~~ | ~~Tabellrader: `py-5` → `py-3`~~ | ✅ Ferdig (#11) |
 | ~~14~~ | ~~NowPlaying skip-rate: 2 nivåer → 3~~ | ✅ Ferdig (#12) |
 | ~~15~~ | ~~ContextChart filter-aktiv: orange → Spotify-grønn~~ | ✅ Ferdig (#13) |
