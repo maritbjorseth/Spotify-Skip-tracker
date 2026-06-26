@@ -44,6 +44,29 @@ body {
   background: var(--color-muted);
 }
 
+/*
+ * SVG-fokusring (Recharts-grafer)
+ *
+ * Recharts legger tabIndex=0 på <svg> for tastaturnavigasjon. Nettleseren
+ * viser da sin native fokusring ved *alle* fokuseringer — inkludert museklikk —
+ * noe som ser forstyrrende ut i dark mode.
+ *
+ * :focus:not(:focus-visible)  → kom fra mus/peker → ingen ring
+ * :focus-visible               → kom fra tastatur  → tematilpasset ring
+ *
+ * Dette er standard WCAG-kompatibel teknikk for å skille
+ * mus- og tastaturinteraksjon.
+ */
+svg:focus:not(:focus-visible) {
+  outline: none;
+}
+
+svg:focus-visible {
+  outline: 2px solid var(--color-green);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 /* Backup: klassen brukes ikke lenger direkte på <img>, men beholdes for
    eventuelle fremtidige brukstilfeller. Beholderen (.album-thumb-box)
    styres nå utelukkende via inline-stiler i Tables.tsx. */
