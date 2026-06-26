@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -10,7 +11,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import type { Artist, Context, HourlyStats, WeekdayStats } from "../types";
+import type { Artist, Context, HourlyStats, WeekdayStats, Track } from "../types";
 import { C, skipRateColor } from "../theme";
 
 // ---------------------------------------------------------------------------
@@ -187,16 +188,125 @@ const FILTER_BUTTONS: { id: ContextFilter; label: string }[] = [
   { id: "all",      label: "Alle" },
 ];
 
+// ---------------------------------------------------------------------------
+// Drill-down: sanger i valgt kontekst
+// ---------------------------------------------------------------------------
+
+function ContextDrillDown({
+  contextName,
+  tracks,
+  onClose,
+}: {
+  contextName: string;
+  tracks: Track[];
+  onClose: () => void;
+}) {
+  const MAX_VISIBLE = 6;
+  const contextTracks = tracks
+    .filter((t) => t.context_name === contextName)
+    .sort((a, b) => b.skip_rate - a.skip_rate);
+
+  return (
+    <motion.div
+      key="drilldown"
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2, ease: "easeInOut" }}
+      className="overflow-hidden"
+    >
+      <div className="border-t border-[#2a2a2a] mt-4 pt-3">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-[#bbb] truncate mr-2" title={contextName}>
+            {contextName.length > 30 ? contextName.slice(0, 29) + "…" : contextName}
+          </p>
+          <button
+            onClick={onClose}
+            className="shrink-0 text-[#666] hover:text-[#bbb] transition-colors text-sm leading-none px-1"
+            aria-label="Lukk"
+          >
+            ✕
+          </button>
+        </div>
+
+        {contextTracks.length === 0 ? (
+          <p className="text-xs text-[#777] italic py-2">
+            Ingen skippede sanger registrert her.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-col gap-0.5">
+              {contextTracks.slice(0, MAX_VISIBLE).map((t) => {
+                const ratePct = Math.round(t.skip_rate * 100);
+                return (
+                  <div
+                    key={t.uri}
+                    className="flex items-center gap-2.5 rounded-md px-1 py-1.5 hover:bg-[#202020] transition-colors"
+                  >
+                    {/* Albumcover */}
+                    {t.image_url ? (
+                      <img
+                        src={t.image_url}
+                        alt=""
+                        className="w-7 h-7 rounded object-cover shrink-0"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded bg-[#2a2a2a] shrink-0" />
+                    )}
+
+                    {/* Tittel + artist */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-[#ddd] truncate leading-tight">
+                        {t.title ?? "Ukjent tittel"}
+                      </p>
+                      <p className="text-[11px] text-[#666] truncate leading-tight">
+                        {t.artists ?? ""}
+                      </p>
+                    </div>
+
+                    {/* Skip-rate badge */}
+                    <span
+                      className="text-xs font-semibold tabular-nums shrink-0"
+                      style={{ color: skipRateColor(ratePct, t.play_count) }}
+                    >
+                      {ratePct}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {contextTracks.length > MAX_VISIBLE && (
+              <p className="text-[11px] text-[#666] mt-1.5 pl-1">
+                + {contextTracks.length - MAX_VISIBLE} til
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hoved­komponent
+// ---------------------------------------------------------------------------
+
 export function ContextChart({
   contexts,
   playlistContexts = [],
   albumContexts = [],
+  tracks = [],
 }: {
   contexts: Context[];
   playlistContexts?: string[];
   albumContexts?: string[];
+  tracks?: Track[];
 }) {
   const [filter, setFilter] = useState<ContextFilter>("playlist");
+  const [selectedContext, setSelectedContext] = useState<string | null>(null);
 
   const playlistSet = new Set(playlistContexts);
   const albumSet    = new Set(albumContexts);
@@ -218,6 +328,19 @@ export function ContextChart({
 
   const chartHeight = Math.max(160, data.length * 34);
 
+  // Nullstill valgt kontekst når filteret endres
+  const handleFilterChange = (newFilter: ContextFilter) => {
+    setFilter(newFilter);
+    setSelectedContext(null);
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleBarClick = (barData: any) => {
+    const name: string | undefined = barData?.name;
+    if (!name) return;
+    setSelectedContext((prev) => (prev === name ? null : name));
+  };
+
   return (
     <ChartCard title="Høyest skip-rate per spilleliste/album">
       {/* Filter-bryterrekke */}
@@ -225,7 +348,7 @@ export function ContextChart({
         {FILTER_BUTTONS.map(({ id, label }) => (
           <button
             key={id}
-            onClick={() => setFilter(id)}
+            onClick={() => handleFilterChange(id)}
             className={[
               "rounded-md border px-3 py-1 text-xs font-medium transition-all duration-150",
               filter === id
@@ -244,7 +367,11 @@ export function ContextChart({
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={chartHeight}>
-          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 100, bottom: 0, left: 8 }}>
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 4, right: 100, bottom: 0, left: 8 }}
+          >
             <XAxis type="number" domain={[0, 100]} hide />
             <YAxis
               type="category"
@@ -257,12 +384,22 @@ export function ContextChart({
               tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 17) + "…" : v}
             />
             <Tooltip content={<CustomTooltip suffix="%" />} cursor={{ fill: "#ffffff08" }} />
-            <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={18}>
+            <Bar
+              dataKey="rate"
+              radius={[0, 4, 4, 0]}
+              barSize={18}
+              cursor="pointer"
+              onClick={handleBarClick}
+            >
               {data.map((d, i) => (
                 <Cell
                   key={i}
                   fill={skipRateColor(d.rate, d.plays)}
-                  fillOpacity={0.9 - i * 0.04}
+                  fillOpacity={
+                    selectedContext === null || selectedContext === d.name
+                      ? 0.9 - i * 0.04
+                      : 0.25
+                  }
                 />
               ))}
               <LabelList
@@ -274,6 +411,17 @@ export function ContextChart({
           </BarChart>
         </ResponsiveContainer>
       )}
+
+      {/* Drill-down: sanger i valgt spilleliste/album */}
+      <AnimatePresence>
+        {selectedContext && (
+          <ContextDrillDown
+            contextName={selectedContext}
+            tracks={tracks}
+            onClose={() => setSelectedContext(null)}
+          />
+        )}
+      </AnimatePresence>
     </ChartCard>
   );
 }

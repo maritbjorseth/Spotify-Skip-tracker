@@ -248,6 +248,7 @@ export default function App() {
                       contexts={data.top_contexts}
                       playlistContexts={data.playlist_contexts ?? []}
                       albumContexts={data.album_contexts ?? []}
+                      tracks={data.tracks}
                     />
                   )}
                   {visible.hourChart && <HourlyChart hourly={data.hourly} />}
