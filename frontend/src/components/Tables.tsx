@@ -258,28 +258,28 @@ export function SkippedTable({
                     transition={{ duration: 0.15, delay: i * 0.02 }}
                     className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150"
                   >
-                    <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">
+                    <td className="px-3 py-3 text-right text-xs text-[#444] tabular-nums w-10">
                       {(page - 1) * PAGE + i + 1}
                     </td>
-                    <td className="px-4 py-5 w-14">
+                    <td className="px-4 py-3 w-14">
                       <AlbumThumb url={t.image_url} title={t.title} uri={t.uri} />
                     </td>
-                    <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>
+                    <td className="px-4 py-3 text-sm font-medium" title={t.title ?? undefined}>
                       {t.title ?? "—"}
                     </td>
-                    <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>
+                    <td className="px-4 py-3 text-sm text-[#999]" title={t.artists ?? undefined}>
                       {t.artists ?? "—"}
                     </td>
-                    <td className="px-4 py-5 text-sm text-[#777]" title={t.context_name ?? undefined}>
+                    <td className="px-4 py-3 text-sm text-[#777]" title={t.context_name ?? undefined}>
                       {t.context_name ?? "—"}
                     </td>
-                    <td className="px-4 py-5 text-right">
+                    <td className="px-4 py-3 text-right">
                       <span className="text-sm font-bold text-[#ff6b35]">{t.skip_count}</span>
                     </td>
-                    <td className="px-4 py-5 text-sm text-[#999] text-right">
+                    <td className="px-4 py-3 text-sm text-[#999] text-right">
                       {t.play_count}
                     </td>
-                    <td className="px-4 py-5 text-right">
+                    <td className="px-4 py-3 text-right">
                       <SkipBadge rate={t.skip_rate} />
                     </td>
                   </motion.tr>
@@ -323,14 +323,14 @@ export function MostPlayedTable({ tracks }: { tracks: Track[] }) {
           <tbody>
             {rows.map((t, i) => (
               <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
-                <td className="px-3 py-5 text-right text-xs text-[#777] tabular-nums w-10">
+                <td className="px-3 py-3 text-right text-xs text-[#777] tabular-nums w-10">
                   {(page - 1) * PAGE + i + 1}
                 </td>
-                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
-                <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
-                <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
-                <td className="px-4 py-5 text-sm text-[#4a9eff] font-semibold text-right">{t.play_count}</td>
-                <td className="px-4 py-5 text-right"><SkipBadge rate={t.skip_rate} /></td>
+                <td className="px-4 py-3 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
+                <td className="px-4 py-3 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
+                <td className="px-4 py-3 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
+                <td className="px-4 py-3 text-sm text-[#4a9eff] font-semibold text-right">{t.play_count}</td>
+                <td className="px-4 py-3 text-right"><SkipBadge rate={t.skip_rate} /></td>
               </tr>
             ))}
           </tbody>
@@ -367,12 +367,12 @@ export function MostCompletedTable({ tracks }: { tracks: Track[] }) {
           <tbody>
             {tracks.map((t, i) => (
               <tr key={t.uri} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
-                <td className="px-3 py-5 text-right text-xs text-[#777] tabular-nums w-10">{i + 1}</td>
-                <td className="px-4 py-5 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
-                <td className="px-4 py-5 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
-                <td className="px-4 py-5 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
-                <td className="px-4 py-5 text-sm text-[#1db954] font-semibold text-right">{t.play_count}</td>
-                <td className="px-4 py-5 text-right"><SkipBadge rate={t.skip_rate} /></td>
+                <td className="px-3 py-3 text-right text-xs text-[#777] tabular-nums w-10">{i + 1}</td>
+                <td className="px-4 py-3 w-14"><AlbumThumb url={t.image_url} title={t.title} uri={t.uri} /></td>
+                <td className="px-4 py-3 text-sm font-medium" title={t.title ?? undefined}>{t.title ?? "—"}</td>
+                <td className="px-4 py-3 text-sm text-[#999]" title={t.artists ?? undefined}>{t.artists ?? "—"}</td>
+                <td className="px-4 py-3 text-sm text-[#1db954] font-semibold text-right">{t.play_count}</td>
+                <td className="px-4 py-3 text-right"><SkipBadge rate={t.skip_rate} /></td>
               </tr>
             ))}
             {tracks.length === 0 && (
@@ -437,22 +437,22 @@ export function AutoSkipPreviewTable({
                   key={c.uri}
                   className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150"
                 >
-                  <td className="px-3 py-5 text-right text-xs text-[#777] tabular-nums w-10">
+                  <td className="px-3 py-3 text-right text-xs text-[#777] tabular-nums w-10">
                     {i + 1}
                   </td>
-                  <td className="px-4 py-5 w-14">
+                  <td className="px-4 py-3 w-14">
                     <AlbumThumb url={c.image_url} title={c.title} uri={c.uri} />
                   </td>
-                  <td className="px-4 py-5 text-sm font-medium" title={c.title ?? undefined}>
+                  <td className="px-4 py-3 text-sm font-medium" title={c.title ?? undefined}>
                     {c.title ?? "—"}
                   </td>
-                  <td className="px-4 py-5 text-sm text-[#999]" title={c.artists ?? undefined}>
+                  <td className="px-4 py-3 text-sm text-[#999]" title={c.artists ?? undefined}>
                     {c.artists ?? "—"}
                   </td>
-                  <td className="px-4 py-5 text-right">
+                  <td className="px-4 py-3 text-right">
                     <SkipBadge rate={c.skip_rate} />
                   </td>
-                  <td className="px-4 py-5 text-right">
+                  <td className="px-4 py-3 text-right">
                     <button
                       disabled
                       className="rounded-md px-3 py-1 text-xs font-medium cursor-not-allowed"
@@ -499,10 +499,10 @@ export function TopArtistsTable({ artists }: { artists: Artist[] }) {
           <tbody>
             {artists.map((a, i) => (
               <tr key={a.artists} className="border-t border-[#2a2a2a] hover:bg-white/[0.04] transition-colors duration-150">
-                <td className="px-3 py-5 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
-                <td className="px-4 py-5 text-sm font-medium">{a.artists}</td>
-                <td className="px-4 py-5 text-sm text-[#4a9eff] font-semibold text-right">{a.play_count}</td>
-                <td className="px-4 py-5 text-right"><SkipBadge rate={a.skip_rate} /></td>
+                <td className="px-3 py-3 text-right text-xs text-[#444] tabular-nums w-10">{i + 1}</td>
+                <td className="px-4 py-3 text-sm font-medium">{a.artists}</td>
+                <td className="px-4 py-3 text-sm text-[#4a9eff] font-semibold text-right">{a.play_count}</td>
+                <td className="px-4 py-3 text-right"><SkipBadge rate={a.skip_rate} /></td>
               </tr>
             ))}
             {artists.length === 0 && (
