@@ -221,7 +221,7 @@ export function ContextChart({
             className={[
               "rounded-md border px-3 py-1 text-xs font-medium transition-all duration-150",
               filter === id
-                ? "border-[#ff6b35] bg-[#ff6b3520] text-[#ff6b35]"
+                ? "border-[#1db954] bg-[#1db95420] text-[#1db954]"
                 : "border-[#2e2e2e] bg-[#1c1c1c] text-[#666] hover:border-[#555] hover:text-[#aaa]",
             ].join(" ")}
           >
