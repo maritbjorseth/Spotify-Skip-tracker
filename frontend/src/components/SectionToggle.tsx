@@ -9,6 +9,7 @@ export const SECTIONS = [
   { id: "hourChart", label: "Skips etter tidspunkt på døgnet" },
   { id: "weekdayRateChart", label: "Skip-rate per ukedag" },
   { id: "heatmap", label: "Skip-aktivitet siste år" },
+  { id: "trendChart", label: "Skip-rate over tid" },
   { id: "mostCompleted", label: "Nesten aldri skippet" },
   { id: "playlistJanitor", label: "Playlist Janitor" },
 ] as const;

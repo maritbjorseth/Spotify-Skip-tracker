@@ -11,6 +11,7 @@ import { CoachInsightsPanel } from "./components/CoachInsightsPanel";
 import { ListeningScorePanel } from "./components/ListeningScorePanel";
 import { LoginScreen } from "./components/LoginScreen";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayRateChart } from "./components/Charts";
+import { SkipTrendChart } from "./components/SkipTrendChart";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
 
 function SectionDivider({ label }: { label: string }) {
@@ -211,6 +212,11 @@ export default function App() {
               <div className="mb-4">
                 <SkipHeatmap daily={data.daily} />
               </div>
+            )}
+
+            {/* Skip-rate trend over tid */}
+            {visible.trendChart && (
+              <SkipTrendChart daily={data.daily} />
             )}
 
             {/* Mest skippede sanger */}
