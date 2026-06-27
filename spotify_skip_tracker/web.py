@@ -28,8 +28,12 @@ from flask_cors import CORS
 
 from .stats import compute_stats, compute_insight_stats, calculate_listening_score
 from .insights import generate_insights
-from .database import pooled_connection, execute
+from .database import (
+    pooled_connection, execute,
+    list_active_user_ids, upsert_user_token,
+)
 from .spotify_api import get_access_token, load_creds
+from .token_crypto import encrypt_token
 from .config import (
     SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
     REDIRECT_URI_WEB, FRONTEND_URL,
@@ -48,31 +52,51 @@ except FileNotFoundError:
     _DASHBOARD_HTML = "<h1>Dashboard ikke funnet</h1>"
 
 # ---------------------------------------------------------------------------
-# Spotify-bruker-ID (caches for hele prosessens levetid)
+# Eier-bruker-ID — brukt av passord-innlogging og åpen modus
 # ---------------------------------------------------------------------------
-
-_cached_user_id: str | None = None
-_user_id_lock = threading.Lock()
 
 # Sett med éngangskoder brukt for å hindre CSRF under web-OAuth-flyten.
 _oauth_states: set[str] = set()
 
+_owner_user_id_cache: str | None = None
+_owner_lock = threading.Lock()
 
-def _resolve_user_id() -> str:
-    """
-    Returnerer den innloggede brukerens Spotify-ID.
 
-    Kaller GET /v1/me første gang og cacher resultatet i minnet.
-    Faller trygt tilbake på 'default_user' dersom API-kallet feiler
-    (f.eks. ved nettverksproblemer eller manglende legitimasjon).
+def _get_owner_user_id() -> str:
     """
-    global _cached_user_id
-    if _cached_user_id is not None:
-        return _cached_user_id
-    with _user_id_lock:
-        # Dobbel sjekk inne i låsen
-        if _cached_user_id is not None:
-            return _cached_user_id
+    Returnerer eierens Spotify-bruker-ID for passord-innlogging og åpen modus.
+
+    Kaller aldri Spotify API direkte dersom DB-oppslaget lykkes. Resultatet
+    caches for prosessens levetid — eieren bytter ikke.
+
+    Prioritet:
+        1. In-memory cache (raskest)
+        2. user_tokens-tabellen (etter bootstrap-migrasjon fra Steg 1)
+        3. Spotify /v1/me med konfigurert legitimasjon (fallback, én gang)
+        4. 'default_user' (siste utvei med advarsel)
+    """
+    global _owner_user_id_cache
+    if _owner_user_id_cache is not None:
+        return _owner_user_id_cache
+
+    with _owner_lock:
+        if _owner_user_id_cache is not None:
+            return _owner_user_id_cache
+
+        # Prioritet 2: databasen (bootstrap-migrasjonen i Steg 1 la dette inn)
+        try:
+            with pooled_connection() as conn:
+                ids = list_active_user_ids(conn)
+                if ids:
+                    _owner_user_id_cache = ids[0]
+                    logger.info(
+                        "Eier-bruker-ID hentet fra DB: '%s'.", _owner_user_id_cache
+                    )
+                    return _owner_user_id_cache
+        except Exception as exc:
+            logger.warning("DB-oppslag for eier-ID feilet: %s", exc)
+
+        # Prioritet 3: Spotify API med konfigurert legitimasjon
         try:
             creds = load_creds()
             token = get_access_token(creds)
@@ -82,14 +106,39 @@ def _resolve_user_id() -> str:
                 timeout=10,
             )
             resp.raise_for_status()
-            _cached_user_id = resp.json().get("id") or "default_user"
-            logger.info("Spotify-bruker-ID cachet: '%s'.", _cached_user_id)
+            _owner_user_id_cache = resp.json().get("id") or "default_user"
+            logger.info(
+                "Eier-bruker-ID hentet fra Spotify API: '%s'.", _owner_user_id_cache
+            )
         except Exception as exc:
             logger.warning(
-                "Kunne ikke hente Spotify-bruker-ID: %s. Bruker 'default_user'.", exc
+                "Kunne ikke hente eier-bruker-ID: %s. Bruker 'default_user'.", exc
             )
-            _cached_user_id = "default_user"
-        return _cached_user_id
+            _owner_user_id_cache = "default_user"
+
+        return _owner_user_id_cache
+
+
+def _resolve_user_id() -> str:
+    """
+    Returnerer bruker-ID-en til den innloggede brukeren i denne requesten.
+
+    Leser fra session['user_id'] — satt av auth_callback() (Spotify OAuth)
+    eller auth_password() (passord-innlogging).
+
+    I åpen modus (DASHBOARD_PASSWORD ikke satt) faller tilbake på
+    _get_owner_user_id() slik at direkte API-kall uten forutgående
+    /api/auth/status-kall fortsatt fungerer.
+
+    Raises RuntimeError dersom bruker ikke er innlogget og modus krever det.
+    Skal i praksis aldri nås etter @require_auth-dekoratoren.
+    """
+    user_id = session.get("user_id")
+    if user_id:
+        return user_id
+    if DASHBOARD_PASSWORD is None:
+        return _get_owner_user_id()
+    raise RuntimeError("Ikke innlogget — user_id mangler i session")
 
 
 def create_flask_app() -> Flask:
@@ -116,15 +165,15 @@ def create_flask_app() -> Flask:
     # ------------------------------------------------------------------
     # Tilgangskontroll — dekorator for beskyttede API-ruter
     #
-    # Dersom DASHBOARD_PASSWORD ikke er satt (lokal utvikling) godtas
-    # alle forespørsler. Ellers kreves session['authenticated'] == True.
+    # Dersom DASHBOARD_PASSWORD ikke er satt (åpen/lokal modus) godtas
+    # alle forespørsler. Ellers kreves session['user_id'].
     # ------------------------------------------------------------------
 
     def require_auth(f):
         """Dekorator som krever gyldig dashbordsesjon på beskyttede ruter."""
         @wraps(f)
         def decorated(*args, **kwargs):
-            if DASHBOARD_PASSWORD is not None and not session.get("authenticated"):
+            if DASHBOARD_PASSWORD is not None and not session.get("user_id"):
                 return jsonify({"error": "Ikke innlogget"}), 401
             return f(*args, **kwargs)
         return decorated
@@ -164,32 +213,40 @@ def create_flask_app() -> Flask:
         Sjekker om denne nettleseren har en gyldig dashbordsesjon.
 
         Tilgangsmodi:
-          - DASHBOARD_PASSWORD ikke satt (lokal utvikling) → alltid authenticated
-          - DASHBOARD_PASSWORD satt → krever at session['authenticated'] er True
+          - DASHBOARD_PASSWORD ikke satt (åpen modus) → alltid authenticated.
+            Setter session['user_id'] = eierens ID ved første kall slik at
+            alle påfølgende API-kall har korrekt bruker-kontekst i session.
+          - DASHBOARD_PASSWORD satt → krever session['user_id'] (satt av
+            auth_callback() eller auth_password()).
         """
         if DASHBOARD_PASSWORD is None:
-            # Åpen modus — ingen passord konfigurert
-            return jsonify({"authenticated": True, "user_id": _resolve_user_id()})
+            if not session.get("user_id"):
+                session["user_id"] = _get_owner_user_id()
+            return jsonify({"authenticated": True, "user_id": session["user_id"]})
 
-        if session.get("authenticated"):
-            return jsonify({"authenticated": True, "user_id": _resolve_user_id()})
+        user_id = session.get("user_id")
+        if user_id:
+            return jsonify({"authenticated": True, "user_id": user_id})
 
         return jsonify({"authenticated": False, "user_id": None})
 
     @app.route("/api/auth/password", methods=["POST"])
     def auth_password():
         """
-        Validerer dashbordpassordet fra POST-body.
+        Validerer dashbordpassordet fra POST-body og oppretter en sesjon.
 
         Bruker hmac.compare_digest for konstant-tid-sammenligning slik at
         timingbaserte angrepsforsøk ikke gir informasjon om passordet.
-        Setter session['authenticated'] = True ved suksess.
+
+        Setter session['user_id'] = eierens Spotify-ID ved suksess.
+        Passord-innlogging gir alltid tilgang til eierens data — en enkelt
+        konfigurert konto per Railway-instans.
 
         Rate limiting: maks 10 forsøk per IP per 60 sekunder.
         """
         if DASHBOARD_PASSWORD is None:
-            # Ingen passord konfigurert — la alle inn
-            session["authenticated"] = True
+            # Åpen modus — ingen passord konfigurert
+            session["user_id"] = _get_owner_user_id()
             return jsonify({"success": True})
 
         ip = request.remote_addr or "unknown"
@@ -206,8 +263,10 @@ def create_flask_app() -> Flask:
             logger.warning("Feil dashbordpassord forsøkt fra %s.", ip)
             return jsonify({"error": "Feil passord"}), 401
 
-        session["authenticated"] = True
-        logger.info("Dashbordsesjon opprettet.")
+        session["user_id"] = _get_owner_user_id()
+        logger.info(
+            "Dashbordsesjon opprettet (passord) for bruker '%s'.", session["user_id"]
+        )
         return jsonify({"success": True})
 
     @app.route("/api/auth/logout", methods=["POST"])
@@ -249,9 +308,16 @@ def create_flask_app() -> Flask:
     def auth_callback():
         """
         Tar imot Spotifys redirect etter vellykket OAuth-autorisasjon.
-        Bytter autorisasjonskoden mot tokens, lagrer legitimasjonen lokalt
-        (nyttig for lokal utvikling), tømmer bruker-ID-cachen og sender
-        nettleseren tilbake til frontenden.
+
+        Flyt:
+          1. Valider CSRF-state og bytt autorisasjonskode mot tokens.
+          2. Kall /v1/me for å identifisere brukeren (spotify_user_id).
+          3. Krypter refresh-token og lagre i user_tokens-tabellen.
+          4. Sett session['user_id'] = spotify_user_id.
+          5. Redirect tilbake til frontenden.
+
+        Brukeren er nå fullt innlogget og alle API-ruter returnerer
+        data filtrert på denne brukerens spotify_user_id.
         """
         code = request.args.get("code")
         state = request.args.get("state")
@@ -267,6 +333,7 @@ def create_flask_app() -> Flask:
             return redirect(f"{FRONTEND_URL}?auth_error=1")
 
         try:
+            # --- Steg 1: bytt code mot tokens ---
             token_resp = http_requests.post(
                 "https://accounts.spotify.com/api/token",
                 data={
@@ -281,28 +348,60 @@ def create_flask_app() -> Flask:
             token_resp.raise_for_status()
             token_data = token_resp.json()
 
-            new_creds = {
-                "client_id": SPOTIFY_CLIENT_ID,
-                "client_secret": SPOTIFY_CLIENT_SECRET,
-                "refresh_token": token_data["refresh_token"],
-                "access_token": token_data["access_token"],
-                "expires_at": _time.time() + token_data.get("expires_in", 3600),
-            }
+            access_token = token_data["access_token"]
+            refresh_token = token_data["refresh_token"]
+            expires_at = _time.time() + token_data.get("expires_in", 3600)
 
-            # Lagre til fil (virker for lokal utvikling og Railway-containere
-            # som ikke bruker refresh-token-env-variabelen).
-            APP_DIR.mkdir(parents=True, exist_ok=True)
-            CREDS_PATH.write_text(_json.dumps(new_creds, indent=2))
-            logger.info("Web-OAuth fullført — legitimasjon lagret i %s.", CREDS_PATH)
+            # --- Steg 2: identifiser brukeren ---
+            me_resp = http_requests.get(
+                "https://api.spotify.com/v1/me",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10,
+            )
+            me_resp.raise_for_status()
+            me_data = me_resp.json()
+            spotify_user_id: str | None = me_data.get("id")
+            display_name: str | None = me_data.get("display_name")
+
+            if not spotify_user_id:
+                logger.error("Spotify /v1/me returnerte ingen bruker-ID.")
+                return redirect(f"{FRONTEND_URL}?auth_error=1")
+
+            # --- Steg 3: lagre kryptert token i DB ---
+            with pooled_connection() as conn:
+                upsert_user_token(
+                    conn,
+                    user_id=spotify_user_id,
+                    refresh_token_encrypted=encrypt_token(refresh_token),
+                    access_token=access_token,
+                    expires_at=expires_at,
+                    display_name=display_name,
+                    scope=SCOPE,
+                )
+            logger.info(
+                "OAuth fullført — token lagret for '%s' (%s).",
+                spotify_user_id, display_name or "–",
+            )
+
+            # Lokal fil-fallback for utvikling (ikke kritisk — ignorer feil)
+            try:
+                APP_DIR.mkdir(parents=True, exist_ok=True)
+                CREDS_PATH.write_text(_json.dumps({
+                    "client_id": SPOTIFY_CLIENT_ID,
+                    "client_secret": SPOTIFY_CLIENT_SECRET,
+                    "refresh_token": refresh_token,
+                    "access_token": access_token,
+                    "expires_at": expires_at,
+                }, indent=2))
+            except Exception:
+                pass
 
         except Exception as exc:
-            logger.error("Token-bytte feilet i OAuth-callback: %s", exc)
+            logger.error("OAuth-callback feilet: %s", exc)
             return redirect(f"{FRONTEND_URL}?auth_error=1")
 
-        # Tøm cache slik at neste kall henter riktig bruker-ID
-        global _cached_user_id
-        with _user_id_lock:
-            _cached_user_id = None
+        # --- Steg 4: sett session ---
+        session["user_id"] = spotify_user_id
 
         return redirect(FRONTEND_URL)
 
