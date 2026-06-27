@@ -40,10 +40,15 @@ MAX_AUTO_SKIPS_PER_HOUR = 10
 # Konfigurasjonshenting
 # ---------------------------------------------------------------------------
 
-def load_config(conn) -> dict:
+def load_config(conn, user_id: str = "default_user") -> dict:
     """
-    Henter Smart Skipper-konfigurasjon fra smart_skipper_config-tabellen.
-    Returnerer alltid et gyldig dict — ved manglende rad er enabled=False.
+    Henter Smart Skipper-konfigurasjon for en bestemt bruker.
+
+    Returnerer alltid et gyldig dict — ved manglende rad er enabled=False,
+    slik at tracker-loopen aldri krasjer om raden mangler.
+
+    Parametere:
+        user_id  Spotify-bruker-ID — filtrerer til brukerens egne innstillinger.
     """
     row = execute(
         conn,
@@ -51,14 +56,15 @@ def load_config(conn) -> dict:
         SELECT enabled, threshold, min_plays, delay_seconds,
                dry_run, respect_time, excluded_contexts, excluded_uris
         FROM smart_skipper_config
-        WHERE id = 1
+        WHERE user_id = %s
         """,
+        (user_id,),
     ).fetchone()
 
     if not row:
-        logger.warning(
-            "smart_skipper_config-tabellen er tom. "
-            "Kjør init_db() for å opprette standardkonfigurasjon."
+        logger.debug(
+            "Ingen Smart Skipper-konfigurasjon funnet for '%s' — bruker standardverdier.",
+            user_id,
         )
         return {"enabled": False}
 
@@ -305,8 +311,8 @@ class SmartSkipper:
             self._reset()
             return False
 
-        # --- Hent konfigurasjon fra DB ---
-        config = load_config(conn)
+        # --- Hent konfigurasjon fra DB (per bruker) ---
+        config = load_config(conn, user_id)
         if not config.get("enabled"):
             return False
 

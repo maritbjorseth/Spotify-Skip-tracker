@@ -185,32 +185,53 @@ def main() -> None:
 
 
 def handle_smart_skipper(args) -> None:
-    from .database import connect, execute, init_db
+    from .database import (
+        connect, execute, init_db,
+        _detect_owner_user_id, ensure_user_smart_skipper_config,
+    )
 
     conn = connect()
     init_db(conn)
 
+    # Finn eierens user_id — CLIen opererer alltid på eierens konto
+    user_id = _detect_owner_user_id(conn) or "default_user"
+    ensure_user_smart_skipper_config(conn, user_id)
+
     if args.action == "status":
         row = execute(
             conn,
-            "SELECT enabled, threshold, min_plays, dry_run FROM smart_skipper_config WHERE id = 1",
+            """
+            SELECT enabled, threshold, min_plays, dry_run
+            FROM smart_skipper_config
+            WHERE user_id = %s
+            """,
+            (user_id,),
         ).fetchone()
         if not row:
             print("Ingen konfigurasjon funnet — kjør init_db først.")
         else:
             enabled, threshold, min_plays, dry_run = row
             print(f"Smart Skipper: {'PÅ' if enabled else 'AV'}")
+            print(f"  Bruker:      {user_id}")
             print(f"  Terskel:     {threshold:.0%}")
             print(f"  Min avspill: {min_plays}")
             print(f"  Prøvemodus:  {'JA' if dry_run else 'NEI'}")
 
     elif args.action == "enable":
-        execute(conn, "UPDATE smart_skipper_config SET enabled = TRUE WHERE id = 1")
+        execute(
+            conn,
+            "UPDATE smart_skipper_config SET enabled = TRUE WHERE user_id = %s",
+            (user_id,),
+        )
         conn.commit()
         print("Smart Skipper aktivert.")
 
     elif args.action == "disable":
-        execute(conn, "UPDATE smart_skipper_config SET enabled = FALSE WHERE id = 1")
+        execute(
+            conn,
+            "UPDATE smart_skipper_config SET enabled = FALSE WHERE user_id = %s",
+            (user_id,),
+        )
         conn.commit()
         print("Smart Skipper deaktivert.")
 
@@ -221,8 +242,8 @@ def handle_smart_skipper(args) -> None:
             val = args.value.lower() in ("on", "true", "1", "ja")
             execute(
                 conn,
-                "UPDATE smart_skipper_config SET dry_run = %s WHERE id = 1",
-                (val,),
+                "UPDATE smart_skipper_config SET dry_run = %s WHERE user_id = %s",
+                (val, user_id),
             )
             conn.commit()
             print(f"Prøvemodus: {'PÅ' if val else 'AV'}")
@@ -242,8 +263,8 @@ def handle_smart_skipper(args) -> None:
             else:
                 execute(
                     conn,
-                    "UPDATE smart_skipper_config SET threshold = %s WHERE id = 1",
-                    (t,),
+                    "UPDATE smart_skipper_config SET threshold = %s WHERE user_id = %s",
+                    (t, user_id),
                 )
                 conn.commit()
                 print(f"Terskel satt til {t:.0%}")

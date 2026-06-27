@@ -189,6 +189,7 @@ def _migrate(conn) -> None:
     _migrate_add_indexes(conn)
     _migrate_bootstrap_owner_token(conn)
     _migrate_now_playing_per_user(conn)
+    _migrate_smart_skipper_per_user(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -281,7 +282,7 @@ def _migrate_smart_skipper(conn) -> None:
         conn,
         """
         CREATE TABLE IF NOT EXISTS smart_skipper_config (
-            id                INTEGER PRIMARY KEY DEFAULT 1,
+            user_id           TEXT PRIMARY KEY,
             enabled           BOOLEAN NOT NULL DEFAULT FALSE,
             threshold         REAL NOT NULL DEFAULT 0.85,
             min_plays         INTEGER NOT NULL DEFAULT 3,
@@ -292,10 +293,6 @@ def _migrate_smart_skipper(conn) -> None:
             excluded_uris     TEXT[] DEFAULT '{}'
         )
         """,
-    )
-    execute(
-        conn,
-        "INSERT INTO smart_skipper_config (id) VALUES (1) ON CONFLICT DO NOTHING",
     )
     logger.info("Smart Skipper-tabeller klar.")
 
@@ -1042,3 +1039,165 @@ def mark_token_invalid(conn, user_id: str) -> None:
     )
     conn.commit()
     logger.info("Token markert som ugyldig for bruker '%s'.", user_id)
+
+
+# ---------------------------------------------------------------------------
+# Hjelpefunksjoner for multi-user CLI og migrasjoner
+# ---------------------------------------------------------------------------
+
+def _detect_owner_user_id(conn) -> str | None:
+    """
+    Finner eierens Spotify-bruker-ID fra databasen uten API-kall.
+
+    Brukes av migrasjoner og CLI-kommandoer der Flask-session ikke er
+    tilgjengelig. Prioritert rekkefølge:
+        1. user_tokens (mest pålitelig — satt av Steg 1 bootstrap)
+        2. plays (siste rad med ekte bruker-ID)
+        3. SPOTIFY_USER_ID-miljøvariabel
+
+    Returnerer None dersom ingen kilde er tilgjengelig.
+    """
+    try:
+        row = execute(
+            conn,
+            "SELECT user_id FROM user_tokens ORDER BY last_active DESC NULLS LAST LIMIT 1",
+        ).fetchone()
+        if row:
+            return row[0]
+    except Exception:
+        pass
+
+    try:
+        row = execute(
+            conn,
+            """
+            SELECT user_id FROM plays
+            WHERE user_id != 'default_user'
+            ORDER BY id DESC LIMIT 1
+            """,
+        ).fetchone()
+        if row:
+            return row[0]
+    except Exception:
+        pass
+
+    from .config import SPOTIFY_USER_ID
+    return SPOTIFY_USER_ID or None
+
+
+def ensure_user_smart_skipper_config(conn, user_id: str) -> None:
+    """
+    Oppretter en standard Smart Skipper-konfigurasjon for brukeren
+    dersom den ikke allerede finnes.
+
+    Idempotent: bruker ON CONFLICT DO NOTHING.
+
+    Kalles fra:
+        - auth_callback() (web.py) etter vellykket OAuth-innlogging
+        - CLI-kommandoer i __main__.py
+    """
+    execute(
+        conn,
+        """
+        INSERT INTO smart_skipper_config (user_id)
+        VALUES (%s)
+        ON CONFLICT (user_id) DO NOTHING
+        """,
+        (user_id,),
+    )
+    conn.commit()
+
+
+def _migrate_smart_skipper_per_user(conn) -> None:
+    """
+    Migrerer smart_skipper_config fra singleton (id=1) til per-bruker (user_id PK).
+
+    Idempotent: hopper over dersom 'id'-kolonnen ikke finnes i tabellen.
+
+    Strategi: drop og recreate med bevaring av eksisterende konfigurasjonsverider.
+    Konfigurasjonen (enabled, threshold, dry_run, osv.) tilhører eieren og
+    preserveres til eierens user_id-rad i det nye skjemaet.
+
+    Eier-ID detekteres via _detect_owner_user_id() — user_tokens → plays → env-var.
+    Finner vi ingen eier-ID, opprettes tabellen uten seed-rad; eieren får
+    standardverdier neste gang ensure_user_smart_skipper_config() kalles.
+    """
+    cur = execute(
+        conn,
+        """
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'smart_skipper_config' AND column_name = 'id'
+        """,
+    )
+    if cur.fetchone() is None:
+        return  # Allerede migrert
+
+    logger.info("Migrerer smart_skipper_config fra singleton til per-bruker …")
+
+    # Les eksisterende konfigurasjonsverider fra gammel tabell
+    old_row = execute(
+        conn,
+        """
+        SELECT enabled, threshold, min_plays, delay_seconds,
+               dry_run, respect_time, excluded_contexts, excluded_uris
+        FROM smart_skipper_config
+        WHERE id = 1
+        """,
+    ).fetchone()
+
+    owner_id = _detect_owner_user_id(conn)
+
+    try:
+        execute(conn, "SAVEPOINT migrate_ss_per_user")
+        execute(conn, "DROP TABLE IF EXISTS smart_skipper_config")
+        execute(
+            conn,
+            """
+            CREATE TABLE smart_skipper_config (
+                user_id           TEXT PRIMARY KEY,
+                enabled           BOOLEAN NOT NULL DEFAULT FALSE,
+                threshold         REAL NOT NULL DEFAULT 0.85,
+                min_plays         INTEGER NOT NULL DEFAULT 3,
+                delay_seconds     INTEGER NOT NULL DEFAULT 5,
+                dry_run           BOOLEAN NOT NULL DEFAULT TRUE,
+                respect_time      BOOLEAN NOT NULL DEFAULT FALSE,
+                excluded_contexts TEXT[] DEFAULT '{}',
+                excluded_uris     TEXT[] DEFAULT '{}'
+            )
+            """,
+        )
+
+        if old_row and owner_id:
+            execute(
+                conn,
+                """
+                INSERT INTO smart_skipper_config
+                    (user_id, enabled, threshold, min_plays, delay_seconds,
+                     dry_run, respect_time, excluded_contexts, excluded_uris)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (user_id) DO NOTHING
+                """,
+                (owner_id, *old_row),
+            )
+            logger.info(
+                "smart_skipper_config: eksisterende innstillinger bevart for '%s'.",
+                owner_id,
+            )
+        elif owner_id:
+            logger.info(
+                "smart_skipper_config: ingen gammel konfigurasjon å bevare — "
+                "eier '%s' får standardverdier.", owner_id,
+            )
+        else:
+            logger.warning(
+                "smart_skipper_config: kunne ikke bestemme eier-ID. "
+                "Tabellen er klar — kjør ensure_user_smart_skipper_config() "
+                "for å opprette en standardrad."
+            )
+
+        execute(conn, "RELEASE SAVEPOINT migrate_ss_per_user")
+        conn.commit()
+        logger.info("smart_skipper_config migrert til per-bruker-skjema.")
+    except Exception as exc:
+        execute(conn, "ROLLBACK TO SAVEPOINT migrate_ss_per_user")
+        logger.error("Feil under smart_skipper_config-migrasjon: %s", exc)

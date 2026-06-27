@@ -540,7 +540,8 @@ def _compute(conn, user_id: str) -> dict:
     # ------------------------------------------------------------------
     config_row = execute(
         conn,
-        "SELECT threshold, min_plays FROM smart_skipper_config WHERE id = 1",
+        "SELECT threshold, min_plays FROM smart_skipper_config WHERE user_id = %s",
+        (user_id,),
     ).fetchone()
     ss_threshold = float(config_row[0]) if config_row else 0.85
     ss_min_plays = int(config_row[1]) if config_row else 3

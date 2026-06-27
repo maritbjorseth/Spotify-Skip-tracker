@@ -31,6 +31,7 @@ from .insights import generate_insights
 from .database import (
     pooled_connection, execute,
     list_active_user_ids, upsert_user_token,
+    ensure_user_smart_skipper_config,
 )
 from .spotify_api import get_access_token, load_creds
 from .token_crypto import encrypt_token
@@ -367,7 +368,7 @@ def create_flask_app() -> Flask:
                 logger.error("Spotify /v1/me returnerte ingen bruker-ID.")
                 return redirect(f"{FRONTEND_URL}?auth_error=1")
 
-            # --- Steg 3: lagre kryptert token i DB ---
+            # --- Steg 3: lagre kryptert token + initialiser brukerdata i DB ---
             with pooled_connection() as conn:
                 upsert_user_token(
                     conn,
@@ -378,6 +379,8 @@ def create_flask_app() -> Flask:
                     display_name=display_name,
                     scope=SCOPE,
                 )
+                # Opprett standard Smart Skipper-konfigurasjon for ny bruker
+                ensure_user_smart_skipper_config(conn, spotify_user_id)
             logger.info(
                 "OAuth fullført — token lagret for '%s' (%s).",
                 spotify_user_id, display_name or "–",
@@ -492,14 +495,19 @@ def create_flask_app() -> Flask:
     @require_auth
     def smart_skipper():
         try:
+            current_user_id = _resolve_user_id()
             with pooled_connection() as conn:
+                # Sikrer at brukeren har en konfigurasjonsrad
+                ensure_user_smart_skipper_config(conn, current_user_id)
+
                 config_row = execute(
                     conn,
                     """
                     SELECT enabled, threshold, min_plays, delay_seconds, dry_run
                     FROM smart_skipper_config
-                    WHERE id = 1
+                    WHERE user_id = %s
                     """,
+                    (current_user_id,),
                 ).fetchone()
 
                 history_rows = execute(
