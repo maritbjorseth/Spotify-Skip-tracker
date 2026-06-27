@@ -63,6 +63,18 @@ SCOPE = (
 SPOTIFY_USER_ID: str | None = os.environ.get("SPOTIFY_USER_ID") or None
 
 # ---------------------------------------------------------------------------
+# Token-kryptering (multi-user)
+# ---------------------------------------------------------------------------
+
+# Fernet-nøkkel for kryptering av refresh-tokens i user_tokens-tabellen.
+# Generer med:
+#   python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Lagres som miljøvariabel TOKEN_ENCRYPTION_KEY på Railway.
+# Uten denne nøkkelen lagres tokens i klartekst (akseptabelt i utvikling,
+# ikke i produksjon med ekte brukere).
+TOKEN_ENCRYPTION_KEY: str | None = os.environ.get("TOKEN_ENCRYPTION_KEY") or None
+
+# ---------------------------------------------------------------------------
 # Dashboard-tilgangskontroll
 # ---------------------------------------------------------------------------
 

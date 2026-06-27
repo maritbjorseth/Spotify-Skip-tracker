@@ -27,7 +27,8 @@ from .config import (
     SPOTIFY_CLIENT_SECRET,
     SPOTIFY_REFRESH_TOKEN,
 )
-from .database import execute
+from .database import execute, get_user_token_row, update_access_token_cache, upsert_user_token
+from .token_crypto import decrypt_token, encrypt_token
 
 logger = logging.getLogger(__name__)
 
@@ -122,14 +123,28 @@ def run_setup(client_id: str, client_secret: str) -> None:
 # Legitimasjon (lokal fil eller miljøvariabler)
 # ---------------------------------------------------------------------------
 
-def load_creds() -> dict:
+def load_creds(user_id: str | None = None) -> dict:
     """
     Laster legitimasjon i prioritert rekkefølge:
-    1. Miljøvariabler / .env.local (SPOTIFY_CLIENT_ID, _SECRET, _REFRESH_TOKEN)
-    2. Lokal fil ~/.spotify_skip_tracker/credentials.json (fallback)
 
-    Avslutter programmet med en feilmelding dersom ingen legitimasjon finnes.
+    Med user_id (multi-user, Steg 5+):
+        1. user_tokens-tabellen i databasen
+           Finner ingen rad → RuntimeError (brukeren må autentisere på nytt)
+
+    Uten user_id (legacy / enkelt-bruker):
+        2. Miljøvariabler / .env.local (SPOTIFY_CLIENT_ID, _SECRET, _REFRESH_TOKEN)
+        3. Lokal fil ~/.spotify_skip_tracker/credentials.json
+
+    Creds-dict inneholder alltid nøklene:
+        client_id, client_secret, refresh_token, access_token, expires_at
+
+    Når lest fra databasen legges 'user_id' til i dict-en slik at
+    save_creds() vet at tilbakeskriving skal gå til DB og ikke til fil.
     """
+    if user_id is not None:
+        return _load_creds_from_db(user_id)
+
+    # --- Legacy-sti: env-var ---
     if SPOTIFY_REFRESH_TOKEN:
         if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
             raise RuntimeError(
@@ -143,21 +158,110 @@ def load_creds() -> dict:
             "access_token": "",
             "expires_at": 0,
         }
+
+    # --- Legacy-sti: lokal fil ---
     if not CREDS_PATH.exists():
         print("Ingen innlogging funnet. Kjør 'setup' først (se --help for hjelp).")
         sys.exit(1)
     return json.loads(CREDS_PATH.read_text())
 
 
+def _load_creds_from_db(user_id: str) -> dict:
+    """
+    Henter kredentials for user_id fra user_tokens-tabellen.
+
+    Dekrypterer refresh_token med token_crypto.decrypt_token().
+    Legger til 'user_id'-nøkkel i returnert dict slik at save_creds()
+    vet at persistering skal gå til databasen.
+
+    Raises:
+        RuntimeError  dersom user_id ikke finnes i user_tokens.
+    """
+    from .database import connect
+    try:
+        conn = connect()
+        row = get_user_token_row(conn, user_id)
+        conn.close()
+    except Exception as exc:
+        raise RuntimeError(
+            f"Databasefeil ved lasting av token for '{user_id}': {exc}"
+        ) from exc
+
+    if row is None:
+        raise RuntimeError(
+            f"Ingen token funnet i databasen for bruker '{user_id}'. "
+            "Brukeren må autentisere via web-OAuth (/api/auth/login)."
+        )
+
+    try:
+        refresh_token_plain = decrypt_token(row["refresh_token"])
+    except Exception as exc:
+        raise RuntimeError(
+            f"Kunne ikke dekryptere refresh-token for '{user_id}': {exc}"
+        ) from exc
+
+    return {
+        "client_id":     SPOTIFY_CLIENT_ID or "",
+        "client_secret": SPOTIFY_CLIENT_SECRET or "",
+        "refresh_token": refresh_token_plain,
+        "access_token":  row["access_token"] or "",
+        "expires_at":    row["expires_at"] or 0.0,
+        "user_id":       user_id,  # signal til save_creds() om å bruke DB-sti
+    }
+
+
 def save_creds(creds: dict) -> None:
     """
-    Lagrer legitimasjon lokalt. Gjør ingenting når legitimasjon kommer fra
-    .env.local / miljøvariabler (refresh-tokenet roterer ikke, og
-    miljøvariabelen er alltid gyldig etter en omstart).
+    Persisterer legitimasjon etter at tokens er oppdatert.
+
+    Med 'user_id' i creds-dict (DB-sti, multi-user):
+        Krypterer refresh_token og skriver access_token-cache til databasen.
+        Brukes av tracker-loopen (Steg 5) etter token-refresh.
+
+    Uten 'user_id' (legacy-sti, enkelt-bruker):
+        Gjør ingenting om SPOTIFY_REFRESH_TOKEN er satt (env-var roterer ikke).
+        Skriver ellers til lokal credentials.json-fil.
     """
+    user_id = creds.get("user_id")
+
+    if user_id:
+        _save_creds_to_db(user_id, creds)
+        return
+
+    # --- Legacy-sti ---
     if SPOTIFY_REFRESH_TOKEN:
         return
     CREDS_PATH.write_text(json.dumps(creds, indent=2))
+
+
+def _save_creds_to_db(user_id: str, creds: dict) -> None:
+    """
+    Skriver oppdaterte tokens til user_tokens-tabellen.
+
+    Krypterer refresh_token på nytt ved hver skriving. Krypteringen er
+    deterministisk billig (AES-operasjon), og sikrer at et rotert
+    refresh-token alltid lagres kryptert selv om det er uendret.
+
+    Feil logges men propageres ikke — en mislykket skriving fører til at
+    neste tracker-poll forsøker en full re-autentisering i verste fall.
+    """
+    from .database import connect
+    try:
+        encrypted_refresh = encrypt_token(creds["refresh_token"])
+        conn = connect()
+        upsert_user_token(
+            conn,
+            user_id=user_id,
+            refresh_token_encrypted=encrypted_refresh,
+            access_token=creds.get("access_token"),
+            expires_at=creds.get("expires_at"),
+        )
+        conn.close()
+    except Exception as exc:
+        logger.error(
+            "Kunne ikke lagre oppdatert token for '%s' i DB: %s",
+            user_id, exc,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -168,8 +272,11 @@ def get_access_token(creds: dict) -> str:
     """
     Returnerer et gyldig access-token. Oppdaterer automatisk via refresh-token
     dersom tokenet utløper innen 30 sekunder.
+
+    Dersom creds inneholder 'user_id' (DB-sti), skrives oppdatert access-token
+    og eventuelt nytt refresh-token tilbake til user_tokens-tabellen.
     """
-    if creds["expires_at"] > time.time() + 30:
+    if creds.get("expires_at", 0) > time.time() + 30:
         return creds["access_token"]
 
     resp = requests.post(
@@ -187,8 +294,12 @@ def get_access_token(creds: dict) -> str:
 
     creds["access_token"] = token_data["access_token"]
     creds["expires_at"] = time.time() + token_data["expires_in"]
+
+    # Spotify roterer av og til refresh-tokenet — ta vare på det nye
     if "refresh_token" in token_data:
         creds["refresh_token"] = token_data["refresh_token"]
+
+    # Skriv tilbake til riktig lager (DB eller fil avhengig av creds-innhold)
     save_creds(creds)
     return creds["access_token"]
 

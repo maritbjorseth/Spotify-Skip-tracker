@@ -159,7 +159,21 @@ def _create_tables(conn) -> None:
         )
         """,
     )
-
+    execute(
+        conn,
+        """
+        CREATE TABLE IF NOT EXISTS user_tokens (
+            user_id       TEXT        PRIMARY KEY,
+            refresh_token TEXT        NOT NULL,
+            access_token  TEXT,
+            expires_at    REAL,
+            display_name  TEXT,
+            scope         TEXT,
+            created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            last_active   TIMESTAMPTZ
+        )
+        """,
+    )
 
 
 def _migrate(conn) -> None:
@@ -173,6 +187,7 @@ def _migrate(conn) -> None:
     _migrate_default_user_to_spotify_id(conn)
     _migrate_add_session_id(conn)
     _migrate_add_indexes(conn)
+    _migrate_bootstrap_owner_token(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -729,3 +744,243 @@ def _migrate_add_indexes(conn) -> None:
             logger.warning("Kunne ikke opprette indeks '%s': %s", name, exc)
     conn.commit()
     logger.info("Indeks-migrasjon fullført.")
+
+
+def _migrate_bootstrap_owner_token(conn) -> None:
+    """
+    Bootstrap-migrasjon: flytter eierens refresh-token fra SPOTIFY_REFRESH_TOKEN-
+    miljøvariabelen til user_tokens-tabellen.
+
+    Kjøres idempotent ved hver oppstart — gjør ingenting dersom tabellen
+    allerede har minst én rad.
+
+    Algoritme for å finne user_id (ingen Spotify API-kall):
+        Prioritet 1: SPOTIFY_USER_ID-miljøvariabelen
+        Prioritet 2: nyeste non-default_user-rad i plays-tabellen
+        Ingen treffer → hopper over med veiledende advarsel
+
+    Krypterer tokenet med token_crypto.encrypt_token() dersom
+    TOKEN_ENCRYPTION_KEY er satt; lagrer ellers i klartekst ('plain:'-prefiks).
+    """
+    # Sjekk om det er noe å gjøre
+    existing_count = execute(conn, "SELECT COUNT(*) FROM user_tokens").fetchone()[0]
+    if existing_count > 0:
+        return  # Allerede migrert
+
+    from .config import SPOTIFY_REFRESH_TOKEN, SPOTIFY_CLIENT_ID, SPOTIFY_USER_ID
+
+    if not SPOTIFY_REFRESH_TOKEN:
+        return  # Ingen env-var-token å migrere
+
+    if not SPOTIFY_CLIENT_ID:
+        logger.warning(
+            "Bootstrap: SPOTIFY_REFRESH_TOKEN er satt, men SPOTIFY_CLIENT_ID "
+            "mangler — kan ikke bekrefte token. Hopper over bootstrap."
+        )
+        return
+
+    # Finn user_id uten API-kall
+    real_user_id: str | None = SPOTIFY_USER_ID
+
+    if not real_user_id:
+        row = execute(
+            conn,
+            """
+            SELECT user_id FROM plays
+            WHERE user_id != 'default_user'
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+        ).fetchone()
+        if row:
+            real_user_id = row[0]
+
+    if not real_user_id:
+        logger.warning(
+            "Bootstrap: SPOTIFY_REFRESH_TOKEN funnet, men kunne ikke bestemme "
+            "bruker-ID (ingen SPOTIFY_USER_ID i miljøet og ingen avspillinger "
+            "i databasen). Sett SPOTIFY_USER_ID i Railway-miljøet og start "
+            "tjenesten på nytt for å fullføre bootstrap-migrasjonen."
+        )
+        return
+
+    # Krypter og lagre
+    try:
+        from .token_crypto import encrypt_token
+        encrypted = encrypt_token(SPOTIFY_REFRESH_TOKEN)
+    except Exception as exc:
+        logger.error(
+            "Bootstrap: kunne ikke kryptere SPOTIFY_REFRESH_TOKEN: %s. "
+            "Hopper over bootstrap.", exc
+        )
+        return
+
+    try:
+        execute(
+            conn,
+            """
+            INSERT INTO user_tokens (user_id, refresh_token, last_active)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (user_id) DO NOTHING
+            """,
+            (real_user_id, encrypted),
+        )
+        conn.commit()
+        logger.info(
+            "Bootstrap: refresh-token for '%s' er migrert til user_tokens-tabellen.",
+            real_user_id,
+        )
+    except Exception as exc:
+        logger.error("Bootstrap: DB-feil ved skriving av token: %s", exc)
+        conn.rollback()
+
+
+# ---------------------------------------------------------------------------
+# user_tokens — offentlige CRUD-funksjoner
+# ---------------------------------------------------------------------------
+
+def upsert_user_token(
+    conn,
+    user_id: str,
+    refresh_token_encrypted: str,
+    access_token: str | None = None,
+    expires_at: float | None = None,
+    display_name: str | None = None,
+    scope: str | None = None,
+) -> None:
+    """
+    Lagrer eller oppdaterer token-informasjon for én bruker.
+
+    refresh_token_encrypted skal allerede være kryptert av token_crypto.encrypt_token()
+    — denne funksjonen tar imot og lagrer den krypterte strengen direkte.
+
+    Ved konflikt (user_id finnes allerede):
+        - refresh_token, access_token, expires_at og last_active oppdateres alltid.
+        - display_name og scope oppdateres kun dersom den nye verdien er ikke-NULL
+          (slik at eksisterende verdier beholdes om ikke satt eksplisitt).
+    """
+    execute(
+        conn,
+        """
+        INSERT INTO user_tokens
+            (user_id, refresh_token, access_token, expires_at,
+             display_name, scope, last_active)
+        VALUES (%s, %s, %s, %s, %s, %s, NOW())
+        ON CONFLICT (user_id) DO UPDATE SET
+            refresh_token = EXCLUDED.refresh_token,
+            access_token  = EXCLUDED.access_token,
+            expires_at    = EXCLUDED.expires_at,
+            display_name  = COALESCE(EXCLUDED.display_name, user_tokens.display_name),
+            scope         = COALESCE(EXCLUDED.scope, user_tokens.scope),
+            last_active   = NOW()
+        """,
+        (user_id, refresh_token_encrypted, access_token, expires_at, display_name, scope),
+    )
+    conn.commit()
+
+
+def update_access_token_cache(
+    conn,
+    user_id: str,
+    access_token: str,
+    expires_at: float,
+) -> None:
+    """
+    Oppdaterer access_token og expires_at uten å røre refresh_token.
+
+    Kalles av get_access_token() etter et vellykket token-refresh. Siden
+    access-tokens er kortlevde (1 time) og ikke sensitive nok til å kreve
+    kryptering, lagres de som klartekst.
+    """
+    execute(
+        conn,
+        """
+        UPDATE user_tokens
+        SET access_token = %s,
+            expires_at   = %s,
+            last_active  = NOW()
+        WHERE user_id = %s
+        """,
+        (access_token, expires_at, user_id),
+    )
+    conn.commit()
+
+
+def get_user_token_row(conn, user_id: str) -> dict | None:
+    """
+    Henter token-rad for user_id.
+
+    Returnerer None dersom brukeren ikke finnes i user_tokens.
+    Returnerer rådata med kryptert refresh_token — dekryptering skjer i
+    spotify_api.py sin load_creds()-funksjon.
+
+    Returformat:
+        {
+            "user_id":       str,
+            "refresh_token": str,   # kryptert streng (enc: eller plain:-prefiks)
+            "access_token":  str | None,
+            "expires_at":    float | None,
+            "display_name":  str | None,
+            "scope":         str | None,
+        }
+    """
+    row = execute(
+        conn,
+        """
+        SELECT user_id, refresh_token, access_token, expires_at, display_name, scope
+        FROM user_tokens
+        WHERE user_id = %s
+        """,
+        (user_id,),
+    ).fetchone()
+
+    if row is None:
+        return None
+
+    return {
+        "user_id":       row[0],
+        "refresh_token": row[1],
+        "access_token":  row[2],
+        "expires_at":    float(row[3]) if row[3] is not None else None,
+        "display_name":  row[4],
+        "scope":         row[5],
+    }
+
+
+def list_active_user_ids(conn) -> list[str]:
+    """
+    Returnerer alle user_id-er som har refresh-tokens lagret i databasen,
+    sortert med den sist aktive brukeren først.
+
+    Brukes av tracker_manager() (Steg 5) for å starte tracking-tråder
+    ved oppstart.
+    """
+    rows = execute(
+        conn,
+        "SELECT user_id FROM user_tokens ORDER BY last_active DESC NULLS LAST",
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
+def mark_token_invalid(conn, user_id: str) -> None:
+    """
+    Markerer brukerens token som ugyldig ved å nullstille access_token og expires_at.
+
+    Refresh-tokenet beholdes slik at brukeren kan re-autentisere via
+    /api/auth/login uten å miste user_id-assosiasjonen.
+
+    Kalles av tracker-loopen (Steg 5) dersom Spotify svarer 401 Unauthorized,
+    noe som indikerer at refresh-tokenet er utløpt eller tilbakekalt.
+    """
+    execute(
+        conn,
+        """
+        UPDATE user_tokens
+        SET access_token = NULL,
+            expires_at   = NULL
+        WHERE user_id = %s
+        """,
+        (user_id,),
+    )
+    conn.commit()
+    logger.info("Token markert som ugyldig for bruker '%s'.", user_id)

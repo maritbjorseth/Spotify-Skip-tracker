@@ -6,3 +6,4 @@ flask-cors>=4.0.0,<7
 gunicorn>=21.2.0,<24
 psycopg2-binary>=2.9.6,<3
 python-dotenv>=1.0.0,<2
+cryptography>=42.0.0,<46

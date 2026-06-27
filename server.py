@@ -47,6 +47,14 @@ def _validate_environment() -> None:
         )
         # Advarer, men avslutter ikke — appen fungerer, sesjoner er bare kortlevde.
 
+    if is_railway and not os.environ.get("TOKEN_ENCRYPTION_KEY"):
+        logger.warning(
+            "ADVARSEL: TOKEN_ENCRYPTION_KEY er ikke satt. Refresh-tokens lagres "
+            "i klartekst i databasen. Generer en nøkkel og sett den i Railway: "
+            "python3 -c \"from cryptography.fernet import Fernet; "
+            "print(Fernet.generate_key().decode())\""
+        )
+
     missing = [
         var for var in ("SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET",
                         "SPOTIFY_REFRESH_TOKEN", "DATABASE_URL")
