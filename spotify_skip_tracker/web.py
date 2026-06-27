@@ -527,9 +527,11 @@ def create_flask_app() -> Flask:
                     """
                     SELECT title, artists, skip_rate, reason, timestamp, undone
                     FROM auto_skips
+                    WHERE user_id = %s
                     ORDER BY timestamp DESC
                     LIMIT 20
                     """,
+                    (current_user_id,),
                 ).fetchall()
 
         except Exception as exc:

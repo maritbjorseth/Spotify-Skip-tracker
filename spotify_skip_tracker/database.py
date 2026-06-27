@@ -190,6 +190,7 @@ def _migrate(conn) -> None:
     _migrate_bootstrap_owner_token(conn)
     _migrate_now_playing_per_user(conn)
     _migrate_smart_skipper_per_user(conn)
+    _migrate_add_auto_skips_user_id(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -265,6 +266,7 @@ def _migrate_smart_skipper(conn) -> None:
         """
         CREATE TABLE IF NOT EXISTS auto_skips (
             id           SERIAL PRIMARY KEY,
+            user_id      TEXT NOT NULL DEFAULT 'default_user',
             uri          TEXT NOT NULL,
             title        TEXT,
             artists      TEXT,
@@ -1201,3 +1203,51 @@ def _migrate_smart_skipper_per_user(conn) -> None:
     except Exception as exc:
         execute(conn, "ROLLBACK TO SAVEPOINT migrate_ss_per_user")
         logger.error("Feil under smart_skipper_config-migrasjon: %s", exc)
+
+
+def _migrate_add_auto_skips_user_id(conn) -> None:
+    """
+    Legger til user_id-kolonnen i auto_skips-tabellen (Smart Skipper audit-logg).
+
+    Idempotent: hopper over dersom kolonnen allerede finnes.
+
+    Backfill: eksisterende rader (generert før multi-user) tilordnes eierens
+    user_id via _detect_owner_user_id(). Finner vi ingen eier, beholdes
+    DEFAULT-verdien 'default_user' — audit-historikken forblir synlig.
+    """
+    cur = execute(
+        conn,
+        """
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'auto_skips' AND column_name = 'user_id'
+        """,
+    )
+    if cur.fetchone() is not None:
+        return  # Allerede migrert
+
+    logger.info("Legger til user_id-kolonne i auto_skips …")
+    execute(
+        conn,
+        "ALTER TABLE auto_skips ADD COLUMN user_id TEXT NOT NULL DEFAULT 'default_user'",
+    )
+    conn.commit()
+
+    # Backfill: oppdater eksisterende rader til eierens bruker-ID
+    owner_id = _detect_owner_user_id(conn)
+    if owner_id:
+        cur = execute(
+            conn,
+            "UPDATE auto_skips SET user_id = %s WHERE user_id = 'default_user'",
+            (owner_id,),
+        )
+        conn.commit()
+        logger.info(
+            "auto_skips: %d rad(er) oppdatert til user_id='%s'.",
+            cur.rowcount, owner_id,
+        )
+    else:
+        logger.info(
+            "auto_skips: ingen eier-ID funnet — rader beholder 'default_user'."
+        )
+
+    logger.info("auto_skips user_id-migrasjon fullført.")

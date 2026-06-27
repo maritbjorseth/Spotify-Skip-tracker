@@ -171,16 +171,17 @@ def log_auto_skip(
     skip_rate: float,
     threshold: float,
     reason: str,
+    user_id: str = "default_user",
 ) -> None:
-    """Skriver én post til auto_skips-tabellen (audit-logg)."""
+    """Skriver én post til auto_skips-tabellen (audit-logg) for én bruker."""
     execute(
         conn,
         """
         INSERT INTO auto_skips
-            (uri, title, artists, context_uri, skip_rate, threshold, reason)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (user_id, uri, title, artists, context_uri, skip_rate, threshold, reason)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """,
-        (uri, title, artists, context_uri, skip_rate, threshold, reason),
+        (user_id, uri, title, artists, context_uri, skip_rate, threshold, reason),
     )
     conn.commit()
 
@@ -455,6 +456,7 @@ class SmartSkipper:
                 skip_rate=skip_rate,
                 threshold=config["threshold"],
                 reason=f"[DRY RUN] {reason}",
+                user_id=user_id,
             )
             return False
 
@@ -483,6 +485,7 @@ class SmartSkipper:
                 skip_rate=skip_rate,
                 threshold=config["threshold"],
                 reason=reason,
+                user_id=user_id,
             )
         else:
             logger.warning(
