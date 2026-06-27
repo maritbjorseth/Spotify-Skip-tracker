@@ -7,7 +7,9 @@ Endepunkter:
   GET /api/now    — nåværende avspilling fra now_playing-tabellen
 """
 
+from collections import defaultdict
 from datetime import datetime, timezone, timedelta
+from functools import wraps
 from pathlib import Path
 import hmac
 import json as _json
@@ -112,6 +114,47 @@ def create_flask_app() -> Flask:
     CORS(app, supports_credentials=True, origins=_allowed_origins)
 
     # ------------------------------------------------------------------
+    # Tilgangskontroll — dekorator for beskyttede API-ruter
+    #
+    # Dersom DASHBOARD_PASSWORD ikke er satt (lokal utvikling) godtas
+    # alle forespørsler. Ellers kreves session['authenticated'] == True.
+    # ------------------------------------------------------------------
+
+    def require_auth(f):
+        """Dekorator som krever gyldig dashbordsesjon på beskyttede ruter."""
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if DASHBOARD_PASSWORD is not None and not session.get("authenticated"):
+                return jsonify({"error": "Ikke innlogget"}), 401
+            return f(*args, **kwargs)
+        return decorated
+
+    # ------------------------------------------------------------------
+    # Rate limiting for innloggingsendepunktet
+    #
+    # Enkel in-memory-implementasjon: maks 10 forsøk per IP per 60 s.
+    # Bruker monotonic-klokkeslett for å unngå problemer med sommertid.
+    # ------------------------------------------------------------------
+
+    _login_attempts: dict[str, list[float]] = defaultdict(list)
+    _LOGIN_MAX_ATTEMPTS = 10
+    _LOGIN_WINDOW_SECONDS = 60
+
+    def _check_rate_limit(ip: str) -> bool:
+        """
+        Returnerer True dersom IP-adressen er innenfor tillatt grense.
+        Rydder opp i utdaterte timestamps ved hvert kall.
+        """
+        now = _time.monotonic()
+        window_start = now - _LOGIN_WINDOW_SECONDS
+        attempts = [t for t in _login_attempts[ip] if t > window_start]
+        _login_attempts[ip] = attempts
+        if len(attempts) >= _LOGIN_MAX_ATTEMPTS:
+            return False
+        _login_attempts[ip].append(now)
+        return True
+
+    # ------------------------------------------------------------------
     # Autentiserings-endepunkter
     # ------------------------------------------------------------------
 
@@ -141,17 +184,26 @@ def create_flask_app() -> Flask:
         Bruker hmac.compare_digest for konstant-tid-sammenligning slik at
         timingbaserte angrepsforsøk ikke gir informasjon om passordet.
         Setter session['authenticated'] = True ved suksess.
+
+        Rate limiting: maks 10 forsøk per IP per 60 sekunder.
         """
         if DASHBOARD_PASSWORD is None:
             # Ingen passord konfigurert — la alle inn
             session["authenticated"] = True
             return jsonify({"success": True})
 
+        ip = request.remote_addr or "unknown"
+        if not _check_rate_limit(ip):
+            logger.warning(
+                "Rate limit nådd for innlogging fra %s — for mange forsøk.", ip
+            )
+            return jsonify({"error": "For mange forsøk — prøv igjen om litt"}), 429
+
         body = request.get_json(silent=True) or {}
         candidate = str(body.get("password", ""))
 
         if not hmac.compare_digest(candidate, DASHBOARD_PASSWORD):
-            logger.warning("Feil dashbordpassord forsøkt fra %s.", request.remote_addr)
+            logger.warning("Feil dashbordpassord forsøkt fra %s.", ip)
             return jsonify({"error": "Feil passord"}), 401
 
         session["authenticated"] = True
@@ -258,7 +310,13 @@ def create_flask_app() -> Flask:
     # API-endepunkter
     # ------------------------------------------------------------------
 
+    @app.route("/health")
+    def health():
+        """Enkel health check for Railway-monitorering."""
+        return jsonify({"status": "ok"}), 200
+
     @app.route("/api/stats")
+    @require_auth
     def stats():
         try:
             return jsonify(compute_stats(_resolve_user_id()))
@@ -267,6 +325,7 @@ def create_flask_app() -> Flask:
             return jsonify({"error": "Kunne ikke hente statistikk"}), 500
 
     @app.route("/api/now")
+    @require_auth
     def now_playing():
         """
         Returnerer nåværende avspilling fra now_playing-tabellen.
@@ -290,8 +349,9 @@ def create_flask_app() -> Flask:
 
                 uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at = row
 
-                # Stale-sjekk: 60 s terskel for å tåle Neon cold-start latens
-                if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=60):
+                # Stale-sjekk: 20 s terskel (tracker poller hvert 7. s,
+                # så 20 s gir 2 missede polls som buffer for Neon-latens).
+                if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=20):
                     is_playing = False
 
                 # Historisk skip-rate — samme tilkobling
@@ -328,6 +388,7 @@ def create_flask_app() -> Flask:
         })
 
     @app.route("/api/smart-skipper")
+    @require_auth
     def smart_skipper():
         try:
             with pooled_connection() as conn:
@@ -379,6 +440,7 @@ def create_flask_app() -> Flask:
         return jsonify({"config": config, "history": history})
 
     @app.route("/api/stats/score")
+    @require_auth
     def listening_score():
         """
         Returnerer brukerens lyttescore (0–100) basert på fullføringsgrad,
@@ -392,6 +454,7 @@ def create_flask_app() -> Flask:
             return jsonify({"error": "Kunne ikke beregne lyttescore"}), 500
 
     @app.route("/api/coach/insights")
+    @require_auth
     def coach_insights():
         """
         Returnerer strukturerte Insight-objekter for Musikkcoach-panelet.
@@ -414,6 +477,7 @@ def create_flask_app() -> Flask:
             return jsonify({"error": "Kunne ikke hente coach-innsikter"}), 500
 
     @app.route("/api/janitor/suggestions")
+    @require_auth
     def janitor_suggestions():
         from .janitor import _confidence_level, _category
 
@@ -465,6 +529,7 @@ def create_flask_app() -> Flask:
         ])
 
     @app.route("/api/janitor/remove", methods=["POST"])
+    @require_auth
     def janitor_remove():
         body = request.get_json(silent=True) or {}
         playlist_id = body.get("playlist_id")

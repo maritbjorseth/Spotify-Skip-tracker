@@ -9,13 +9,28 @@ noe som skalerer langt bedre med mange avspillinger.
 
 Alle funksjoner tar en 'user_id'-parameter slik at dataene isoleres
 per bruker (Fase H — multi-user forberedelse).
+
+Caching:
+    compute_stats() er dekorert med en enkel TTL-cache (60 sekunder).
+    Dette eliminerer gjentatte DB-kall ved parallelle forespørsler og
+    under Neon cold-start-perioder. Cachen er per user_id.
 """
 
 import logging
+import threading
+import time as _time
 
 from .database import execute, pooled_connection
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Enkel TTL-cache for compute_stats()
+# ---------------------------------------------------------------------------
+
+_stats_cache: dict[str, tuple[dict, float]] = {}  # user_id → (result, expires_at)
+_stats_cache_lock = threading.Lock()
+_STATS_CACHE_TTL = 60  # sekunder
 
 
 def calculate_listening_score(user_id: str = "default_user") -> int:
@@ -201,11 +216,26 @@ def compute_stats(user_id: str = "default_user") -> dict:
     Bruker connection-poolen slik at dashboard-forespørsler ikke åpner
     en ny tilkobling for hvert kall.
 
+    Resultatet caches i _STATS_CACHE_TTL sekunder per user_id for å
+    unngå gjentatte DB-kall ved parallelle forespørsler eller Neon
+    cold-start-perioder.
+
     Parametere:
         user_id  Spotify-bruker-ID — filtrerer all statistikk til kun denne brukeren.
     """
+    now = _time.monotonic()
+    with _stats_cache_lock:
+        cached = _stats_cache.get(user_id)
+        if cached is not None and cached[1] > now:
+            return cached[0]
+
     with pooled_connection() as conn:
-        return _compute(conn, user_id)
+        result = _compute(conn, user_id)
+
+    with _stats_cache_lock:
+        _stats_cache[user_id] = (result, now + _STATS_CACHE_TTL)
+
+    return result
 
 
 def _compute(conn, user_id: str) -> dict:
@@ -236,6 +266,7 @@ def _compute(conn, user_id: str) -> dict:
         GROUP BY p.uri, context_name
         HAVING SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END) > 0
         ORDER BY skip_count DESC
+        LIMIT 500
         """,
         (user_id,),
     ).fetchall()

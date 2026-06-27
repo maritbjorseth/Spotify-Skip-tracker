@@ -84,6 +84,7 @@ def should_auto_skip(
     context_uri: str | None,
     threshold: float = 0.85,
     min_plays: int = 3,
+    user_id: str = "default_user",
 ) -> tuple[bool, str]:
     """
     Bestemmer om Smart Skipper skal hoppe automatisk over denne sangen.
@@ -96,6 +97,10 @@ def should_auto_skip(
     2. Fallback til global skip-rate for sangen dersom kontekst-data
        er utilstrekkelig.
     3. Returnerer False dersom ingen av dem overskrider terskelen.
+
+    Parametere:
+        user_id  Spotify-bruker-ID — avgjørende for at beslutningen baseres
+                 på brukerens egne data, ikke alle brukeres data kombinert.
     """
     # --- Kontekst-spesifikk skip-rate ---
     if context_uri:
@@ -106,9 +111,9 @@ def should_auto_skip(
                 COUNT(*)                                            AS play_count,
                 SUM(CASE WHEN skipped THEN 1 ELSE 0 END)           AS skip_count
             FROM plays
-            WHERE uri = %s AND context_uri = %s
+            WHERE uri = %s AND context_uri = %s AND user_id = %s
             """,
-            (uri, context_uri),
+            (uri, context_uri, user_id),
         ).fetchone()
 
         if row and row[0] >= min_plays:
@@ -121,7 +126,7 @@ def should_auto_skip(
                     f"({skip_count}/{play_count} i denne spillelisten)",
                 )
 
-    # --- Global skip-rate som fallback ---
+    # --- Global skip-rate som fallback (kun brukerens egne data) ---
     row = execute(
         conn,
         """
@@ -129,9 +134,9 @@ def should_auto_skip(
             COUNT(*)                                                AS play_count,
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)               AS skip_count
         FROM plays
-        WHERE uri = %s
+        WHERE uri = %s AND user_id = %s
         """,
-        (uri,),
+        (uri, user_id),
     ).fetchone()
 
     if row and row[0] >= min_plays:
@@ -276,21 +281,24 @@ class SmartSkipper:
         progress_ms: int,
         duration_ms: int,
         is_playing: bool,
+        user_id: str = "default_user",
     ) -> bool:
         """
         Kalles ved hvert poll-syklus. Returnerer True hvis et faktisk hopp
         ble utført (ikke bare loggført i dry-run-modus).
 
         Parametere:
-            conn           Aktiv database-tilkobling
-            token          Gyldig Spotify access token
-            current_uri    URI for sangen som spilles nå
-            current_title  Tittel (for logging)
+            conn            Aktiv database-tilkobling
+            token           Gyldig Spotify access token
+            current_uri     URI for sangen som spilles nå
+            current_title   Tittel (for logging)
             current_artists Artistnavn (for logging)
-            context_uri    Spotify-URI for nåværende spilleliste/album
-            progress_ms    Antall millisekunder inn i sangen
-            duration_ms    Total lengde på sangen i millisekunder
-            is_playing     True dersom noe faktisk spilles
+            context_uri     Spotify-URI for nåværende spilleliste/album
+            progress_ms     Antall millisekunder inn i sangen
+            duration_ms     Total lengde på sangen i millisekunder
+            is_playing      True dersom noe faktisk spilles
+            user_id         Spotify-bruker-ID — sikrer at skip-beslutninger
+                            baseres kun på brukerens egne avspillinger.
         """
         # --- Grunnleggende sanity-sjekker ---
         if not current_uri or not is_playing:
@@ -365,6 +373,7 @@ class SmartSkipper:
             context_uri=context_uri,
             threshold=effective_threshold,
             min_plays=config["min_plays"],
+            user_id=user_id,
         )
 
         if not should_skip:
@@ -405,14 +414,14 @@ class SmartSkipper:
         uri_to_skip = self._pending_uri
         self._reset()
 
-        # Hent gjeldende global skip-rate for audit-loggen
+        # Hent gjeldende global skip-rate for audit-loggen (kun brukerens data)
         rate_row = execute(
             conn,
             """
             SELECT COUNT(*), SUM(CASE WHEN skipped THEN 1 ELSE 0 END)
-            FROM plays WHERE uri = %s
+            FROM plays WHERE uri = %s AND user_id = %s
             """,
-            (uri_to_skip,),
+            (uri_to_skip, user_id),
         ).fetchone()
         skip_rate = (
             int(rate_row[1] or 0) / int(rate_row[0])

@@ -304,6 +304,7 @@ def polling_loop() -> None:
                     progress_ms=int(progress_ms),
                     duration_ms=int(duration_ms),
                     is_playing=is_playing,
+                    user_id=user_id,
                 )
             except Exception as exc:
                 logger.warning(

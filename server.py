@@ -2,16 +2,15 @@
 Railway-inngang: starter tracker i bakgrunnen og eksponerer Flask-appen
 via gunicorn. Holdes separat fra app.py (som er Vercel sin inngang).
 
-Inneholder også en in-process janitor-scheduler som kjører daglig kl. 03:00 UTC.
-Dette komplementerer railway.json-cron-tjenesten og sikrer at jobben kjøres
-selv om Railway-cron-tjenesten ikke er satt opp som separat service.
+Playlist Janitor kjøres via railway.json-cron-tjenesten (daglig kl. 03:00 UTC)
+som en separat Railway-service. Den tidligere in-process scheduleren er fjernet
+for å unngå dobbelt kjøring.
 """
 
 import logging
+import os
 import sys
 import threading
-import time
-from datetime import datetime, timezone
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,59 +20,47 @@ logging.basicConfig(
 logger = logging.getLogger("server")
 
 # ---------------------------------------------------------------------------
-# Janitor-scheduler — kjøres som daemon-tråd
+# Oppstartvalidering — feil som bør fanges opp FØR gunicorn tar over
 # ---------------------------------------------------------------------------
 
-_JANITOR_HOUR_UTC = 3      # kl. 03:00 UTC
-_JANITOR_MIN_PLAYS = 2
-_JANITOR_MIN_SCORE = 0.50
-_JANITOR_POLL_INTERVAL = 60  # sjekk hvert minutt
-
-
-def _janitor_scheduler() -> None:
+def _validate_environment() -> None:
     """
-    Bakgrunnstråd som kjører Playlist Janitor én gang per dag kl. 03:00 UTC.
-    Sover 10 minutter etter kjøring for å unngå dobbelkjøring innen samme time.
+    Sjekker at kritiske miljøvariabler er satt.
+
+    SECRET_KEY: Dersom den mangler, genererer Flask en tilfeldig nøkkel
+    ved hver oppstart. Alle aktive dashbordsesjoner (session-cookies)
+    invalideres da ved hver Railway-deploy. For en multi-bruker alpha
+    er dette uakseptabelt — brukere kastes ut uten varsel.
+
+    Kjøres kun på Railway (RAILWAY_ENVIRONMENT satt) slik at lokal
+    utvikling ikke hindres.
     """
-    logger.info("janitor-scheduler: startet (kjører daglig kl. %02d:00 UTC)", _JANITOR_HOUR_UTC)
-    _last_run_date: str | None = None
+    is_railway = bool(os.environ.get("RAILWAY_ENVIRONMENT"))
 
-    while True:
-        try:
-            now = datetime.now(tz=timezone.utc)
-            today = now.strftime("%Y-%m-%d")
+    if is_railway and not os.environ.get("SECRET_KEY"):
+        logger.critical(
+            "KRITISK: SECRET_KEY er ikke satt som miljøvariabel på Railway. "
+            "Flask genererer en tilfeldig nøkkel ved hver omstart, noe som "
+            "ugyldiggjør alle aktive brukersesjoner ved hver deploy. "
+            "Sett SECRET_KEY til en fast tilfeldig streng i Railway-prosjektets "
+            "Variables-fane: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+        # Advarer, men avslutter ikke — appen fungerer, sesjoner er bare kortlevde.
 
-            if now.hour == _JANITOR_HOUR_UTC and _last_run_date != today:
-                _last_run_date = today
-                logger.info(
-                    "janitor-scheduler: trigger kl. %s UTC — starter Playlist Janitor",
-                    now.strftime("%H:%M:%S"),
-                )
-                try:
-                    from spotify_skip_tracker.janitor import run_janitor
-                    result = run_janitor(
-                        min_plays=_JANITOR_MIN_PLAYS,
-                        min_score=_JANITOR_MIN_SCORE,
-                        dry_run=False,
-                    )
-                    logger.info(
-                        "janitor-scheduler: ferdig — %d spillelister analysert, "
-                        "%d kandidater funnet og lagret",
-                        result["playlists_analysed"],
-                        result["total_candidates"],
-                    )
-                except Exception as exc:
-                    logger.error("janitor-scheduler: kjøring feilet — %s", exc, exc_info=True)
+    missing = [
+        var for var in ("SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET",
+                        "SPOTIFY_REFRESH_TOKEN", "DATABASE_URL")
+        if not os.environ.get(var)
+    ]
+    if missing:
+        logger.critical(
+            "KRITISK: Følgende påkrevde miljøvariabler mangler: %s. "
+            "Appen vil sannsynligvis feile ved oppstart.",
+            ", ".join(missing),
+        )
 
-                # Sov 10 min etter kjøring for å unngå gjentatt trigger i samme time
-                time.sleep(600)
-                continue
 
-        except Exception as exc:
-            logger.error("janitor-scheduler: uventet feil i schedulerløkke — %s", exc)
-
-        time.sleep(_JANITOR_POLL_INTERVAL)
-
+_validate_environment()
 
 # ---------------------------------------------------------------------------
 # Oppstart
@@ -100,14 +87,6 @@ try:
     logger.info("server.py: tracker startet")
 except Exception as exc:
     logger.error("server.py: tracker feil: %s", exc)
-
-logger.info("server.py: starter janitor-scheduler…")
-try:
-    _js = threading.Thread(target=_janitor_scheduler, daemon=True, name="janitor-scheduler")
-    _js.start()
-    logger.info("server.py: janitor-scheduler startet")
-except Exception as exc:
-    logger.error("server.py: janitor-scheduler feil: %s", exc)
 
 logger.info("server.py: oppretter Flask-app…")
 app = create_flask_app()

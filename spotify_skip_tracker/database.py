@@ -161,6 +161,7 @@ def _create_tables(conn) -> None:
     )
 
 
+
 def _migrate(conn) -> None:
     """Kjører inkrementelle skjema-migrasjoner."""
     _migrate_timestamp_to_timestamptz(conn)
@@ -171,6 +172,7 @@ def _migrate(conn) -> None:
     _migrate_add_user_id(conn)
     _migrate_default_user_to_spotify_id(conn)
     _migrate_add_session_id(conn)
+    _migrate_add_indexes(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -674,3 +676,56 @@ def _backfill_session_ids(conn, gap_seconds: int = 1800) -> None:
         logger.debug("  → '%s': %d avspillinger tagget.", user_id, len(updates))
 
     conn.commit()
+
+
+def _migrate_add_indexes(conn) -> None:
+    """
+    Oppretter indekser på plays-tabellen for å unngå fulle tabellskann.
+
+    Kjøres etter _migrate_add_user_id() og _migrate_add_session_id() slik
+    at alle kolonner garantert finnes. IF NOT EXISTS gjør det trygt å kjøre
+    ved hver oppstart — Postgres hopper over eksisterende indekser.
+
+    Indekser:
+        idx_plays_user_timestamp  — filtrering per bruker, sortert på tid
+                                    (brukes av nesten alle stats-spørringer)
+        idx_plays_user_uri        — skip-rate per sang per bruker
+        idx_plays_uri             — global URI-oppslag (SmartSkipper fallback)
+        idx_plays_user_context    — kontekst-aggregering (Janitor, stats)
+        idx_plays_session         — session_id-oppslag (insights)
+    """
+    indexes = [
+        (
+            "idx_plays_user_timestamp",
+            "CREATE INDEX IF NOT EXISTS idx_plays_user_timestamp "
+            "ON plays (user_id, timestamp DESC)",
+        ),
+        (
+            "idx_plays_user_uri",
+            "CREATE INDEX IF NOT EXISTS idx_plays_user_uri "
+            "ON plays (user_id, uri)",
+        ),
+        (
+            "idx_plays_uri",
+            "CREATE INDEX IF NOT EXISTS idx_plays_uri "
+            "ON plays (uri)",
+        ),
+        (
+            "idx_plays_user_context",
+            "CREATE INDEX IF NOT EXISTS idx_plays_user_context "
+            "ON plays (user_id, context_uri)",
+        ),
+        (
+            "idx_plays_session",
+            "CREATE INDEX IF NOT EXISTS idx_plays_session "
+            "ON plays (session_id) WHERE session_id IS NOT NULL",
+        ),
+    ]
+    for name, ddl in indexes:
+        try:
+            execute(conn, ddl)
+            logger.debug("Indeks klar: %s", name)
+        except Exception as exc:
+            logger.warning("Kunne ikke opprette indeks '%s': %s", name, exc)
+    conn.commit()
+    logger.info("Indeks-migrasjon fullført.")
