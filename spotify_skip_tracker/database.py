@@ -146,7 +146,7 @@ def _create_tables(conn) -> None:
         conn,
         """
         CREATE TABLE IF NOT EXISTS now_playing (
-            id          INTEGER DEFAULT 1 PRIMARY KEY,
+            user_id     TEXT        PRIMARY KEY,
             uri         TEXT,
             title       TEXT,
             artists     TEXT,
@@ -188,6 +188,7 @@ def _migrate(conn) -> None:
     _migrate_add_session_id(conn)
     _migrate_add_indexes(conn)
     _migrate_bootstrap_owner_token(conn)
+    _migrate_now_playing_per_user(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -833,6 +834,63 @@ def _migrate_bootstrap_owner_token(conn) -> None:
     except Exception as exc:
         logger.error("Bootstrap: DB-feil ved skriving av token: %s", exc)
         conn.rollback()
+
+
+def _migrate_now_playing_per_user(conn) -> None:
+    """
+    Migrerer now_playing-tabellen fra singleton-design (én rad med id=1)
+    til per-bruker-design (én rad per bruker med user_id som primærnøkkel).
+
+    Idempotent: hopper over dersom user_id-kolonnen allerede finnes.
+
+    Strategi: drop og recreate.
+    now_playing inneholder kun øyeblikkets avspillingsstatus — ikke historikk.
+    Det er derfor trygt å forkaste den gamle raden; trackeren fyller tabellen
+    på nytt innen neste poll-syklus (≤ 7 sekunder etter oppstart).
+
+    Den nye tabellen er identisk med definisjonen i _create_tables(), slik
+    at nye og migrerte databaser havner i samme tilstand.
+    """
+    cur = execute(
+        conn,
+        """
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'now_playing' AND column_name = 'user_id'
+        """,
+    )
+    if cur.fetchone() is not None:
+        return  # Allerede migrert
+
+    logger.info(
+        "Migrerer now_playing fra singleton (id=1) til per-bruker (user_id) …"
+    )
+
+    try:
+        execute(conn, "SAVEPOINT migrate_now_playing")
+        execute(conn, "DROP TABLE IF EXISTS now_playing")
+        execute(
+            conn,
+            """
+            CREATE TABLE now_playing (
+                user_id     TEXT        PRIMARY KEY,
+                uri         TEXT,
+                title       TEXT,
+                artists     TEXT,
+                album       TEXT,
+                image_url   TEXT,
+                progress_ms INTEGER,
+                duration_ms INTEGER,
+                is_playing  BOOLEAN NOT NULL DEFAULT FALSE,
+                updated_at  TIMESTAMPTZ NOT NULL
+            )
+            """,
+        )
+        execute(conn, "RELEASE SAVEPOINT migrate_now_playing")
+        conn.commit()
+        logger.info("now_playing migrert. Trackeren fyller tabellen ved neste poll.")
+    except Exception as exc:
+        execute(conn, "ROLLBACK TO SAVEPOINT migrate_now_playing")
+        logger.error("Feil under now_playing-migrasjon: %s", exc)
 
 
 # ---------------------------------------------------------------------------

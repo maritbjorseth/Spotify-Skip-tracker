@@ -198,7 +198,11 @@ def polling_loop() -> None:
                 image_url = images[0]["url"]
 
             # Oppdater now_playing-tabellen på hver poll
-            conn = _upsert_now_playing(conn, uri, title, album, artists, image_url, int(progress_ms), int(duration_ms), is_playing)
+            conn = _upsert_now_playing(
+                conn, uri, title, album, artists, image_url,
+                int(progress_ms), int(duration_ms), is_playing,
+                user_id=user_id,
+            )
 
             if uri != last_uri:
                 if last_uri is not None:
@@ -329,24 +333,26 @@ def _upsert_now_playing(
     progress_ms: int,
     duration_ms: int,
     is_playing: bool,
+    user_id: str = "default_user",
 ):
     """
-    Oppdaterer now_playing-tabellen med nåværende avspilling (upsert på rad 1).
+    Oppdaterer now_playing-tabellen med nåværende avspilling for én bruker.
 
-    Returnerer tilkoblingen som faktisk ble brukt - samme `conn` ved suksess,
-    eller en ny tilkobling dersom den gamle var død og måtte fornyes. Uten
-    dette ville en avbrutt tilkobling (f.eks. Neon inaktivitetstimeout) gjort
-    at hver poll-syklus feilet stille i opptil ett minutt, til et sporbytte
-    tilfeldigvis trigget gjenoppkobling et annet sted i koden.
+    Upsert på user_id: én rad per Spotify-bruker. Støtter dermed flere
+    samtidige brukere etter at tracker_manager() er implementert i Steg 5.
+
+    Returnerer tilkoblingen som faktisk ble brukt — samme `conn` ved suksess,
+    eller en ny tilkobling dersom den gamle var død og måtte fornyes.
     """
     try:
         execute(
             conn,
             """
             INSERT INTO now_playing
-                (id, uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at)
-            VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-            ON CONFLICT (id) DO UPDATE SET
+                (user_id, uri, title, artists, album, image_url,
+                 progress_ms, duration_ms, is_playing, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            ON CONFLICT (user_id) DO UPDATE SET
                 uri         = EXCLUDED.uri,
                 title       = EXCLUDED.title,
                 artists     = EXCLUDED.artists,
@@ -357,7 +363,7 @@ def _upsert_now_playing(
                 is_playing  = EXCLUDED.is_playing,
                 updated_at  = NOW()
             """,
-            (uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing),
+            (user_id, uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing),
         )
         conn.commit()
         return conn

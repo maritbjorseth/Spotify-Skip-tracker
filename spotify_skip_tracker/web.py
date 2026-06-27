@@ -427,11 +427,12 @@ def create_flask_app() -> Flask:
     @require_auth
     def now_playing():
         """
-        Returnerer nåværende avspilling fra now_playing-tabellen.
-        Trackeren (Railway) skriver hit hvert 7. sekund.
-        Dersom updated_at er eldre enn 30 s, regnes ingenting som spilt.
+        Returnerer nåværende avspilling fra now_playing-tabellen for innlogget bruker.
+        Trackeren (Railway) skriver hit hvert 7. sekund per bruker.
+        Dersom updated_at er eldre enn 20 s, regnes ingenting som spilt.
         """
         try:
+            current_user_id = _resolve_user_id()
             with pooled_connection() as conn:
                 row = execute(
                     conn,
@@ -439,8 +440,9 @@ def create_flask_app() -> Flask:
                     SELECT uri, title, artists, album, image_url,
                            progress_ms, duration_ms, is_playing, updated_at
                     FROM now_playing
-                    WHERE id = 1
+                    WHERE user_id = %s
                     """,
+                    (current_user_id,),
                 ).fetchone()
 
                 if row is None:
