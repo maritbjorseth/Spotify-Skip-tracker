@@ -3,11 +3,13 @@ Sporingsloop for Spotify Skip Tracker.
 
 Håndterer:
 - Skip-deteksjonslogikk (ren funksjon, lett å teste)
-- Polling av Spotify-APIet
+- Polling av Spotify-APIet per bruker
 - Skriving av avspillinger til databasen
+- Trådstyring for multi-user tracking
 """
 
 import logging
+import threading
 import time
 import uuid as _uuid
 from datetime import datetime, timezone
@@ -16,11 +18,148 @@ import psycopg2
 import requests
 
 from .config import MIN_REMAINING_MS, POLL_SECONDS, SESSION_GAP_MINUTES, SKIP_THRESHOLD
-from .database import connect, execute, init_db, reconnect
+from .database import (
+    connect, execute, mark_token_invalid, list_active_user_ids,
+    ensure_user_smart_skipper_config,
+)
 from .smart_skipper import SmartSkipper
 from .spotify_api import get_access_token, get_context_name, load_creds
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Trådstyring — én tracker-tråd per Spotify-bruker
+# ---------------------------------------------------------------------------
+
+_active_trackers: dict[str, threading.Thread] = {}
+_trackers_lock = threading.Lock()
+
+
+def ensure_tracker_running(user_id: str) -> None:
+    """
+    Starter en tracker-tråd for user_id dersom den ikke allerede kjører.
+
+    Idempotent: kall fra auth_callback() og tracker_manager() uten å bekymre
+    deg for duplikater. Bruker is_alive()-sjekk bak en threading.Lock.
+
+    Kalles fra:
+        - tracker_manager()  ved oppstart for eksisterende brukere
+        - auth_callback()    når en ny bruker logger inn via OAuth
+    """
+    with _trackers_lock:
+        existing = _active_trackers.get(user_id)
+        if existing and existing.is_alive():
+            logger.debug("[%s] Tracker kjører allerede — ingen ny tråd.", user_id)
+            return
+        t = threading.Thread(
+            target=polling_loop,
+            args=(user_id,),
+            daemon=True,
+            name=f"tracker-{user_id}",
+        )
+        _active_trackers[user_id] = t
+        t.start()
+        logger.info("[%s] Tracker-tråd startet.", user_id)
+
+
+def tracker_manager() -> None:
+    """
+    Starter tracking-tråder for alle brukere i user_tokens-tabellen.
+
+    Kalles én gang ved oppstart fra server.py. Nye brukere får tracker
+    via ensure_tracker_running() i auth_callback().
+
+    Dersom user_tokens er tom og SPOTIFY_REFRESH_TOKEN er satt som env-var
+    (enkelt-bruker / legacy-modus), gjøres ett API-kall for å identifisere
+    eieren og bootstrappe user_tokens — slik at oppstart alltid fungerer uten
+    manuell konfigurasjon av SPOTIFY_USER_ID.
+    """
+    try:
+        conn = connect()
+        user_ids = list_active_user_ids(conn)
+        conn.close()
+    except Exception as exc:
+        logger.error("tracker_manager: DB-feil ved oppstart: %s", exc)
+        user_ids = []
+
+    if user_ids:
+        logger.info(
+            "tracker_manager: starter %d tracker-tråd(er) for kjente brukere.",
+            len(user_ids),
+        )
+        for uid in user_ids:
+            ensure_tracker_running(uid)
+        return
+
+    # Ingen brukere i DB — prøv env-var-bootstrap
+    from .config import SPOTIFY_REFRESH_TOKEN
+    if SPOTIFY_REFRESH_TOKEN:
+        logger.warning(
+            "tracker_manager: ingen brukere i user_tokens. "
+            "Bootstrapper fra SPOTIFY_REFRESH_TOKEN …"
+        )
+        _bootstrap_and_start()
+    else:
+        logger.warning(
+            "tracker_manager: ingen brukere i user_tokens og ingen "
+            "SPOTIFY_REFRESH_TOKEN. Tracker starter ikke. "
+            "Logg inn via /api/auth/login for å starte tracking."
+        )
+
+
+def _bootstrap_and_start() -> None:
+    """
+    Engangs-bootstrap for legacy-modus: henter bruker-ID fra Spotify API
+    ved hjelp av env-var-legitimasjon, skriver token til user_tokens og
+    starter tracker-tråd.
+
+    Kalles av tracker_manager() dersom user_tokens er tom men
+    SPOTIFY_REFRESH_TOKEN er satt. Dette dekker ferske deploy-er der
+    bootstrap-migrasjonen ikke fant en user_id (f.eks. fordi SPOTIFY_USER_ID
+    ikke var satt og databasen var ny).
+    """
+    from .config import SPOTIFY_REFRESH_TOKEN, SCOPE
+    from .database import upsert_user_token
+    from .token_crypto import encrypt_token
+
+    try:
+        creds = load_creds()  # env-var-sti
+        token = get_access_token(creds)
+
+        resp = requests.get(
+            "https://api.spotify.com/v1/me",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        user_id = resp.json().get("id")
+        display_name = resp.json().get("display_name")
+
+        if not user_id:
+            logger.error("_bootstrap_and_start: /v1/me returnerte ingen bruker-ID.")
+            return
+
+        conn = connect()
+        upsert_user_token(
+            conn,
+            user_id=user_id,
+            refresh_token_encrypted=encrypt_token(SPOTIFY_REFRESH_TOKEN),
+            access_token=token,
+            expires_at=creds.get("expires_at"),
+            display_name=display_name,
+            scope=SCOPE,
+        )
+        ensure_user_smart_skipper_config(conn, user_id)
+        conn.close()
+
+        logger.info(
+            "_bootstrap_and_start: token for '%s' (%s) lagret — starter tracker.",
+            user_id, display_name or "–",
+        )
+        ensure_tracker_running(user_id)
+
+    except Exception as exc:
+        logger.error("_bootstrap_and_start feilet: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -94,55 +233,43 @@ def log_play(
 
 
 # ---------------------------------------------------------------------------
-# Hoved-polling-loop
+# Hoved-polling-loop (per bruker)
 # ---------------------------------------------------------------------------
 
-def polling_loop() -> None:
+def polling_loop(user_id: str) -> None:
     """
-    Poller Spotify-APIet hvert POLL_SECONDS sekund og logger avspillinger.
+    Poller Spotify-APIet for én bruker hvert POLL_SECONDS sekund.
+
+    Parametere:
+        user_id  Spotify-bruker-ID — brukes til å laste creds fra user_tokens,
+                 tagge alle avspillinger og filtrere DB-spørringer korrekt.
+
+    Avsluttes dersom:
+        - Creds ikke finnes i databasen (RuntimeError)
+        - Spotifys token-endepunkt svarer 400/401 (ugyldig/tilbakekalt token)
+          Token markeres da som ugyldig i user_tokens for å hindre gjentatte forsøk.
 
     Skip-deteksjonen fungerer retroaktivt: vi vet at et spor ble skippet
-    først når neste spor starter — da sjekker vi hvor langt det forrige
-    sporet kom.
+    først når neste spor starter — da sjekker vi hvor langt det forrige sporet kom.
     """
-    creds = load_creds()
-    conn = connect()
-    init_db(conn)
+    logger.info("[%s] Tracker starter.", user_id)
 
-    # Hent Spotify-bruker-ID én gang ved oppstart og bruk den på alle log_play-kall.
-    # Kaller /v1/me med det første tokenet — faller tilbake på 'default_user' ved feil.
-    user_id = "default_user"
+    # --- Last legitimasjon fra user_tokens (feiler fort ved manglende rad) ---
     try:
-        _startup_token = get_access_token(creds)
-        _me = requests.get(
-            "https://api.spotify.com/v1/me",
-            headers={"Authorization": f"Bearer {_startup_token}"},
-            timeout=10,
-        )
-        if _me.status_code == 200:
-            user_id = _me.json().get("id") or "default_user"
-            logger.info("Tracker: innlogget som Spotify-bruker '%s'.", user_id)
-        else:
-            logger.warning(
-                "Spotify /v1/me svarte %d — bruker 'default_user' som fallback.",
-                _me.status_code,
-            )
-    except Exception as exc:
-        logger.warning(
-            "Kunne ikke hente Spotify-bruker-ID ved oppstart: %s. "
-            "Bruker 'default_user' som fallback.", exc,
-        )
+        creds = load_creds(user_id)
+    except RuntimeError as exc:
+        logger.error("[%s] Kunne ikke laste creds: %s", user_id, exc)
+        return
 
-    # Smart Skipper — instansieres én gang og lever hele sesjonen
+    conn = connect()
+    # init_db() er allerede kjørt av server.py — ikke gjør det igjen her.
+
     skipper = SmartSkipper()
-
-    # Sesjons-sporing — ny UUID starter ved oppstart og ved gap > SESSION_GAP_MINUTES
     _session_gap_seconds = SESSION_GAP_MINUTES * 60
     current_session_id: str = str(_uuid.uuid4())
     last_play_logged_at: datetime | None = None
-    logger.info("Lyttesesjon startet: %s", current_session_id)
+    logger.info("[%s] Lyttesesjon startet: %s", user_id, current_session_id)
 
-    # Tilstand fra forrige poll-syklus
     last_uri: str | None = None
     last_progress_ms: float = 0
     last_duration_ms: float = 0
@@ -153,30 +280,58 @@ def polling_loop() -> None:
     last_shuffle_state: bool | None = None
     last_image_url: str | None = None
 
-    logger.info("Tracker startet. Poller hvert %ds.", POLL_SECONDS)
+    logger.info("[%s] Poller hvert %ds.", user_id, POLL_SECONDS)
 
     while True:
+        # --- Hent/forny access-token —----------------------------------------
+        # 400/401 fra Spotify betyr refresh-token er ugyldig eller tilbakekalt.
+        # I det tilfellet markerer vi tokenet i DB og avslutter tråden.
         try:
             token = get_access_token(creds)
+        except requests.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+            if status in (400, 401):
+                logger.warning(
+                    "[%s] Spotify avviste refresh-token (HTTP %d). "
+                    "Markerer som ugyldig og avslutter tråd.",
+                    user_id, status,
+                )
+                try:
+                    mark_token_invalid(conn, user_id)
+                except Exception:
+                    pass
+                return
+            logger.warning("[%s] HTTP-feil ved token-refresh: %s.", user_id, exc)
+            time.sleep(POLL_SECONDS)
+            continue
+        except requests.RequestException as exc:
+            logger.warning("[%s] Nettverksfeil ved token-refresh: %s.", user_id, exc)
+            time.sleep(POLL_SECONDS)
+            continue
+
+        # --- Poll Spotify-player API ------------------------------------------
+        try:
             resp = requests.get(
                 "https://api.spotify.com/v1/me/player",
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=10,
             )
 
-            # 204 = ingenting spilles; 429 = rate limit; andre feil → prøv igjen
+            # 204 = ingenting spilles; 429 = rate limit
             if resp.status_code in (204, 429) or not resp.content:
                 time.sleep(POLL_SECONDS)
                 continue
             if resp.status_code != 200:
-                logger.warning("Uventet statuskode fra Spotify: %d", resp.status_code)
+                logger.warning(
+                    "[%s] Uventet statuskode fra Spotify: %d", user_id, resp.status_code
+                )
                 time.sleep(POLL_SECONDS)
                 continue
 
             data = resp.json()
             item = data.get("item")
 
-            # Filtrer bort podcast-episoder — vi sporer kun musikk
+            # Filtrer bort podcast-episoder
             if not item or item.get("type") != "track":
                 time.sleep(POLL_SECONDS)
                 continue
@@ -191,11 +346,8 @@ def polling_loop() -> None:
             context_uri: str | None = (data.get("context") or {}).get("uri")
             shuffle_state: bool | None = data.get("shuffle_state")
 
-            # Velg albumcover: foretrekk ~640px (indeks 0), fall tilbake på første
             images = (item.get("album") or {}).get("images") or []
-            image_url: str | None = None
-            if images:
-                image_url = images[0]["url"]
+            image_url: str | None = images[0]["url"] if images else None
 
             # Oppdater now_playing-tabellen på hver poll
             conn = _upsert_now_playing(
@@ -218,14 +370,16 @@ def polling_loop() -> None:
                     skipped = is_skip(ratio, remaining_ms, shuffle_toggled, context_switched)
 
                     try:
-                        # Start ny sesjon dersom det er lenge siden forrige avspilling
                         now = datetime.now(timezone.utc)
                         if (
                             last_play_logged_at is None
                             or (now - last_play_logged_at).total_seconds() > _session_gap_seconds
                         ):
                             current_session_id = str(_uuid.uuid4())
-                            logger.info("Ny lyttesesjon startet: %s", current_session_id)
+                            logger.info(
+                                "[%s] Ny lyttesesjon startet: %s",
+                                user_id, current_session_id,
+                            )
                         last_play_logged_at = now
 
                         log_play(
@@ -241,23 +395,20 @@ def polling_loop() -> None:
                             user_id,
                             current_session_id,
                         )
-                        # Fortell Smart Skipper om utfallet slik at utålmodighets-
-                        # logikken (Fase G) kan holde styr på de siste 3 sangene.
                         skipper.record_outcome(skipped)
                         if last_context:
                             get_context_name(conn, token, last_context)
                     except psycopg2.Error as exc:
-                        # DB-tilkoblingen kan ha falt ut (f.eks. Neon inaktivitetstimeout).
-                        # Vi mister dette ene datapunktet, men loopen holder seg i live.
-                        logger.error("DB-feil ved skriving: %s", exc)
+                        logger.error("[%s] DB-feil ved skriving: %s", user_id, exc)
                         try:
                             conn.close()
                         except Exception:
                             pass
+                        from .database import reconnect
                         new_conn = reconnect()
                         if new_conn is not None:
                             conn = new_conn
-                            logger.info("Koblet til databasen på nytt.")
+                            logger.info("[%s] Koblet til databasen på nytt.", user_id)
 
                 last_uri = uri
                 last_title = title
@@ -266,18 +417,10 @@ def polling_loop() -> None:
                 last_context = context_uri
                 last_image_url = image_url
 
-            # ------------------------------------------------------------------
-            # Edge case A: søk tilbake i samme sang (progress hopper bakover).
-            # Dersom brukeren spoler mer enn 5 s bakover i samme spor, nullstilles
-            # nedtellingen slik at Smart Skipper ikke hopper umiddelbart.
-            # Sjekkes før last_progress_ms oppdateres, mens den fortsatt har
-            # forrige polls verdi.
-            # ------------------------------------------------------------------
+            # Edge case A: spolt bakover i samme sang
             if uri == last_uri and progress_ms < last_progress_ms - 5_000:
                 logger.debug(
-                    "Smart Skipper: progress spolet bakover (%.0f→%.0f ms) — "
-                    "nullstiller nedtelling for '%s'.",
-                    last_progress_ms, progress_ms, title,
+                    "[%s] Progress spolet bakover — nullstiller SmartSkipper.", user_id
                 )
                 skipper._reset()
 
@@ -285,18 +428,7 @@ def polling_loop() -> None:
             last_duration_ms = duration_ms
             last_shuffle_state = shuffle_state
 
-            # ------------------------------------------------------------------
-            # Smart Skipper — evalueres på hvert poll-syklus etter at
-            # sporbytte-logging og last_*-variabler er oppdatert.
-            #
-            # Edge case B (A→B→A): dersom brukeren manuelt hopper til en sang
-            # de nettopp forlot, vil SmartSkipper-tilstandsmaskinen se at
-            # current_uri ≠ _pending_uri og kalle _reset() internt. Den nye
-            # forekomsten av sangen starter en frisk nedtelling fra 0.
-            #
-            # Feil i SmartSkipper isoleres med try/except slik at en bug
-            # i skip-logikken aldri kan krasje hoved-tracking-loopen.
-            # ------------------------------------------------------------------
+            # Smart Skipper — feil her skal aldri krasje tracking-loopen
             try:
                 skipper.evaluate(
                     conn=conn,
@@ -312,13 +444,13 @@ def polling_loop() -> None:
                 )
             except Exception as exc:
                 logger.warning(
-                    "Smart Skipper-feil (ignorerer, tracking fortsetter): %s", exc
+                    "[%s] Smart Skipper-feil (ignorerer): %s", user_id, exc
                 )
 
         except requests.RequestException as exc:
-            logger.warning("Nettverksfeil, prøver igjen: %s", exc)
+            logger.warning("[%s] Nettverksfeil, prøver igjen: %s", user_id, exc)
         except Exception as exc:
-            logger.exception("Uventet feil i polling-loop: %s", exc)
+            logger.exception("[%s] Uventet feil i polling-loop: %s", user_id, exc)
 
         time.sleep(POLL_SECONDS)
 
@@ -338,12 +470,12 @@ def _upsert_now_playing(
     """
     Oppdaterer now_playing-tabellen med nåværende avspilling for én bruker.
 
-    Upsert på user_id: én rad per Spotify-bruker. Støtter dermed flere
-    samtidige brukere etter at tracker_manager() er implementert i Steg 5.
+    Upsert på user_id: én rad per Spotify-bruker.
 
     Returnerer tilkoblingen som faktisk ble brukt — samme `conn` ved suksess,
     eller en ny tilkobling dersom den gamle var død og måtte fornyes.
     """
+    from .database import reconnect
     try:
         execute(
             conn,
@@ -368,18 +500,18 @@ def _upsert_now_playing(
         conn.commit()
         return conn
     except Exception as exc:
-        logger.warning("Kunne ikke oppdatere now_playing, kobler til på nytt: %s", exc)
+        logger.warning("[%s] Kunne ikke oppdatere now_playing: %s", user_id, exc)
         try:
             conn.close()
         except Exception:
             pass
         new_conn = reconnect()
         if new_conn is not None:
-            logger.info("Koblet til databasen på nytt (now_playing).")
+            logger.info("[%s] Koblet til databasen på nytt (now_playing).", user_id)
             return new_conn
         logger.critical(
-            "Kunne ikke koble til databasen på nytt. "
-            "Hopper over poll-syklus og prøver igjen om %ds.", POLL_SECONDS
+            "[%s] Kunne ikke koble til databasen på nytt. "
+            "Hopper over poll-syklus og prøver igjen om %ds.", user_id, POLL_SECONDS
         )
         time.sleep(POLL_SECONDS)
         return conn

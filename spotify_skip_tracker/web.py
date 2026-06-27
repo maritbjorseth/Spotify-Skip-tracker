@@ -406,6 +406,18 @@ def create_flask_app() -> Flask:
         # --- Steg 4: sett session ---
         session["user_id"] = spotify_user_id
 
+        # --- Steg 5: start tracking for ny bruker (kun i Railway-miljøet) ---
+        # På Vercel er det ingen langtlevende prosess — start ikke tråder der.
+        if os.environ.get("RAILWAY_ENVIRONMENT"):
+            try:
+                from .tracker import ensure_tracker_running
+                ensure_tracker_running(spotify_user_id)
+            except Exception as exc:
+                logger.warning(
+                    "Kunne ikke starte tracker-tråd for '%s': %s",
+                    spotify_user_id, exc,
+                )
+
         return redirect(FRONTEND_URL)
 
     # ------------------------------------------------------------------
