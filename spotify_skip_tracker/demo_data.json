@@ -1,0 +1,2432 @@
+{
+  "stats": {
+    "tracks": [
+      {
+        "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+        "title": "Anti-Hero",
+        "artists": "Taylor Swift",
+        "context_name": "Today's Top Hits",
+        "skip_count": 14,
+        "play_count": 18,
+        "skip_rate": 0.778,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:7MXVkk9YMctZqd1Srtv4MB",
+        "title": "Blinding Lights",
+        "artists": "The Weeknd",
+        "context_name": "Today's Top Hits",
+        "skip_count": 12,
+        "play_count": 22,
+        "skip_rate": 0.545,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+      },
+      {
+        "uri": "spotify:track:1BxfuPKGuaTgP7aM0Chatn",
+        "title": "Shape of You",
+        "artists": "Ed Sheeran",
+        "context_name": "Today's Top Hits",
+        "skip_count": 11,
+        "play_count": 14,
+        "skip_rate": 0.786,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+      },
+      {
+        "uri": "spotify:track:6DCZcSspjsKoFjzjrWoCdn",
+        "title": "God's Plan",
+        "artists": "Drake",
+        "context_name": "RapCaviar",
+        "skip_count": 10,
+        "play_count": 15,
+        "skip_rate": 0.667,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+        "title": "Numb",
+        "artists": "Linkin Park",
+        "context_name": "Rock Classics",
+        "skip_count": 9,
+        "play_count": 11,
+        "skip_rate": 0.818,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:2xLMifQCjDGFmkHkpNLD9h",
+        "title": "Humble.",
+        "artists": "Kendrick Lamar",
+        "context_name": "RapCaviar",
+        "skip_count": 9,
+        "play_count": 13,
+        "skip_rate": 0.692,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
+      },
+      {
+        "uri": "spotify:track:1Cv1YLb4q0RzL6pybtaMLo",
+        "title": "Peaches",
+        "artists": "Justin Bieber",
+        "context_name": "Today's Top Hits",
+        "skip_count": 8,
+        "play_count": 10,
+        "skip_rate": 0.8,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:2Fxmhks0bxGSBdJ92vM42m",
+        "title": "Positions",
+        "artists": "Ariana Grande",
+        "context_name": "Liked Songs",
+        "skip_count": 8,
+        "play_count": 12,
+        "skip_rate": 0.667,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+      },
+      {
+        "uri": "spotify:track:5QO79kh1waicV47BqGRL3g",
+        "title": "Save Your Tears",
+        "artists": "The Weeknd",
+        "context_name": "Today's Top Hits",
+        "skip_count": 7,
+        "play_count": 19,
+        "skip_rate": 0.368,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
+        "title": "Sunflower",
+        "artists": "Post Malone",
+        "context_name": "Liked Songs",
+        "skip_count": 7,
+        "play_count": 16,
+        "skip_rate": 0.438,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+      },
+      {
+        "uri": "spotify:track:5tCCzZ9AoV2oFEYJpf6nFs",
+        "title": "Thunder",
+        "artists": "Imagine Dragons",
+        "context_name": "Rock Classics",
+        "skip_count": 6,
+        "play_count": 8,
+        "skip_rate": 0.75,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+      },
+      {
+        "uri": "spotify:track:0gplL1WMoJ6iYaPgMCL0gX",
+        "title": "Believer",
+        "artists": "Imagine Dragons",
+        "context_name": "Rock Classics",
+        "skip_count": 6,
+        "play_count": 9,
+        "skip_rate": 0.667,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+      },
+      {
+        "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
+        "title": "Stay",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "context_name": "RapCaviar",
+        "skip_count": 6,
+        "play_count": 7,
+        "skip_rate": 0.857,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+      },
+      {
+        "uri": "spotify:track:6PCUP3dWmTjcTtXY02oFdT",
+        "title": "Good 4 U",
+        "artists": "Olivia Rodrigo",
+        "context_name": "Today's Top Hits",
+        "skip_count": 5,
+        "play_count": 8,
+        "skip_rate": 0.625,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:0lYBSQXN6rF3PmPeibwTah",
+        "title": "Industry Baby",
+        "artists": "Lil Nas X, Jack Harlow",
+        "context_name": "RapCaviar",
+        "skip_count": 5,
+        "play_count": 6,
+        "skip_rate": 0.833,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6",
+        "title": "One Dance",
+        "artists": "Drake",
+        "context_name": "Liked Songs",
+        "skip_count": 5,
+        "play_count": 14,
+        "skip_rate": 0.357,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:3ee8Jmje8o58CHK66QrVC2",
+        "title": "MIDDLE OF THE NIGHT",
+        "artists": "Elley Duhé",
+        "context_name": "Today's Top Hits",
+        "skip_count": 4,
+        "play_count": 5,
+        "skip_rate": 0.8,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+      },
+      {
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
+        "title": "Levitating",
+        "artists": "Dua Lipa",
+        "context_name": "Today's Top Hits",
+        "skip_count": 4,
+        "play_count": 10,
+        "skip_rate": 0.4,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+      },
+      {
+        "uri": "spotify:track:3n3Ppam7vgaVa1iaRUIOKE",
+        "title": "Mr. Brightside",
+        "artists": "The Killers",
+        "context_name": "Rock Classics",
+        "skip_count": 4,
+        "play_count": 7,
+        "skip_rate": 0.571,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+      },
+      {
+        "uri": "spotify:track:6habFhsOp2NvshLv26DqMb",
+        "title": "In the End",
+        "artists": "Linkin Park",
+        "context_name": "Rock Classics",
+        "skip_count": 3,
+        "play_count": 9,
+        "skip_rate": 0.333,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+      },
+      {
+        "uri": "spotify:track:7lQ8MOhq6IN2w8EYcFNSUk",
+        "title": "Radioactive",
+        "artists": "Imagine Dragons",
+        "context_name": "Rock Classics",
+        "skip_count": 3,
+        "play_count": 6,
+        "skip_rate": 0.5,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:3a0YB6DJWJKoRxnNFTJHNO",
+        "title": "Enemy",
+        "artists": "Imagine Dragons, JID",
+        "context_name": "Today's Top Hits",
+        "skip_count": 3,
+        "play_count": 5,
+        "skip_rate": 0.6,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+      },
+      {
+        "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
+        "title": "Flowers",
+        "artists": "Miley Cyrus",
+        "context_name": "Liked Songs",
+        "skip_count": 3,
+        "play_count": 7,
+        "skip_rate": 0.429,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+      },
+      {
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA21",
+        "title": "drivers license",
+        "artists": "Olivia Rodrigo",
+        "context_name": "Today's Top Hits",
+        "skip_count": 2,
+        "play_count": 8,
+        "skip_rate": 0.25,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+        "title": "Heat Waves",
+        "artists": "Glass Animals",
+        "context_name": "Liked Songs",
+        "skip_count": 2,
+        "play_count": 11,
+        "skip_rate": 0.182,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
+      }
+    ],
+    "contexts": [
+      "Liked Songs",
+      "RapCaviar",
+      "Rock Classics",
+      "Today's Top Hits"
+    ],
+    "playlist_contexts": [
+      "Hot Country",
+      "Liked Songs",
+      "Peaceful Piano",
+      "RapCaviar",
+      "Rock Classics",
+      "Today's Top Hits"
+    ],
+    "album_contexts": [
+      "After Hours",
+      "DAMN."
+    ],
+    "top_artists": [
+      {
+        "artists": "The Weeknd",
+        "skip_count": 19,
+        "play_count": 41,
+        "skip_rate": 0.463
+      },
+      {
+        "artists": "Imagine Dragons",
+        "skip_count": 18,
+        "play_count": 28,
+        "skip_rate": 0.643
+      },
+      {
+        "artists": "Olivia Rodrigo",
+        "skip_count": 10,
+        "play_count": 16,
+        "skip_rate": 0.625
+      },
+      {
+        "artists": "Drake",
+        "skip_count": 15,
+        "play_count": 29,
+        "skip_rate": 0.517
+      },
+      {
+        "artists": "Justin Bieber",
+        "skip_count": 8,
+        "play_count": 10,
+        "skip_rate": 0.8
+      },
+      {
+        "artists": "Ariana Grande",
+        "skip_count": 8,
+        "play_count": 12,
+        "skip_rate": 0.667
+      },
+      {
+        "artists": "Linkin Park",
+        "skip_count": 12,
+        "play_count": 20,
+        "skip_rate": 0.6
+      },
+      {
+        "artists": "Post Malone",
+        "skip_count": 7,
+        "play_count": 16,
+        "skip_rate": 0.438
+      },
+      {
+        "artists": "Lil Nas X",
+        "skip_count": 6,
+        "play_count": 8,
+        "skip_rate": 0.75
+      },
+      {
+        "artists": "Ed Sheeran",
+        "skip_count": 11,
+        "play_count": 14,
+        "skip_rate": 0.786
+      }
+    ],
+    "top_listened_artists": [
+      {
+        "artists": "Harry Styles",
+        "skip_count": 0,
+        "play_count": 28,
+        "skip_rate": 0.0
+      },
+      {
+        "artists": "The Weeknd",
+        "skip_count": 19,
+        "play_count": 41,
+        "skip_rate": 0.463
+      },
+      {
+        "artists": "Taylor Swift",
+        "skip_count": 14,
+        "play_count": 18,
+        "skip_rate": 0.778
+      },
+      {
+        "artists": "Drake",
+        "skip_count": 15,
+        "play_count": 29,
+        "skip_rate": 0.517
+      },
+      {
+        "artists": "Post Malone",
+        "skip_count": 7,
+        "play_count": 16,
+        "skip_rate": 0.438
+      },
+      {
+        "artists": "Billie Eilish",
+        "skip_count": 1,
+        "play_count": 15,
+        "skip_rate": 0.067
+      },
+      {
+        "artists": "Ed Sheeran",
+        "skip_count": 11,
+        "play_count": 14,
+        "skip_rate": 0.786
+      },
+      {
+        "artists": "Imagine Dragons",
+        "skip_count": 18,
+        "play_count": 28,
+        "skip_rate": 0.643
+      },
+      {
+        "artists": "Olivia Rodrigo",
+        "skip_count": 10,
+        "play_count": 16,
+        "skip_rate": 0.625
+      },
+      {
+        "artists": "Queen",
+        "skip_count": 0,
+        "play_count": 13,
+        "skip_rate": 0.0
+      }
+    ],
+    "top_contexts": [
+      {
+        "context_name": "Rock Classics",
+        "skip_count": 22,
+        "play_count": 30,
+        "skip_rate": 0.733
+      },
+      {
+        "context_name": "Today's Top Hits",
+        "skip_count": 68,
+        "play_count": 115,
+        "skip_rate": 0.591
+      },
+      {
+        "context_name": "RapCaviar",
+        "skip_count": 31,
+        "play_count": 55,
+        "skip_rate": 0.564
+      },
+      {
+        "context_name": "After Hours",
+        "skip_count": 19,
+        "play_count": 41,
+        "skip_rate": 0.463
+      },
+      {
+        "context_name": "Hot Country",
+        "skip_count": 9,
+        "play_count": 22,
+        "skip_rate": 0.409
+      },
+      {
+        "context_name": "DAMN.",
+        "skip_count": 9,
+        "play_count": 13,
+        "skip_rate": 0.692
+      },
+      {
+        "context_name": "Liked Songs",
+        "skip_count": 24,
+        "play_count": 61,
+        "skip_rate": 0.393
+      },
+      {
+        "context_name": "Peaceful Piano",
+        "skip_count": 2,
+        "play_count": 18,
+        "skip_rate": 0.111
+      }
+    ],
+    "most_played": [
+      {
+        "uri": "spotify:track:6nGeLlakfzlBcFdZXteDq7",
+        "title": "As It Was",
+        "artists": "Harry Styles",
+        "context_name": null,
+        "skip_count": 0,
+        "play_count": 28,
+        "skip_rate": 0.0,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+      },
+      {
+        "uri": "spotify:track:7MXVkk9YMctZqd1Srtv4MB",
+        "title": "Blinding Lights",
+        "artists": "The Weeknd",
+        "context_name": null,
+        "skip_count": 12,
+        "play_count": 22,
+        "skip_rate": 0.545,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+      },
+      {
+        "uri": "spotify:track:5QO79kh1waicV47BqGRL3g",
+        "title": "Save Your Tears",
+        "artists": "The Weeknd",
+        "context_name": null,
+        "skip_count": 7,
+        "play_count": 19,
+        "skip_rate": 0.368,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+      },
+      {
+        "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+        "title": "Anti-Hero",
+        "artists": "Taylor Swift",
+        "context_name": null,
+        "skip_count": 14,
+        "play_count": 18,
+        "skip_rate": 0.778,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
+      },
+      {
+        "uri": "spotify:track:2takcwOaAZWiXQijPHIx7B",
+        "title": "Starboy",
+        "artists": "The Weeknd",
+        "context_name": null,
+        "skip_count": 2,
+        "play_count": 17,
+        "skip_rate": 0.118,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+      },
+      {
+        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
+        "title": "Sunflower",
+        "artists": "Post Malone",
+        "context_name": null,
+        "skip_count": 7,
+        "play_count": 16,
+        "skip_rate": 0.438,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+      },
+      {
+        "uri": "spotify:track:6DCZcSspjsKoFjzjrWoCdn",
+        "title": "God's Plan",
+        "artists": "Drake",
+        "context_name": null,
+        "skip_count": 10,
+        "play_count": 15,
+        "skip_rate": 0.667,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+      },
+      {
+        "uri": "spotify:track:6UelLqGlWMcVH1E5c4H7lY",
+        "title": "bad guy",
+        "artists": "Billie Eilish",
+        "context_name": null,
+        "skip_count": 1,
+        "play_count": 15,
+        "skip_rate": 0.067,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
+      },
+      {
+        "uri": "spotify:track:2xLMifQCjDGFmkHkpNLD9h",
+        "title": "Humble.",
+        "artists": "Kendrick Lamar",
+        "context_name": null,
+        "skip_count": 9,
+        "play_count": 13,
+        "skip_rate": 0.692,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:2Fxmhks0bxGSBdJ92vM42m",
+        "title": "Positions",
+        "artists": "Ariana Grande",
+        "context_name": null,
+        "skip_count": 8,
+        "play_count": 12,
+        "skip_rate": 0.667,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+      },
+      {
+        "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6",
+        "title": "One Dance",
+        "artists": "Drake",
+        "context_name": null,
+        "skip_count": 5,
+        "play_count": 14,
+        "skip_rate": 0.357,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:1BxfuPKGuaTgP7aM0Chatn",
+        "title": "Shape of You",
+        "artists": "Ed Sheeran",
+        "context_name": null,
+        "skip_count": 11,
+        "play_count": 14,
+        "skip_rate": 0.786,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:5ghIJDpPoe3CfHMGu71E6T",
+        "title": "Bohemian Rhapsody",
+        "artists": "Queen",
+        "context_name": null,
+        "skip_count": 0,
+        "play_count": 13,
+        "skip_rate": 0.0,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+      },
+      {
+        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+        "title": "Heat Waves",
+        "artists": "Glass Animals",
+        "context_name": null,
+        "skip_count": 2,
+        "play_count": 11,
+        "skip_rate": 0.182,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+        "title": "Numb",
+        "artists": "Linkin Park",
+        "context_name": null,
+        "skip_count": 9,
+        "play_count": 11,
+        "skip_rate": 0.818,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+      },
+      {
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
+        "title": "Levitating",
+        "artists": "Dua Lipa",
+        "context_name": null,
+        "skip_count": 4,
+        "play_count": 10,
+        "skip_rate": 0.4,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+      },
+      {
+        "uri": "spotify:track:6habFhsOp2NvshLv26DqMb",
+        "title": "In the End",
+        "artists": "Linkin Park",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 9,
+        "skip_rate": 0.333,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+      },
+      {
+        "uri": "spotify:track:6PCUP3dWmTjcTtXY02oFdT",
+        "title": "Good 4 U",
+        "artists": "Olivia Rodrigo",
+        "context_name": null,
+        "skip_count": 5,
+        "play_count": 8,
+        "skip_rate": 0.625,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+      },
+      {
+        "uri": "spotify:track:5tCCzZ9AoV2oFEYJpf6nFs",
+        "title": "Thunder",
+        "artists": "Imagine Dragons",
+        "context_name": null,
+        "skip_count": 6,
+        "play_count": 8,
+        "skip_rate": 0.75,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+      },
+      {
+        "uri": "spotify:track:0gplL1WMoJ6iYaPgMCL0gX",
+        "title": "Believer",
+        "artists": "Imagine Dragons",
+        "context_name": null,
+        "skip_count": 6,
+        "play_count": 9,
+        "skip_rate": 0.667,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
+      },
+      {
+        "uri": "spotify:track:7KXjTSCq5nL1LoYtL7XAwS",
+        "title": "MONTERO (Call Me By Your Name)",
+        "artists": "Lil Nas X",
+        "context_name": null,
+        "skip_count": 1,
+        "play_count": 7,
+        "skip_rate": 0.143,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+      },
+      {
+        "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
+        "title": "Flowers",
+        "artists": "Miley Cyrus",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 7,
+        "skip_rate": 0.429,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:3n3Ppam7vgaVa1iaRUIOKE",
+        "title": "Mr. Brightside",
+        "artists": "The Killers",
+        "context_name": null,
+        "skip_count": 4,
+        "play_count": 7,
+        "skip_rate": 0.571,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+      },
+      {
+        "uri": "spotify:track:7lQ8MOhq6IN2w8EYcFNSUk",
+        "title": "Radioactive",
+        "artists": "Imagine Dragons",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 6,
+        "skip_rate": 0.5,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
+        "title": "Stay",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "context_name": null,
+        "skip_count": 6,
+        "play_count": 7,
+        "skip_rate": 0.857,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+      },
+      {
+        "uri": "spotify:track:1Cv1YLb4q0RzL6pybtaMLo",
+        "title": "Peaches",
+        "artists": "Justin Bieber",
+        "context_name": null,
+        "skip_count": 8,
+        "play_count": 10,
+        "skip_rate": 0.8,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+      },
+      {
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA21",
+        "title": "drivers license",
+        "artists": "Olivia Rodrigo",
+        "context_name": null,
+        "skip_count": 2,
+        "play_count": 8,
+        "skip_rate": 0.25,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+      },
+      {
+        "uri": "spotify:track:3ee8Jmje8o58CHK66QrVC2",
+        "title": "MIDDLE OF THE NIGHT",
+        "artists": "Elley Duhé",
+        "context_name": null,
+        "skip_count": 4,
+        "play_count": 5,
+        "skip_rate": 0.8,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+      },
+      {
+        "uri": "spotify:track:0lYBSQXN6rF3PmPeibwTah",
+        "title": "Industry Baby",
+        "artists": "Lil Nas X, Jack Harlow",
+        "context_name": null,
+        "skip_count": 5,
+        "play_count": 6,
+        "skip_rate": 0.833,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+      },
+      {
+        "uri": "spotify:track:3a0YB6DJWJKoRxnNFTJHNO",
+        "title": "Enemy",
+        "artists": "Imagine Dragons, JID",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 5,
+        "skip_rate": 0.6,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      }
+    ],
+    "most_completed": [
+      {
+        "uri": "spotify:track:6nGeLlakfzlBcFdZXteDq7",
+        "title": "As It Was",
+        "artists": "Harry Styles",
+        "context_name": null,
+        "skip_count": 0,
+        "play_count": 28,
+        "skip_rate": 0.0,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:5ghIJDpPoe3CfHMGu71E6T",
+        "title": "Bohemian Rhapsody",
+        "artists": "Queen",
+        "context_name": null,
+        "skip_count": 0,
+        "play_count": 13,
+        "skip_rate": 0.0,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+      },
+      {
+        "uri": "spotify:track:6UelLqGlWMcVH1E5c4H7lY",
+        "title": "bad guy",
+        "artists": "Billie Eilish",
+        "context_name": null,
+        "skip_count": 1,
+        "play_count": 15,
+        "skip_rate": 0.067,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:2takcwOaAZWiXQijPHIx7B",
+        "title": "Starboy",
+        "artists": "The Weeknd",
+        "context_name": null,
+        "skip_count": 2,
+        "play_count": 17,
+        "skip_rate": 0.118,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+      },
+      {
+        "uri": "spotify:track:7KXjTSCq5nL1LoYtL7XAwS",
+        "title": "MONTERO (Call Me By Your Name)",
+        "artists": "Lil Nas X",
+        "context_name": null,
+        "skip_count": 1,
+        "play_count": 7,
+        "skip_rate": 0.143,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+        "title": "Heat Waves",
+        "artists": "Glass Animals",
+        "context_name": null,
+        "skip_count": 2,
+        "play_count": 11,
+        "skip_rate": 0.182,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+      },
+      {
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA21",
+        "title": "drivers license",
+        "artists": "Olivia Rodrigo",
+        "context_name": null,
+        "skip_count": 2,
+        "play_count": 8,
+        "skip_rate": 0.25,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+      },
+      {
+        "uri": "spotify:track:6habFhsOp2NvshLv26DqMb",
+        "title": "In the End",
+        "artists": "Linkin Park",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 9,
+        "skip_rate": 0.333,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+      },
+      {
+        "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
+        "title": "Flowers",
+        "artists": "Miley Cyrus",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 7,
+        "skip_rate": 0.429,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+      },
+      {
+        "uri": "spotify:track:7lQ8MOhq6IN2w8EYcFNSUk",
+        "title": "Radioactive",
+        "artists": "Imagine Dragons",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 6,
+        "skip_rate": 0.5,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
+      }
+    ],
+    "hourly": [
+      {
+        "skips": 1,
+        "plays": 2
+      },
+      {
+        "skips": 0,
+        "plays": 1
+      },
+      {
+        "skips": 0,
+        "plays": 0
+      },
+      {
+        "skips": 0,
+        "plays": 0
+      },
+      {
+        "skips": 0,
+        "plays": 0
+      },
+      {
+        "skips": 0,
+        "plays": 1
+      },
+      {
+        "skips": 1,
+        "plays": 3
+      },
+      {
+        "skips": 3,
+        "plays": 8
+      },
+      {
+        "skips": 4,
+        "plays": 12
+      },
+      {
+        "skips": 4,
+        "plays": 15
+      },
+      {
+        "skips": 5,
+        "plays": 18
+      },
+      {
+        "skips": 5,
+        "plays": 20
+      },
+      {
+        "skips": 7,
+        "plays": 22
+      },
+      {
+        "skips": 6,
+        "plays": 19
+      },
+      {
+        "skips": 4,
+        "plays": 16
+      },
+      {
+        "skips": 4,
+        "plays": 14
+      },
+      {
+        "skips": 5,
+        "plays": 18
+      },
+      {
+        "skips": 8,
+        "plays": 24
+      },
+      {
+        "skips": 9,
+        "plays": 28
+      },
+      {
+        "skips": 10,
+        "plays": 30
+      },
+      {
+        "skips": 8,
+        "plays": 25
+      },
+      {
+        "skips": 5,
+        "plays": 18
+      },
+      {
+        "skips": 3,
+        "plays": 10
+      },
+      {
+        "skips": 1,
+        "plays": 5
+      }
+    ],
+    "weekday": [
+      {
+        "skips": 17,
+        "plays": 48
+      },
+      {
+        "skips": 12,
+        "plays": 42
+      },
+      {
+        "skips": 11,
+        "plays": 40
+      },
+      {
+        "skips": 13,
+        "plays": 45
+      },
+      {
+        "skips": 17,
+        "plays": 52
+      },
+      {
+        "skips": 19,
+        "plays": 58
+      },
+      {
+        "skips": 13,
+        "plays": 44
+      }
+    ],
+    "daily": {
+      "2025-06-28": {
+        "skips": 3,
+        "plays": 14
+      },
+      "2025-06-29": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2025-06-30": {
+        "skips": 5,
+        "plays": 14
+      },
+      "2025-07-01": {
+        "skips": 0,
+        "plays": 1
+      },
+      "2025-07-02": {
+        "skips": 1,
+        "plays": 3
+      },
+      "2025-07-03": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-07-04": {
+        "skips": 1,
+        "plays": 2
+      },
+      "2025-07-05": {
+        "skips": 0,
+        "plays": 1
+      },
+      "2025-07-06": {
+        "skips": 1,
+        "plays": 3
+      },
+      "2025-07-07": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2025-07-08": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-07-09": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-07-10": {
+        "skips": 0,
+        "plays": 1
+      },
+      "2025-07-11": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-07-12": {
+        "skips": 1,
+        "plays": 3
+      },
+      "2025-07-13": {
+        "skips": 0,
+        "plays": 1
+      },
+      "2025-07-15": {
+        "skips": 0,
+        "plays": 1
+      },
+      "2025-07-16": {
+        "skips": 1,
+        "plays": 3
+      },
+      "2025-07-17": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2025-07-18": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2025-07-20": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2025-07-22": {
+        "skips": 1,
+        "plays": 3
+      },
+      "2025-07-23": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-07-24": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2025-07-26": {
+        "skips": 1,
+        "plays": 2
+      },
+      "2025-07-27": {
+        "skips": 0,
+        "plays": 1
+      },
+      "2025-07-28": {
+        "skips": 2,
+        "plays": 4
+      },
+      "2025-07-31": {
+        "skips": 1,
+        "plays": 2
+      },
+      "2025-08-01": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2025-08-02": {
+        "skips": 3,
+        "plays": 13
+      },
+      "2025-08-03": {
+        "skips": 4,
+        "plays": 11
+      },
+      "2025-08-04": {
+        "skips": 3,
+        "plays": 12
+      },
+      "2025-08-05": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2025-08-06": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-08-07": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-08-08": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-08-09": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2025-08-10": {
+        "skips": 3,
+        "plays": 12
+      },
+      "2025-08-11": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-08-12": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-08-14": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-08-15": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-08-16": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2025-08-17": {
+        "skips": 3,
+        "plays": 13
+      },
+      "2025-08-18": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2025-08-19": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-08-20": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2025-08-21": {
+        "skips": 5,
+        "plays": 14
+      },
+      "2025-08-22": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2025-08-23": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-08-24": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2025-08-25": {
+        "skips": 4,
+        "plays": 11
+      },
+      "2025-08-26": {
+        "skips": 4,
+        "plays": 11
+      },
+      "2025-08-28": {
+        "skips": 5,
+        "plays": 12
+      },
+      "2025-08-29": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-08-30": {
+        "skips": 3,
+        "plays": 7
+      },
+      "2025-08-31": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2025-09-01": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2025-09-02": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2025-09-03": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-09-04": {
+        "skips": 3,
+        "plays": 7
+      },
+      "2025-09-05": {
+        "skips": 3,
+        "plays": 13
+      },
+      "2025-09-07": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2025-09-08": {
+        "skips": 5,
+        "plays": 12
+      },
+      "2025-09-09": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-09-10": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2025-09-11": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-09-12": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2025-09-13": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2025-09-14": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2025-09-15": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2025-09-16": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2025-09-18": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2025-09-19": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-09-20": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2025-09-21": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-09-22": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-09-23": {
+        "skips": 5,
+        "plays": 14
+      },
+      "2025-09-24": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-09-25": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2025-09-26": {
+        "skips": 3,
+        "plays": 12
+      },
+      "2025-09-27": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-09-28": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2025-09-29": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2025-09-30": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-10-02": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2025-10-03": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2025-10-05": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2025-10-06": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2025-10-07": {
+        "skips": 2,
+        "plays": 4
+      },
+      "2025-10-08": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2025-10-09": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-10-10": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-10-11": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2025-10-12": {
+        "skips": 3,
+        "plays": 7
+      },
+      "2025-10-13": {
+        "skips": 1,
+        "plays": 6
+      },
+      "2025-10-14": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2025-10-15": {
+        "skips": 5,
+        "plays": 14
+      },
+      "2025-10-16": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2025-10-17": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2025-10-18": {
+        "skips": 3,
+        "plays": 7
+      },
+      "2025-10-19": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2025-10-20": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-10-21": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2025-10-22": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2025-10-23": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2025-10-25": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2025-10-27": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2025-10-28": {
+        "skips": 4,
+        "plays": 9
+      },
+      "2025-10-29": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2025-11-01": {
+        "skips": 5,
+        "plays": 14
+      },
+      "2025-11-02": {
+        "skips": 5,
+        "plays": 16
+      },
+      "2025-11-03": {
+        "skips": 5,
+        "plays": 16
+      },
+      "2025-11-04": {
+        "skips": 6,
+        "plays": 16
+      },
+      "2025-11-05": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2025-11-06": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2025-11-07": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2025-11-08": {
+        "skips": 5,
+        "plays": 12
+      },
+      "2025-11-09": {
+        "skips": 4,
+        "plays": 15
+      },
+      "2025-11-10": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2025-11-11": {
+        "skips": 4,
+        "plays": 15
+      },
+      "2025-11-12": {
+        "skips": 3,
+        "plays": 13
+      },
+      "2025-11-13": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2025-11-14": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2025-11-15": {
+        "skips": 4,
+        "plays": 16
+      },
+      "2025-11-16": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2025-11-17": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2025-11-18": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2025-11-19": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2025-11-20": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2025-11-21": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-11-22": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2025-11-23": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2025-11-24": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2025-11-25": {
+        "skips": 3,
+        "plays": 7
+      },
+      "2025-11-26": {
+        "skips": 5,
+        "plays": 16
+      },
+      "2025-11-27": {
+        "skips": 4,
+        "plays": 11
+      },
+      "2025-11-28": {
+        "skips": 6,
+        "plays": 15
+      },
+      "2025-11-29": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-11-30": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2025-12-01": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-12-02": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2025-12-03": {
+        "skips": 5,
+        "plays": 18
+      },
+      "2025-12-04": {
+        "skips": 5,
+        "plays": 19
+      },
+      "2025-12-05": {
+        "skips": 3,
+        "plays": 13
+      },
+      "2025-12-06": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2025-12-07": {
+        "skips": 6,
+        "plays": 19
+      },
+      "2025-12-08": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2025-12-09": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2025-12-10": {
+        "skips": 7,
+        "plays": 20
+      },
+      "2025-12-11": {
+        "skips": 7,
+        "plays": 21
+      },
+      "2025-12-13": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2025-12-14": {
+        "skips": 6,
+        "plays": 22
+      },
+      "2025-12-15": {
+        "skips": 7,
+        "plays": 19
+      },
+      "2025-12-16": {
+        "skips": 6,
+        "plays": 22
+      },
+      "2025-12-17": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2025-12-18": {
+        "skips": 5,
+        "plays": 18
+      },
+      "2025-12-19": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2025-12-20": {
+        "skips": 7,
+        "plays": 17
+      },
+      "2025-12-21": {
+        "skips": 4,
+        "plays": 17
+      },
+      "2025-12-22": {
+        "skips": 7,
+        "plays": 18
+      },
+      "2025-12-24": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2025-12-25": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2025-12-26": {
+        "skips": 6,
+        "plays": 20
+      },
+      "2025-12-28": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2025-12-29": {
+        "skips": 3,
+        "plays": 13
+      },
+      "2025-12-31": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-01-01": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-01-02": {
+        "skips": 5,
+        "plays": 15
+      },
+      "2026-01-03": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2026-01-04": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2026-01-05": {
+        "skips": 7,
+        "plays": 19
+      },
+      "2026-01-06": {
+        "skips": 2,
+        "plays": 10
+      },
+      "2026-01-07": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-01-08": {
+        "skips": 6,
+        "plays": 22
+      },
+      "2026-01-09": {
+        "skips": 6,
+        "plays": 19
+      },
+      "2026-01-10": {
+        "skips": 5,
+        "plays": 21
+      },
+      "2026-01-11": {
+        "skips": 7,
+        "plays": 20
+      },
+      "2026-01-12": {
+        "skips": 8,
+        "plays": 20
+      },
+      "2026-01-14": {
+        "skips": 5,
+        "plays": 16
+      },
+      "2026-01-15": {
+        "skips": 4,
+        "plays": 16
+      },
+      "2026-01-16": {
+        "skips": 3,
+        "plays": 14
+      },
+      "2026-01-17": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2026-01-18": {
+        "skips": 5,
+        "plays": 19
+      },
+      "2026-01-19": {
+        "skips": 4,
+        "plays": 16
+      },
+      "2026-01-20": {
+        "skips": 7,
+        "plays": 20
+      },
+      "2026-01-21": {
+        "skips": 5,
+        "plays": 15
+      },
+      "2026-01-22": {
+        "skips": 3,
+        "plays": 12
+      },
+      "2026-01-24": {
+        "skips": 8,
+        "plays": 22
+      },
+      "2026-01-25": {
+        "skips": 5,
+        "plays": 17
+      },
+      "2026-01-26": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-01-27": {
+        "skips": 5,
+        "plays": 15
+      },
+      "2026-01-28": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2026-01-29": {
+        "skips": 5,
+        "plays": 22
+      },
+      "2026-01-31": {
+        "skips": 6,
+        "plays": 19
+      },
+      "2026-02-01": {
+        "skips": 4,
+        "plays": 11
+      },
+      "2026-02-02": {
+        "skips": 3,
+        "plays": 15
+      },
+      "2026-02-03": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2026-02-04": {
+        "skips": 3,
+        "plays": 12
+      },
+      "2026-02-05": {
+        "skips": 5,
+        "plays": 16
+      },
+      "2026-02-06": {
+        "skips": 5,
+        "plays": 19
+      },
+      "2026-02-07": {
+        "skips": 4,
+        "plays": 15
+      },
+      "2026-02-08": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2026-02-09": {
+        "skips": 7,
+        "plays": 19
+      },
+      "2026-02-10": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2026-02-11": {
+        "skips": 5,
+        "plays": 12
+      },
+      "2026-02-12": {
+        "skips": 6,
+        "plays": 16
+      },
+      "2026-02-13": {
+        "skips": 5,
+        "plays": 21
+      },
+      "2026-02-14": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-02-15": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2026-02-16": {
+        "skips": 6,
+        "plays": 16
+      },
+      "2026-02-17": {
+        "skips": 6,
+        "plays": 18
+      },
+      "2026-02-19": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2026-02-20": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-02-21": {
+        "skips": 8,
+        "plays": 21
+      },
+      "2026-02-22": {
+        "skips": 5,
+        "plays": 14
+      },
+      "2026-02-24": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2026-02-25": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2026-02-26": {
+        "skips": 7,
+        "plays": 20
+      },
+      "2026-02-27": {
+        "skips": 5,
+        "plays": 17
+      },
+      "2026-02-28": {
+        "skips": 4,
+        "plays": 15
+      },
+      "2026-03-01": {
+        "skips": 4,
+        "plays": 15
+      },
+      "2026-03-03": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2026-03-04": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2026-03-05": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2026-03-06": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2026-03-07": {
+        "skips": 3,
+        "plays": 13
+      },
+      "2026-03-08": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-03-09": {
+        "skips": 4,
+        "plays": 16
+      },
+      "2026-03-10": {
+        "skips": 6,
+        "plays": 16
+      },
+      "2026-03-11": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2026-03-12": {
+        "skips": 4,
+        "plays": 16
+      },
+      "2026-03-14": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-03-15": {
+        "skips": 4,
+        "plays": 15
+      },
+      "2026-03-16": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2026-03-17": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-03-18": {
+        "skips": 3,
+        "plays": 7
+      },
+      "2026-03-19": {
+        "skips": 2,
+        "plays": 11
+      },
+      "2026-03-20": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2026-03-21": {
+        "skips": 3,
+        "plays": 15
+      },
+      "2026-03-22": {
+        "skips": 5,
+        "plays": 16
+      },
+      "2026-03-23": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-03-24": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-03-25": {
+        "skips": 6,
+        "plays": 16
+      },
+      "2026-03-26": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2026-03-28": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-03-29": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-03-31": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2026-04-01": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2026-04-02": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2026-04-04": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2026-04-05": {
+        "skips": 3,
+        "plays": 14
+      },
+      "2026-04-06": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-04-07": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2026-04-08": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2026-04-09": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2026-04-10": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2026-04-11": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2026-04-12": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2026-04-13": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2026-04-14": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2026-04-15": {
+        "skips": 3,
+        "plays": 12
+      },
+      "2026-04-16": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2026-04-17": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2026-04-18": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2026-04-19": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-04-20": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-04-21": {
+        "skips": 3,
+        "plays": 14
+      },
+      "2026-04-22": {
+        "skips": 3,
+        "plays": 12
+      },
+      "2026-04-23": {
+        "skips": 5,
+        "plays": 12
+      },
+      "2026-04-24": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2026-04-25": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2026-04-26": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2026-04-27": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-04-28": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2026-04-29": {
+        "skips": 2,
+        "plays": 4
+      },
+      "2026-04-30": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2026-05-03": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2026-05-05": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-05-07": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2026-05-08": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-05-09": {
+        "skips": 2,
+        "plays": 11
+      },
+      "2026-05-10": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2026-05-11": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-05-12": {
+        "skips": 4,
+        "plays": 10
+      },
+      "2026-05-13": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2026-05-15": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2026-05-16": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2026-05-17": {
+        "skips": 4,
+        "plays": 14
+      },
+      "2026-05-18": {
+        "skips": 1,
+        "plays": 5
+      },
+      "2026-05-19": {
+        "skips": 5,
+        "plays": 14
+      },
+      "2026-05-20": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2026-05-21": {
+        "skips": 2,
+        "plays": 11
+      },
+      "2026-05-22": {
+        "skips": 4,
+        "plays": 11
+      },
+      "2026-05-24": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2026-05-25": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-05-26": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-05-28": {
+        "skips": 3,
+        "plays": 10
+      },
+      "2026-05-30": {
+        "skips": 3,
+        "plays": 14
+      },
+      "2026-05-31": {
+        "skips": 6,
+        "plays": 14
+      },
+      "2026-06-01": {
+        "skips": 5,
+        "plays": 13
+      },
+      "2026-06-02": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-06-03": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2026-06-04": {
+        "skips": 3,
+        "plays": 8
+      },
+      "2026-06-05": {
+        "skips": 3,
+        "plays": 14
+      },
+      "2026-06-06": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2026-06-07": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-06-08": {
+        "skips": 2,
+        "plays": 9
+      },
+      "2026-06-09": {
+        "skips": 2,
+        "plays": 8
+      },
+      "2026-06-10": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2026-06-11": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2026-06-12": {
+        "skips": 2,
+        "plays": 6
+      },
+      "2026-06-13": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2026-06-14": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2026-06-15": {
+        "skips": 2,
+        "plays": 5
+      },
+      "2026-06-16": {
+        "skips": 6,
+        "plays": 14
+      },
+      "2026-06-17": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2026-06-18": {
+        "skips": 1,
+        "plays": 4
+      },
+      "2026-06-19": {
+        "skips": 3,
+        "plays": 9
+      },
+      "2026-06-20": {
+        "skips": 4,
+        "plays": 13
+      },
+      "2026-06-22": {
+        "skips": 2,
+        "plays": 7
+      },
+      "2026-06-23": {
+        "skips": 4,
+        "plays": 12
+      },
+      "2026-06-25": {
+        "skips": 3,
+        "plays": 11
+      },
+      "2026-06-27": {
+        "skips": 1,
+        "plays": 4
+      }
+    },
+    "total_skips": 1064,
+    "total_plays": 3425,
+    "unique_tracks": 25,
+    "auto_skip_candidates": [
+      {
+        "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+        "title": "Anti-Hero",
+        "artists": "Taylor Swift",
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de",
+        "play_count": 18,
+        "skip_count": 14,
+        "skip_rate": 0.778
+      },
+      {
+        "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+        "title": "Numb",
+        "artists": "Linkin Park",
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea",
+        "play_count": 11,
+        "skip_count": 9,
+        "skip_rate": 0.818
+      },
+      {
+        "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
+        "title": "Stay",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d",
+        "play_count": 7,
+        "skip_count": 6,
+        "skip_rate": 0.857
+      },
+      {
+        "uri": "spotify:track:0lYBSQXN6rF3PmPeibwTah",
+        "title": "Industry Baby",
+        "artists": "Lil Nas X, Jack Harlow",
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96",
+        "play_count": 6,
+        "skip_count": 5,
+        "skip_rate": 0.833
+      }
+    ],
+    "smart_skipper_threshold": 0.85
+  },
+  "now": {
+    "is_playing": true,
+    "uri": "spotify:track:6nGeLlakfzlBcFdZXteDq7",
+    "title": "As It Was",
+    "artists": "Harry Styles",
+    "album": "Harry's House",
+    "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101",
+    "progress_ms": 97000,
+    "duration_ms": 167303,
+    "skip_rate": 0.0,
+    "updated_at": "2026-06-28T14:32:10+00:00"
+  },
+  "smart_skipper": {
+    "config": {
+      "enabled": false,
+      "threshold": 0.85,
+      "min_plays": 3,
+      "delay_seconds": 5,
+      "dry_run": true
+    },
+    "history": [
+      {
+        "title": "Anti-Hero",
+        "artists": "Taylor Swift",
+        "skip_rate": 0.778,
+        "reason": "skip_rate >= 0.85",
+        "timestamp": "2026-06-20T19:14:55+00:00",
+        "undone": false
+      },
+      {
+        "title": "Numb",
+        "artists": "Linkin Park",
+        "skip_rate": 0.818,
+        "reason": "skip_rate >= 0.85",
+        "timestamp": "2026-06-18T21:03:12+00:00",
+        "undone": true
+      }
+    ]
+  },
+  "score": {
+    "score": 68
+  },
+  "insights": [
+    {
+      "id": "skip_peak_hour",
+      "category": "tidspunkt",
+      "stadium": 3,
+      "observation": "Du skipper mest mellom kl. 19 og 21.",
+      "context": "Det er 35 % høyere skip-rate enn resten av dagen.",
+      "explanation": "Kveldslytting skjer gjerne på farten eller mens du gjør noe annet — du er mer utålmodig med sanger som ikke treffer stemningen.",
+      "action": "Lag en spilleliste med energiske sanger for kveldsøkter.",
+      "value": 19,
+      "trend": null,
+      "trend_is_positive": null
+    },
+    {
+      "id": "most_skipped_artist",
+      "category": "artist",
+      "stadium": 2,
+      "observation": "Imagine Dragons er artisten du skipper oftest (64 % av gangene).",
+      "context": "Taylor Swift og Ed Sheeran følger hakk i hæl.",
+      "explanation": null,
+      "action": null,
+      "value": 0.643,
+      "trend": null,
+      "trend_is_positive": null
+    },
+    {
+      "id": "loyal_listener",
+      "category": "artist",
+      "stadium": 2,
+      "observation": "Harry Styles hører du alltid ferdig — 0 % skip på 28 avspillinger.",
+      "context": "Det er din mest lojale lytterelasjon.",
+      "explanation": null,
+      "action": null,
+      "value": 0.0,
+      "trend": null,
+      "trend_is_positive": null
+    }
+  ],
+  "janitor_suggestions": [
+    {
+      "id": 1,
+      "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
+      "playlist_name": "Today's Top Hits",
+      "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+      "title": "Anti-Hero",
+      "artists": "Taylor Swift",
+      "skip_rate": 0.778,
+      "janitor_score": 0.87,
+      "suggested_at": "2026-06-25T10:00:00+00:00",
+      "status": "pending",
+      "play_count": 18,
+      "confidence_level": "høy",
+      "category": "skipper nesten alltid"
+    },
+    {
+      "id": 2,
+      "playlist_id": "37i9dQZF1DX0XUsuxWHRQd",
+      "playlist_name": "RapCaviar",
+      "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
+      "title": "Stay",
+      "artists": "The Kid LAROI, Justin Bieber",
+      "skip_rate": 0.857,
+      "janitor_score": 0.91,
+      "suggested_at": "2026-06-24T08:30:00+00:00",
+      "status": "pending",
+      "play_count": 7,
+      "confidence_level": "middels",
+      "category": "skipper nesten alltid"
+    }
+  ]
+}

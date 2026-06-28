@@ -36,7 +36,7 @@ from .config import (
     SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN,
     REDIRECT_URI_WEB, FRONTEND_URL,
     APP_DIR, CREDS_PATH, SCOPE,
-    FLASK_SECRET_KEY,
+    FLASK_SECRET_KEY, DEMO_MODE,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,18 @@ try:
     _DASHBOARD_HTML = (_HERE / "dashboard.html").read_text(encoding="utf-8")
 except FileNotFoundError:
     _DASHBOARD_HTML = "<h1>Dashboard ikke funnet</h1>"
+
+try:
+    _DEMO_DATA: dict | None = _json.loads(
+        (_HERE / "demo_data.json").read_text(encoding="utf-8")
+    )
+except FileNotFoundError:
+    _DEMO_DATA = None
+
+
+def _is_demo() -> bool:
+    """Returnerer True dersom den gjeldende sesjonen er en demo-sesjon."""
+    return bool(session.get("is_demo"))
 
 # ---------------------------------------------------------------------------
 # Auth-hjelpere
@@ -134,8 +146,28 @@ def create_flask_app() -> Flask:
         """
         user_id = session.get("user_id")
         if user_id:
-            return jsonify({"authenticated": True, "user_id": user_id})
-        return jsonify({"authenticated": False, "user_id": None})
+            return jsonify({
+                "authenticated": True,
+                "user_id": user_id,
+                "is_demo": _is_demo(),
+            })
+        return jsonify({"authenticated": False, "user_id": None, "is_demo": False})
+
+    @app.route("/api/auth/demo")
+    def auth_demo():
+        """
+        Setter opp en demo-sesjon uten Spotify OAuth eller DB-tilgang.
+
+        Returnerer 404 dersom DEMO_MODE ikke er aktivert i miljøet.
+        Setter session['user_id'] = '_demo_' og session['is_demo'] = True,
+        og sender brukeren videre til FRONTEND_URL.
+        """
+        if not DEMO_MODE:
+            return jsonify({"error": "Demo-modus er ikke aktivert"}), 404
+        session["user_id"] = "_demo_"
+        session["is_demo"] = True
+        logger.info("Demo-sesjon startet.")
+        return redirect(FRONTEND_URL)
 
     @app.route("/api/auth/password", methods=["POST"])
     def auth_password():
@@ -381,6 +413,9 @@ def create_flask_app() -> Flask:
     @app.route("/api/stats")
     @require_auth
     def stats():
+        if _is_demo():
+            return jsonify(_DEMO_DATA["stats"])
+
         try:
             return jsonify(compute_stats(_resolve_user_id()))
         except Exception as exc:
@@ -395,6 +430,9 @@ def create_flask_app() -> Flask:
         Trackeren (Railway) skriver hit hvert 7. sekund per bruker.
         Dersom updated_at er eldre enn 20 s, regnes ingenting som spilt.
         """
+        if _is_demo():
+            return jsonify(_DEMO_DATA["now"])
+
         try:
             current_user_id = _resolve_user_id()
             with pooled_connection() as conn:
@@ -455,6 +493,9 @@ def create_flask_app() -> Flask:
     @app.route("/api/smart-skipper")
     @require_auth
     def smart_skipper():
+        if _is_demo():
+            return jsonify(_DEMO_DATA["smart_skipper"])
+
         try:
             current_user_id = _resolve_user_id()
             with pooled_connection() as conn:
@@ -518,6 +559,9 @@ def create_flask_app() -> Flask:
         Returnerer brukerens lyttescore (0–100) basert på fullføringsgrad,
         lengste streak og daglig konsistens.
         """
+        if _is_demo():
+            return jsonify(_DEMO_DATA["score"])
+
         try:
             score = calculate_listening_score(_resolve_user_id())
             return jsonify({"score": score})
@@ -541,6 +585,9 @@ def create_flask_app() -> Flask:
 
         Responsen er en JSON-liste sortert med høyeste stadium øverst.
         """
+        if _is_demo():
+            return jsonify(_DEMO_DATA["insights"])
+
         try:
             insights = generate_insights(_resolve_user_id())
             return jsonify([i.to_dict() for i in insights])
@@ -551,6 +598,9 @@ def create_flask_app() -> Flask:
     @app.route("/api/janitor/suggestions")
     @require_auth
     def janitor_suggestions():
+        if _is_demo():
+            return jsonify(_DEMO_DATA["janitor_suggestions"])
+
         from .janitor import _confidence_level, _category
 
         user_id = _resolve_user_id()
@@ -603,6 +653,9 @@ def create_flask_app() -> Flask:
     @app.route("/api/janitor/remove", methods=["POST"])
     @require_auth
     def janitor_remove():
+        if _is_demo():
+            return jsonify({"error": "Ikke tilgjengelig i demo-modus"}), 403
+
         body = request.get_json(silent=True) or {}
         playlist_id = body.get("playlist_id")
         track_uri = body.get("track_uri")

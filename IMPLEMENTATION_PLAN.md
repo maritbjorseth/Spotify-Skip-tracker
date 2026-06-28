@@ -12,7 +12,7 @@ Status-nøkkel: `[ ]` ikke startet · `[~]` påbegynt · `[x]` fullført
 - ☑ i18n ferdig
 - ☑ Produksjon deployet
 - ☑ Demo-data generert
-- ☐ Public Demo backend
+- ☑ Public Demo backend (steg 5 av 6)
 - ☐ Public Demo frontend
 - ☐ Open Source-klargjøring
 - ☐ README
@@ -59,7 +59,7 @@ Nøkkelarkitektur:
 
 ### Steg 1 — Generer `demo_data.json`
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Fil:** `spotify_skip_tracker/demo_data.json` (ny)  
 **Beskrivelse:**  
 Opprett et statisk JSON-datasett med realistiske verdier som speiler eksakt hva hvert API-endepunkt returnerer. Strukturen:
@@ -91,7 +91,7 @@ Datasettet skal inkludere:
 
 ### Steg 2 — Backend: demo-infrastruktur i `web.py` og `config.py`
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Filer:** `web.py`, `config.py`  
 **Beskrivelse:**
 
@@ -118,7 +118,7 @@ Datasettet skal inkludere:
 
 ### Steg 3 — Backend: demo-sjekk i stats, now, smart-skipper
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Fil:** `web.py`  
 **Beskrivelse:**  
 Legg til tidlig demo-return øverst i funksjonslegemene for:
@@ -140,7 +140,7 @@ Plasseres etter `@require_auth`-sjekken, men før alle DB-kall.
 
 ### Steg 4 — Backend: demo-sjekk i score, insights, janitor/suggestions
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Fil:** `web.py`  
 **Beskrivelse:**  
 Samme mønster som steg 3 for:
@@ -155,7 +155,7 @@ Samme mønster som steg 3 for:
 
 ### Steg 5 — Backend: blokker skriving i demo-modus
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Fil:** `web.py`  
 **Beskrivelse:**  
 `POST /api/janitor/remove` er det eneste endepunktet som faktisk skriver data (til DB og Spotify). Legg til øverst i funksjonslegemet:
