@@ -167,14 +167,7 @@ class TestAutoSkipsDB:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture()
-def app(monkeypatch):
-    monkeypatch.setattr("spotify_skip_tracker.web.DASHBOARD_PASSWORD", None)
-    monkeypatch.setattr("spotify_skip_tracker.config.DASHBOARD_PASSWORD", None)
-    monkeypatch.setattr(
-        "spotify_skip_tracker.web._get_owner_user_id", lambda: "owner"
-    )
-    monkeypatch.setattr("spotify_skip_tracker.web._owner_user_id_cache", None)
-
+def app():
     from spotify_skip_tracker.web import create_flask_app
     flask_app = create_flask_app()
     flask_app.config.update(

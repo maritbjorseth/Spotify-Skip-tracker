@@ -7,15 +7,12 @@ Endepunkter:
   GET /api/now    — nåværende avspilling fra now_playing-tabellen
 """
 
-from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from pathlib import Path
-import hmac
 import json as _json
 import os
 import secrets
-import threading
 import time as _time
 import urllib.parse
 
@@ -39,7 +36,7 @@ from .config import (
     SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
     REDIRECT_URI_WEB, FRONTEND_URL,
     APP_DIR, CREDS_PATH, SCOPE,
-    FLASK_SECRET_KEY, DASHBOARD_PASSWORD,
+    FLASK_SECRET_KEY,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,92 +50,25 @@ except FileNotFoundError:
     _DASHBOARD_HTML = "<h1>Dashboard ikke funnet</h1>"
 
 # ---------------------------------------------------------------------------
-# Eier-bruker-ID — brukt av passord-innlogging og åpen modus
+# Auth-hjelpere
 # ---------------------------------------------------------------------------
 
 # Sett med éngangskoder brukt for å hindre CSRF under web-OAuth-flyten.
 _oauth_states: set[str] = set()
 
-_owner_user_id_cache: str | None = None
-_owner_lock = threading.Lock()
-
-
-def _get_owner_user_id() -> str:
-    """
-    Returnerer eierens Spotify-bruker-ID for passord-innlogging og åpen modus.
-
-    Kaller aldri Spotify API direkte dersom DB-oppslaget lykkes. Resultatet
-    caches for prosessens levetid — eieren bytter ikke.
-
-    Prioritet:
-        1. In-memory cache (raskest)
-        2. user_tokens-tabellen (etter bootstrap-migrasjon fra Steg 1)
-        3. Spotify /v1/me med konfigurert legitimasjon (fallback, én gang)
-        4. 'default_user' (siste utvei med advarsel)
-    """
-    global _owner_user_id_cache
-    if _owner_user_id_cache is not None:
-        return _owner_user_id_cache
-
-    with _owner_lock:
-        if _owner_user_id_cache is not None:
-            return _owner_user_id_cache
-
-        # Prioritet 2: databasen (bootstrap-migrasjonen i Steg 1 la dette inn)
-        try:
-            with pooled_connection() as conn:
-                ids = list_active_user_ids(conn)
-                if ids:
-                    _owner_user_id_cache = ids[0]
-                    logger.info(
-                        "Eier-bruker-ID hentet fra DB: '%s'.", _owner_user_id_cache
-                    )
-                    return _owner_user_id_cache
-        except Exception as exc:
-            logger.warning("DB-oppslag for eier-ID feilet: %s", exc)
-
-        # Prioritet 3: Spotify API med konfigurert legitimasjon
-        try:
-            creds = load_creds()
-            token = get_access_token(creds)
-            resp = http_requests.get(
-                "https://api.spotify.com/v1/me",
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=10,
-            )
-            resp.raise_for_status()
-            _owner_user_id_cache = resp.json().get("id") or "default_user"
-            logger.info(
-                "Eier-bruker-ID hentet fra Spotify API: '%s'.", _owner_user_id_cache
-            )
-        except Exception as exc:
-            logger.warning(
-                "Kunne ikke hente eier-bruker-ID: %s. Bruker 'default_user'.", exc
-            )
-            _owner_user_id_cache = "default_user"
-
-        return _owner_user_id_cache
-
 
 def _resolve_user_id() -> str:
     """
-    Returnerer bruker-ID-en til den innloggede brukeren i denne requesten.
+    Returnerer Spotify-bruker-IDen til den innloggede brukeren.
 
-    Leser fra session['user_id'] — satt av auth_callback() (Spotify OAuth)
-    eller auth_password() (passord-innlogging).
+    Leser fra session['user_id'] — satt utelukkende av auth_callback()
+    etter vellykket Spotify OAuth-flyt.
 
-    I åpen modus (DASHBOARD_PASSWORD ikke satt) faller tilbake på
-    _get_owner_user_id() slik at direkte API-kall uten forutgående
-    /api/auth/status-kall fortsatt fungerer.
-
-    Raises RuntimeError dersom bruker ikke er innlogget og modus krever det.
-    Skal i praksis aldri nås etter @require_auth-dekoratoren.
+    Skal i praksis aldri feile etter @require_auth-dekoratoren.
     """
     user_id = session.get("user_id")
     if user_id:
         return user_id
-    if DASHBOARD_PASSWORD is None:
-        return _get_owner_user_id()
     raise RuntimeError("Ikke innlogget — user_id mangler i session")
 
 
@@ -166,43 +96,17 @@ def create_flask_app() -> Flask:
     # ------------------------------------------------------------------
     # Tilgangskontroll — dekorator for beskyttede API-ruter
     #
-    # Dersom DASHBOARD_PASSWORD ikke er satt (åpen/lokal modus) godtas
-    # alle forespørsler. Ellers kreves session['user_id'].
+    # Alle API-ruter krever session['user_id'], satt av Spotify OAuth-flyten.
     # ------------------------------------------------------------------
 
     def require_auth(f):
-        """Dekorator som krever gyldig dashbordsesjon på beskyttede ruter."""
+        """Dekorator som krever aktiv Spotify-innlogging på beskyttede ruter."""
         @wraps(f)
         def decorated(*args, **kwargs):
-            if DASHBOARD_PASSWORD is not None and not session.get("user_id"):
+            if not session.get("user_id"):
                 return jsonify({"error": "Ikke innlogget"}), 401
             return f(*args, **kwargs)
         return decorated
-
-    # ------------------------------------------------------------------
-    # Rate limiting for innloggingsendepunktet
-    #
-    # Enkel in-memory-implementasjon: maks 10 forsøk per IP per 60 s.
-    # Bruker monotonic-klokkeslett for å unngå problemer med sommertid.
-    # ------------------------------------------------------------------
-
-    _login_attempts: dict[str, list[float]] = defaultdict(list)
-    _LOGIN_MAX_ATTEMPTS = 10
-    _LOGIN_WINDOW_SECONDS = 60
-
-    def _check_rate_limit(ip: str) -> bool:
-        """
-        Returnerer True dersom IP-adressen er innenfor tillatt grense.
-        Rydder opp i utdaterte timestamps ved hvert kall.
-        """
-        now = _time.monotonic()
-        window_start = now - _LOGIN_WINDOW_SECONDS
-        attempts = [t for t in _login_attempts[ip] if t > window_start]
-        _login_attempts[ip] = attempts
-        if len(attempts) >= _LOGIN_MAX_ATTEMPTS:
-            return False
-        _login_attempts[ip].append(now)
-        return True
 
     # ------------------------------------------------------------------
     # Autentiserings-endepunkter
@@ -211,68 +115,33 @@ def create_flask_app() -> Flask:
     @app.route("/api/auth/status")
     def auth_status():
         """
-        Sjekker om denne nettleseren har en gyldig dashbordsesjon.
+        Sjekker om denne nettleseren har en aktiv Spotify-sesjon.
 
-        Tilgangsmodi:
-          - DASHBOARD_PASSWORD ikke satt (åpen modus) → alltid authenticated.
-            Setter session['user_id'] = eierens ID ved første kall slik at
-            alle påfølgende API-kall har korrekt bruker-kontekst i session.
-          - DASHBOARD_PASSWORD satt → krever session['user_id'] (satt av
-            auth_callback() eller auth_password()).
+        Returnerer authenticated=True kun dersom session['user_id'] er satt,
+        noe som bare skjer etter vellykket Spotify OAuth-flyt via /api/auth/login.
+
+        Frontenden bruker svaret til å avgjøre om LoginScreen eller dashbordet
+        skal vises. Uautentiserte brukere sendes til /api/auth/login.
         """
-        if DASHBOARD_PASSWORD is None:
-            if not session.get("user_id"):
-                session["user_id"] = _get_owner_user_id()
-            return jsonify({"authenticated": True, "user_id": session["user_id"]})
-
         user_id = session.get("user_id")
         if user_id:
             return jsonify({"authenticated": True, "user_id": user_id})
-
         return jsonify({"authenticated": False, "user_id": None})
 
     @app.route("/api/auth/password", methods=["POST"])
     def auth_password():
         """
-        Validerer dashbordpassordet fra POST-body og oppretter en sesjon.
-
-        Bruker hmac.compare_digest for konstant-tid-sammenligning slik at
-        timingbaserte angrepsforsøk ikke gir informasjon om passordet.
-
-        Setter session['user_id'] = eierens Spotify-ID ved suksess.
-        Passord-innlogging gir alltid tilgang til eierens data — en enkelt
-        konfigurert konto per Railway-instans.
-
-        Rate limiting: maks 10 forsøk per IP per 60 sekunder.
+        Passord-innlogging er fjernet — alle brukere logger inn via Spotify OAuth.
+        Returnerer 410 Gone med veiledende melding.
         """
-        if DASHBOARD_PASSWORD is None:
-            # Åpen modus — ingen passord konfigurert
-            session["user_id"] = _get_owner_user_id()
-            return jsonify({"success": True})
-
-        ip = request.remote_addr or "unknown"
-        if not _check_rate_limit(ip):
-            logger.warning(
-                "Rate limit nådd for innlogging fra %s — for mange forsøk.", ip
-            )
-            return jsonify({"error": "For mange forsøk — prøv igjen om litt"}), 429
-
-        body = request.get_json(silent=True) or {}
-        candidate = str(body.get("password", ""))
-
-        if not hmac.compare_digest(candidate, DASHBOARD_PASSWORD):
-            logger.warning("Feil dashbordpassord forsøkt fra %s.", ip)
-            return jsonify({"error": "Feil passord"}), 401
-
-        session["user_id"] = _get_owner_user_id()
-        logger.info(
-            "Dashbordsesjon opprettet (passord) for bruker '%s'.", session["user_id"]
-        )
-        return jsonify({"success": True})
+        return jsonify({
+            "error": "Passord-innlogging er ikke lenger støttet. "
+                     "Bruk /api/auth/login for å logge inn med Spotify."
+        }), 410
 
     @app.route("/api/auth/logout", methods=["POST"])
     def auth_logout():
-        """Avslutter dashbordsesjonen ved å tømme session-cookien."""
+        """Avslutter Spotify-sesjonen ved å tømme session-cookien."""
         session.clear()
         logger.info("Dashbordsesjon avsluttet.")
         return jsonify({"success": True})

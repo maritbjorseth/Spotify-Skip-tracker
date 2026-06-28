@@ -121,14 +121,7 @@ class TestNowPlayingDB:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture()
-def app(monkeypatch):
-    monkeypatch.setattr("spotify_skip_tracker.web.DASHBOARD_PASSWORD", None)
-    monkeypatch.setattr("spotify_skip_tracker.config.DASHBOARD_PASSWORD", None)
-    monkeypatch.setattr(
-        "spotify_skip_tracker.web._get_owner_user_id", lambda: "test_user"
-    )
-    monkeypatch.setattr("spotify_skip_tracker.web._owner_user_id_cache", None)
-
+def app():
     from spotify_skip_tracker.web import create_flask_app
     flask_app = create_flask_app()
     flask_app.config["TESTING"] = True
@@ -253,16 +246,8 @@ class TestNowPlayingAPI:
         resp = client.get("/api/now")
         assert resp.get_json()["is_playing"] is True
 
-    def test_krever_innlogging_i_passord_modus(self, monkeypatch):
-        monkeypatch.setattr("spotify_skip_tracker.web.DASHBOARD_PASSWORD", "secret")
-        monkeypatch.setattr("spotify_skip_tracker.config.DASHBOARD_PASSWORD", "secret")
-        monkeypatch.setattr("spotify_skip_tracker.web._owner_user_id_cache", None)
-
-        from spotify_skip_tracker.web import create_flask_app
-        pw_app = create_flask_app()
-        pw_app.config.update(TESTING=True, SECRET_KEY="test",
-                             SESSION_COOKIE_SECURE=False, SESSION_COOKIE_SAMESITE="Lax")
-        pw_client = pw_app.test_client()
-
+    def test_krever_innlogging_uten_session(self, app):
+        """Uten session['user_id'] skal /api/now returnere 401."""
+        pw_client = app.test_client()
         resp = pw_client.get("/api/now")
         assert resp.status_code == 401
