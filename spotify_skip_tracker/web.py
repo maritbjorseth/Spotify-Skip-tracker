@@ -76,15 +76,24 @@ def create_flask_app() -> Flask:
     app = Flask(__name__, static_folder=None)
 
     # -------------------------------------------------------------------
-    # Session-konfigurasjon for cross-domain cookies (Vercel → Railway)
+    # Session-konfigurasjon
     #
-    # SameSite=None + Secure=True er påkrevd for at nettleseren skal sende
-    # cookien på tvers av domener. I lokal utvikling uten DASHBOARD_PASSWORD
-    # brukes aldri session, så dette er ufarlig for dev-miljøet.
+    # Produksjon (Railway ↔ Vercel, cross-domain):
+    #   SameSite=None + Secure=True er påkrevd for at nettleseren skal
+    #   sende cookien på tvers av domener.
+    #
+    # Lokal utvikling (alt på localhost, same-site):
+    #   SameSite=Lax + Secure=False — unngår Safari-begrensningen der
+    #   Secure-cookies ikke sendes over HTTP, og trenger ikke cross-site-regler.
+    #   RAILWAY_ENVIRONMENT og VERCEL settes automatisk i skyen; lokalt
+    #   er ingen av dem satt.
     # -------------------------------------------------------------------
+    _is_production = bool(
+        os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("VERCEL")
+    )
     app.secret_key = FLASK_SECRET_KEY
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' if _is_production else 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = _is_production
     app.config['SESSION_COOKIE_HTTPONLY'] = True
 
     _allowed_origins = [
