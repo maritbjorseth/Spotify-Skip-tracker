@@ -6,6 +6,19 @@ Status-nøkkel: `[ ]` ikke startet · `[~]` påbegynt · `[x]` fullført
 
 ---
 
+## Status
+
+**Prosjektfase:**
+- ☑ i18n ferdig
+- ☑ Produksjon deployet
+- ☑ Demo-data generert
+- ☐ Public Demo backend
+- ☐ Public Demo frontend
+- ☐ Open Source-klargjøring
+- ☐ README
+
+---
+
 ## Kontekst
 
 Spotify Skip Tracker endrer retning til et **open source self-hosting-prosjekt**.  
