@@ -1,0 +1,264 @@
+{
+  "login": {
+    "title": "Spotify Skip Tracker",
+    "titleAccent": " & Coach",
+    "subtitle": "Koble til Spotify-kontoen din for å se dine skip-statistikker.",
+    "loginButton": "Logg inn med Spotify",
+    "footer": "Spotify Skip Tracker & Coach · Personlig dashbord"
+  },
+  "app": {
+    "header": {
+      "title": "Skip Stats",
+      "subtitle": "Hva skipper du egentlig?",
+      "lastUpdated": "Sist oppdatert:"
+    },
+    "logout": "Logg ut",
+    "loading": "Laster statistikk…",
+    "error": "Kunne ikke laste data. Sjekk at Flask-serveren kjører.",
+    "sections": {
+      "charts": "Grafer",
+      "more": "Mer statistikk",
+      "coach": "Musikkcoach",
+      "smartSkipper": "Smart Skipper",
+      "janitor": "Playlist Janitor"
+    },
+    "empty": {
+      "heading": "Trackeren er klar",
+      "description": "Ingen avspillinger er logget ennå. Sett på musikk i Spotify — trackeren registrerer automatisk hva du hører på og hva du hopper over. Data vises her etter første lyttesesjon.",
+      "step1": "Spill en sang i Spotify — på hvilken som helst enhet.",
+      "step2": "Hopp over sangen før den er ferdig — trackeren oppdager skipet automatisk.",
+      "step3": "Kom tilbake hit etter noen sanger — statistikken oppdateres i sanntid."
+    }
+  },
+  "sectionToggle": {
+    "skipped": "Mest skippede sanger",
+    "artistChart": "Mest skippede artister",
+    "contextChart": "Skip-rate per spilleliste/album",
+    "hourChart": "Skips etter tidspunkt på døgnet",
+    "weekdayRateChart": "Skip-rate per ukedag",
+    "heatmap": "Skip-aktivitet siste år",
+    "trendChart": "Skip-rate over tid",
+    "mostCompleted": "Nesten aldri skippet",
+    "playlistJanitor": "Playlist Janitor",
+    "counter": "{{count}}/{{total}} synlige"
+  },
+  "statCards": {
+    "totalSkipped": "Totalt skippet",
+    "totalSkippedTooltip": "Totalt antall sanger du har skippet siden tracking startet.",
+    "skipRate": "Skip-rate",
+    "skipRateTooltip": "Andel av avspillinger som ble skippet før sangen var ferdig.",
+    "playsLogged": "Avspillinger logget",
+    "playsLoggedTooltip": "Totalt antall avspillinger registrert — inkluderer både fullhørte sanger og skips.",
+    "uniqueSkipped": "Unike sanger skippet",
+    "uniqueSkippedTooltip": "Antall unike sanger du har skippet minst én gang."
+  },
+  "nowPlaying": {
+    "offlineBanner": "Kan ikke nå serveren — viser sist kjente data.",
+    "idle": "Spill musikk i Spotify for å se hva som spilles nå.",
+    "liveLabel": "Spiller nå",
+    "skipRateHigh": "Du hopper vanligvis over denne sangen",
+    "skipRateMedium": "Du hopper av og til over denne sangen",
+    "skipRateLow": "Du hører vanligvis denne sangen ferdig",
+    "skipRateBadge": "{{rate}}% skip-rate",
+    "unknownTrack": "Ukjent spor"
+  },
+  "tables": {
+    "skipRateLow": "Lav skip-rate",
+    "skipRateMedium": "Moderat skip-rate",
+    "skipRateHigh": "Høy skip-rate",
+    "openInSpotify": "Åpne «{{title}}» i Spotify",
+    "pagination": {
+      "prev": "← Forrige",
+      "next": "Neste →",
+      "info": "Side {{page}} av {{totalPages}} ({{total}})"
+    },
+    "noData": "Ingen data ennå",
+    "columns": {
+      "title": "Tittel",
+      "artist": "Artist",
+      "context": "Spilleliste/album",
+      "skips": "Skip",
+      "plays": "Spilt",
+      "skipRate": "Skip-rate"
+    },
+    "filters": {
+      "allPlaylists": "Alle spillelister",
+      "allAlbums": "Alle album",
+      "searchPlaceholder": "Søk etter tittel eller artist…"
+    },
+    "skipped": {
+      "heading": "Mest skippede sanger"
+    },
+    "mostPlayed": {
+      "heading": "Mest spilt totalt"
+    },
+    "mostCompleted": {
+      "heading": "Sanger du nesten aldri skipper",
+      "subtitle": "Låter du som regel lytter til helt ferdig."
+    },
+    "autoSkip": {
+      "heading": "Kandidater for automatisk hopp",
+      "subtitle": "Sanger med høy nok skip-rate til at Smart Skipper ville hoppet over dem automatisk.",
+      "empty": "Ingen kandidater — ingen sanger overskrider {{pct}}%-terskelen ennå.",
+      "dryRunButton": "Prøvemodus",
+      "dryRunTooltip": "Slå av prøvemodus for å aktivere automatiske hopp"
+    },
+    "topArtists": {
+      "heading": "Artister du hører mest på",
+      "columns": {
+        "artist": "Artist",
+        "plays": "Totalt spilt",
+        "skipRate": "Skip-rate"
+      }
+    }
+  },
+  "heatmap": {
+    "heading": "Skip-aktivitet siste år",
+    "headingTooltip": "Viser hvor mange sanger du skipper per dag i et kalender-heatmap.",
+    "months": ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"],
+    "days": ["man", "ons", "fre"],
+    "tooltipSkips": "{{n}} skip",
+    "tooltipPlays": "{{n}} avspillinger",
+    "legendNone": "Ingen data",
+    "legendMany": "Mange skip"
+  },
+  "charts": {
+    "tooltipSkipRate": "{{n}}% skip-rate",
+    "tooltipRaw": "{{skips}} skip / {{plays}} avsp.",
+    "tooltipNoPlays": "Ingen avspillinger",
+    "multiArtistSuffix": " m.fl.",
+    "filterPlaylists": "Spillelister",
+    "filterAlbums": "Album",
+    "filterAll": "Alle",
+    "contextEmpty": "Ingen data for dette filteret ennå.",
+    "drillDownEmpty": "Ingen skippede sanger registrert her.",
+    "drillDownMore": "+ {{n}} til",
+    "drillDownClose": "Lukk",
+    "artist": {
+      "title": "Høyest skip-rate per artist",
+      "subtitle": "Rangert etter skip-rate (min. 5 avspillinger)."
+    },
+    "context": {
+      "title": "Høyest skip-rate per spilleliste/album"
+    },
+    "hourly": {
+      "title": "Skips etter tidspunkt på døgnet",
+      "empty": "Ingen data ennå – tracker samler data i sanntid."
+    },
+    "weekday": {
+      "title": "Skip-antall etter ukedag",
+      "empty": "Ingen data ennå – tracker samler data i sanntid.",
+      "days": ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"],
+      "daysFull": ["Mandager", "Tirsdager", "Onsdager", "Torsdager", "Fredager", "Lørdager", "Søndager"]
+    },
+    "hourlyRate": {
+      "title": "Skip-rate per time på døgnet"
+    },
+    "weekdayRate": {
+      "title": "Skip-rate per ukedag"
+    }
+  },
+  "skipTrendChart": {
+    "heading": "Skip-rate over tid",
+    "headingTooltip": "Ukentlig skip-rate de siste 16 ukene. Stiplet linje = totalsnitt. Amber linje = 4-ukers glidende gjennomsnitt.",
+    "notEnoughData": "Ikke nok data ennå",
+    "notEnoughDataDetail": "Trenger minst 3 ukers registrert aktivitet",
+    "avgLabel": "snitt {{n}}%",
+    "trendSuffix": " siste 4 uker",
+    "trendStable": "→ Stabil",
+    "trendDown": "↓ Ned {{n}}pp",
+    "trendUp": "↑ Opp {{n}}pp",
+    "tooltipWeek": "Uke f.o.m. {{label}}",
+    "tooltipRate": "{{n}}% skip-rate",
+    "tooltipRaw": "{{skips}} skip / {{plays}} avspillinger",
+    "tooltipAvg4": "{{n}}% snitt (4 uker)",
+    "legendWeekly": "Ukentlig skip-rate",
+    "legendAvg4": "4-ukers snitt",
+    "legendTotal": "Totalsnitt",
+    "seriesWeekly": "Ukentlig rate",
+    "seriesAvg4": "4-ukers snitt",
+    "dateLocale": "nb-NO"
+  },
+  "listeningScore": {
+    "label": "Lytte-score",
+    "suffix": "/100",
+    "scoreLabel": {
+      "patient": "Tålmodig lytter",
+      "active": "Aktiv lytter",
+      "impatient": "Utålmodig lytter"
+    },
+    "scoreMessage": {
+      "s90": "Fantastisk — du er en ekstremt tålmodig og dedikert lytter.",
+      "s80": "Veldig bra! Du hører musikken din til ende nesten alltid.",
+      "s65": "Ganske bra, men du skipper mer enn gjennomsnittet enkelte dager.",
+      "s50": "Du er midt på treet — litt kaotisk, men det finnes dager du er tålmodig.",
+      "s35": "Du skipper mye om dagen. Kanskje på tide med en Janitor-opprydding?",
+      "s0": "Høy skip-rate og lav konsistens — spillelistene dine kan trenge et grundig Janitor-gjennomgang."
+    },
+    "explanation": "Lytte-scoren din (0–100) beregnes fra tre komponenter: fullføringsgrad (50 %), lengste sammenhengende rekke uten skip (30 %) og konsistens i daglig skip-rate (20 %). Scoren oppdateres i sanntid etter hvert som du lytter."
+  },
+  "coachInsights": {
+    "label": "Innsikter",
+    "categories": {
+      "skip_rate": "Skip-rate",
+      "streak": "Streak",
+      "session": "Sesjonsmønster",
+      "janitor": "Playlist Janitor",
+      "pattern": "Lyttemønster"
+    },
+    "explanation": "Musikkcoachen analyserer lyttemønstrene dine og gir deg personlige innsikter basert på historiske data. Innsiktene vises i tre nivåer: observasjon (hva skjer?), kontekst (hva betyr det?) og forklaring (hvorfor, og hva kan du gjøre?)."
+  },
+  "smartSkipper": {
+    "statusDisabled": "Deaktivert",
+    "statusDryRun": "Prøvemodus (dry-run)",
+    "statusActive": "Aktiv",
+    "heading": "Smart Skipper — kontrollpanel",
+    "subtitle": "Automatisk hopping basert på din historiske skip-data.",
+    "loading": "Laster Smart Skipper-data…",
+    "error": "Kunne ikke hente Smart Skipper-status.",
+    "enableHint": "Aktiver via CLI:",
+    "dryRunHint": "Slå av prøvemodus for ekte hopp:",
+    "historyHeading": "Siste 20 automatiske hopp",
+    "historyEmpty": "Ingen automatiske hopp registrert ennå.",
+    "columns": {
+      "title": "Tittel",
+      "artist": "Artist",
+      "skipRate": "Skip-rate",
+      "timestamp": "Tidspunkt",
+      "mode": "Modus"
+    },
+    "modeDryRun": "Dry-run",
+    "modeReal": "Ekte hopp",
+    "explanation": "Smart Skipper bruker din historiske skip-data til å identifisere sanger du konsekvent hopper over, og kan automatisk hoppe til neste sang etter en konfigurerbar forsinkelse. Kjører i prøvemodus som standard — ingen ekte hopp uten at du aktiverer det."
+  },
+  "playlistJanitor": {
+    "categoryRemove": "Fjern",
+    "categoryCandidate": "Kandidat",
+    "categoryWatchlist": "Overvåkes",
+    "categoryKeep": "Behold",
+    "skipRateLow": "Lav skip-rate",
+    "skipRateMedium": "Moderat skip-rate",
+    "skipRateHigh": "Høy skip-rate",
+    "confirm": "Bekreft",
+    "cancel": "Avbryt",
+    "remove": "Fjern",
+    "heading": "Playlist Janitor",
+    "subtitle": "Sanger du konsekvent hopper over — kategorisert etter risiko.",
+    "lastUpdated": "Oppdatert {{time}}",
+    "actionable": "{{n}} handlingsklare",
+    "loading": "Analyserer spillelister…",
+    "error": "Kunne ikke hente Playlist Janitor-data. Kjør analysen via CLI:",
+    "emptyHeading": "Ingen kandidater funnet.",
+    "emptyCLIHint": "Kjør kommandoen nedenfor for å analysere spillelistene dine:",
+    "columns": {
+      "songArtist": "Sang / artist",
+      "skipPct": "Skip%",
+      "score": "Score"
+    },
+    "tabEmpty": "Ingen sanger i denne kategorien.",
+    "explanation": "Playlist Janitor analyserer spillelistene dine og finner sanger du konsekvent hopper over. Scoren (0–1) beregnes fra skip-rate, konsistens, tid siden siste fullføring og antall avspillinger. Sanger du nylig hørte ferdig blir ikke foreslått fjernet."
+  },
+  "algorithmTooltip": {
+    "label": "Hvordan fungerer dette?"
+  }
+}

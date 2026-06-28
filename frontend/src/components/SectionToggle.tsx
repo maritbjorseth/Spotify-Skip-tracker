@@ -1,39 +1,35 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const STORAGE_PREFIX = "vis_";
 
-export const SECTIONS = [
-  { id: "skipped", label: "Mest skippede sanger" },
-  { id: "artistChart", label: "Mest skippede artister" },
-  { id: "contextChart", label: "Skip-rate per spilleliste/album" },
-  { id: "hourChart", label: "Skips etter tidspunkt på døgnet" },
-  { id: "weekdayRateChart", label: "Skip-rate per ukedag" },
-  { id: "heatmap", label: "Skip-aktivitet siste år" },
-  { id: "trendChart", label: "Skip-rate over tid" },
-  { id: "mostCompleted", label: "Nesten aldri skippet" },
-  { id: "playlistJanitor", label: "Playlist Janitor" },
+export const SECTION_IDS = [
+  "skipped", "artistChart", "contextChart", "hourChart",
+  "weekdayRateChart", "heatmap", "trendChart", "mostCompleted", "playlistJanitor",
 ] as const;
+
+export type SectionId = typeof SECTION_IDS[number];
+
+// SECTIONS brukes kun for å styre visibilitet — labels hentes fra i18n
+export const SECTIONS = SECTION_IDS.map((id) => ({ id }));
 
 export function useSectionVisibility() {
   const [visible, setVisible] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    for (const s of SECTIONS) {
-      const saved = localStorage.getItem(STORAGE_PREFIX + s.id);
-      initial[s.id] = saved === null ? true : saved === "1";
+    for (const id of SECTION_IDS) {
+      const saved = localStorage.getItem(STORAGE_PREFIX + id);
+      initial[id] = saved === null ? true : saved === "1";
     }
     return initial;
   });
 
   const toggle = (id: string) => {
-    setVisible((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      return next;
-    });
+    setVisible((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   useEffect(() => {
-    for (const s of SECTIONS) {
-      localStorage.setItem(STORAGE_PREFIX + s.id, visible[s.id] ? "1" : "0");
+    for (const id of SECTION_IDS) {
+      localStorage.setItem(STORAGE_PREFIX + id, visible[id] ? "1" : "0");
     }
   }, [visible]);
 
@@ -47,6 +43,7 @@ export function SectionToggle({
   visible: Record<string, boolean>;
   onToggle: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -58,7 +55,7 @@ export function SectionToggle({
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-  const checkedCount = SECTIONS.filter((s) => visible[s.id]).length;
+  const checkedCount = SECTION_IDS.filter((id) => visible[id]).length;
 
   return (
     <div className="relative" data-section-toggle>
@@ -70,23 +67,23 @@ export function SectionToggle({
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
         </svg>
-        <span>{checkedCount}/{SECTIONS.length} synlige</span>
+        <span>{t("sectionToggle.counter", { count: checkedCount, total: SECTION_IDS.length })}</span>
       </button>
 
       {open && (
         <div className="absolute right-0 top-full mt-2 flex flex-col gap-1 rounded-xl border border-[#2a2a2a] bg-[#1c1c1c] p-3 shadow-xl z-50 min-w-56">
-          {SECTIONS.map((s) => (
+          {SECTION_IDS.map((id) => (
             <label
-              key={s.id}
+              key={id}
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[#ccc] hover:text-[#eee] hover:bg-[#232323] cursor-pointer transition-colors"
             >
               <input
                 type="checkbox"
-                checked={visible[s.id]}
-                onChange={() => onToggle(s.id)}
+                checked={visible[id]}
+                onChange={() => onToggle(id)}
                 className="accent-[#1db954]"
               />
-              {s.label}
+              {t(`sectionToggle.${id}` as const)}
             </label>
           ))}
         </div>

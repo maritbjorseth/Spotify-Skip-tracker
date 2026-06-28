@@ -1,28 +1,23 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import type { JanitorCandidate, JanitorCategory } from "../types";
 import { AlgorithmTooltip } from "./AlgorithmTooltip";
 import { skipRateColor } from "../theme";
 
-const JANITOR_EXPLANATION =
-  "Playlist Janitor analyserer spillelistene dine og rangerer sanger etter en kombinasjon av " +
-  "skip-rate, konsistens og tid siden du hørte dem ferdig sist. " +
-  "Sanger i «Fjern»-kategorien er de du konsekvent hopper over — fjerner du dem, " +
-  "forsvinner de kun fra denne spillelisten og er fortsatt tilgjengelige i Spotify og andre lister.";
-
 // ---------------------------------------------------------------------------
-// Kategori-konfigurasjon
+// Kategori-konfigurasjon (statiske farger, labels hentes via i18n)
 // ---------------------------------------------------------------------------
 
 const CATEGORY_CONFIG: Record<
   JanitorCategory,
-  { label: string; dot: string; bg: string; fg: string; canRemove: boolean }
+  { labelKey: string; dot: string; bg: string; fg: string; canRemove: boolean }
 > = {
-  Remove:    { label: "Fjern",     dot: "#ef4444", bg: "#ef444418", fg: "#ef4444", canRemove: true  },
-  Candidate: { label: "Kandidat",  dot: "#f97316", bg: "#f9731618", fg: "#f97316", canRemove: true  },
-  Watchlist: { label: "Overvåkes", dot: "#eab308", bg: "#eab30818", fg: "#eab308", canRemove: false },
-  Keep:      { label: "Behold",    dot: "#1db954", bg: "#1db95418", fg: "#1db954", canRemove: false },
+  Remove:    { labelKey: "playlistJanitor.categoryRemove",    dot: "#ef4444", bg: "#ef444418", fg: "#ef4444", canRemove: true  },
+  Candidate: { labelKey: "playlistJanitor.categoryCandidate", dot: "#f97316", bg: "#f9731618", fg: "#f97316", canRemove: true  },
+  Watchlist: { labelKey: "playlistJanitor.categoryWatchlist", dot: "#eab308", bg: "#eab30818", fg: "#eab308", canRemove: false },
+  Keep:      { labelKey: "playlistJanitor.categoryKeep",      dot: "#1db954", bg: "#1db95418", fg: "#1db954", canRemove: false },
 };
 
 const TAB_ORDER: JanitorCategory[] = ["Remove", "Candidate", "Watchlist"];
@@ -31,20 +26,21 @@ const TAB_ORDER: JanitorCategory[] = ["Remove", "Candidate", "Watchlist"];
 // Skip-rate badge
 // ---------------------------------------------------------------------------
 
-function skipRateLabel(pct: number): string {
-  if (pct >= 50) return "Høy skip-rate";
-  if (pct >= 25) return "Moderat skip-rate";
-  return "Lav skip-rate";
-}
-
 function SkipRateBadge({ rate }: { rate: number }) {
+  const { t } = useTranslation();
   const pct = Math.round(rate * 100);
   const fg  = skipRateColor(pct);
+
+  let label: string;
+  if (pct >= 50) label = t("playlistJanitor.skipRateHigh");
+  else if (pct >= 25) label = t("playlistJanitor.skipRateMedium");
+  else label = t("playlistJanitor.skipRateLow");
+
   return (
     <span
       className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
       style={{ background: fg + "22", color: fg }}
-      title={`${pct}% — ${skipRateLabel(pct)}`}
+      title={`${pct}% — ${label}`}
     >
       {pct}%
     </span>
@@ -101,6 +97,7 @@ function TrackRow({
   onRemove: (playlistId: string, trackUri: string) => void;
   isRemoving: boolean;
 }) {
+  const { t } = useTranslation();
   const cfg = CATEGORY_CONFIG[candidate.category];
   const [confirming, setConfirming] = useState(false);
 
@@ -155,7 +152,7 @@ function TrackRow({
                 border border-red-700/70 bg-red-900/25 text-red-300
                 hover:bg-red-900/40 active:scale-95 disabled:opacity-40"
             >
-              {isRemoving ? "…" : "Bekreft"}
+              {isRemoving ? "…" : t("playlistJanitor.confirm")}
             </button>
             <button
               type="button"
@@ -164,7 +161,7 @@ function TrackRow({
                 border border-[#333] bg-[#1c1c1c] text-[#888]
                 hover:border-[#555] hover:text-[#bbb] active:scale-95"
             >
-              Avbryt
+              {t("playlistJanitor.cancel")}
             </button>
           </div>
         ) : (
@@ -182,7 +179,7 @@ function TrackRow({
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               />
             </svg>
-            {isRemoving ? "…" : "Fjern"}
+            {isRemoving ? "…" : t("playlistJanitor.remove")}
           </button>
         )
       ) : (
@@ -247,10 +244,12 @@ function TabContent({
   onRemove: (playlistId: string, trackUri: string) => void;
   removingUri: string | null;
 }) {
+  const { t } = useTranslation();
+
   if (candidates.length === 0) {
     return (
       <div className="py-10 text-center">
-        <p className="text-sm text-[#777]">Ingen sanger i denne kategorien.</p>
+        <p className="text-sm text-[#777]">{t("playlistJanitor.tabEmpty")}</p>
       </div>
     );
   }
@@ -267,9 +266,9 @@ function TabContent({
     <div>
       {/* Kolonne-header */}
       <div className="hidden md:flex items-center gap-3 px-4 py-2.5 bg-[#111] border-b border-[#252525]">
-        <span className="flex-1 text-xs font-semibold text-[#888] uppercase tracking-wider">Sang / artist</span>
-        <span className="flex-shrink-0 w-12 text-xs font-semibold text-[#888] uppercase tracking-wider text-center hidden sm:block">Skip%</span>
-        <span className="flex-shrink-0 w-24 text-xs font-semibold text-[#888] uppercase tracking-wider text-right">Score</span>
+        <span className="flex-1 text-xs font-semibold text-[#888] uppercase tracking-wider">{t("playlistJanitor.columns.songArtist")}</span>
+        <span className="flex-shrink-0 w-12 text-xs font-semibold text-[#888] uppercase tracking-wider text-center hidden sm:block">{t("playlistJanitor.columns.skipPct")}</span>
+        <span className="flex-shrink-0 w-24 text-xs font-semibold text-[#888] uppercase tracking-wider text-right">{t("playlistJanitor.columns.score")}</span>
         <span className="flex-shrink-0 w-[72px]" />
       </div>
       {[...grouped.entries()].map(([name, cands]) => (
@@ -290,6 +289,7 @@ function TabContent({
 // ---------------------------------------------------------------------------
 
 export function PlaylistJanitorPanel() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<JanitorCategory>("Remove");
 
@@ -319,7 +319,7 @@ export function PlaylistJanitorPanel() {
   );
 
   const lastUpdated = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })
+    ? new Date(dataUpdatedAt).toLocaleTimeString(i18n.language === "en" ? "en-GB" : "nb-NO", { hour: "2-digit", minute: "2-digit" })
     : null;
 
   const removingUri = mutation.isPending ? (mutation.variables?.trackUri ?? null) : null;
@@ -330,22 +330,26 @@ export function PlaylistJanitorPanel() {
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-[#a78bfa]">Playlist Janitor</h2>
-            <AlgorithmTooltip text={JANITOR_EXPLANATION} color="#a78bfa" />
+            <h2 className="text-base font-semibold text-[#a78bfa]">{t("playlistJanitor.heading")}</h2>
+            <AlgorithmTooltip text={t("playlistJanitor.explanation")} color="#a78bfa" />
           </div>
           <p className="text-xs text-[#888] mt-0.5">
-            Sanger du konsekvent hopper over — kategorisert etter risiko.
+            {t("playlistJanitor.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {lastUpdated && <span className="text-xs text-[#888]">Oppdatert {lastUpdated}</span>}
+          {lastUpdated && (
+            <span className="text-xs text-[#888]">
+              {t("playlistJanitor.lastUpdated", { time: lastUpdated })}
+            </span>
+          )}
           {data && data.length > 0 && (
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
               style={{ background: "#ef444418", color: "#ef4444" }}
             >
               <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: "#ef4444" }} />
-              {byCategory.Remove.length + byCategory.Candidate.length} handlingsklare
+              {t("playlistJanitor.actionable", { n: byCategory.Remove.length + byCategory.Candidate.length })}
             </span>
           )}
         </div>
@@ -353,13 +357,13 @@ export function PlaylistJanitorPanel() {
 
       {/* Laster */}
       {isLoading && (
-        <p className="text-sm text-[#888] py-6 text-center">Analyserer spillelister…</p>
+        <p className="text-sm text-[#888] py-6 text-center">{t("playlistJanitor.loading")}</p>
       )}
 
       {/* Feil */}
       {isError && (
         <div className="rounded-xl border border-red-900/40 bg-red-900/10 p-4 text-red-400 text-sm">
-          Kunne ikke hente Playlist Janitor-data. Kjør analysen via CLI:&nbsp;
+          {t("playlistJanitor.error")}&nbsp;
           <code className="rounded bg-[#1c1c1c] px-1.5 py-0.5 text-[#888]">
             python3 -m spotify_skip_tracker janitor
           </code>
@@ -372,13 +376,12 @@ export function PlaylistJanitorPanel() {
           <svg className="h-8 w-8 mx-auto mb-3 text-[#333]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-sm text-[#888]">Ingen kandidater funnet.</p>
+          <p className="text-sm text-[#888]">{t("playlistJanitor.emptyHeading")}</p>
           <p className="text-xs text-[#777] mt-1">
-            Kjør{" "}
+            {t("playlistJanitor.emptyCLIHint")}{" "}
             <code className="rounded bg-[#1c1c1c] px-1.5 py-0.5 text-[#888]">
               python3 -m spotify_skip_tracker janitor
-            </code>{" "}
-            for å analysere spillelistene dine.
+            </code>
           </p>
         </div>
       )}
@@ -407,7 +410,7 @@ export function PlaylistJanitorPanel() {
                   <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true" className="flex-shrink-0">
                     <circle cx="4" cy="4" r="4" fill={cfg.dot} />
                   </svg>
-                  <span>{cfg.label}</span>
+                  <span>{t(cfg.labelKey as Parameters<typeof t>[0])}</span>
                   {count > 0 && (
                     <span
                       className="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums"

@@ -7,6 +7,27 @@ Format basert på [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Lagt til
+- **Fullstendig i18n (internasjonalisering):** Alle tekster som vises til brukeren er nå
+  eksternt i oversettelsesnøkler. Grensesnittet støtter norsk bokmål (nb) og engelsk (en).
+  - `LanguageSelector`-komponenten vises i dashbord-headeren med flaggknapper (🇳🇴 / 🇬🇧).
+  - Norsk er standardspråk. Dersom brukeren ikke har valgt språk, brukes alltid norsk.
+  - Valgt språk huskes mellom økter via `localStorage` (nøkkel: `i18nextLng`).
+  - Løsningen bruker `i18next` + `react-i18next` + `i18next-browser-languagedetector`.
+  - Nye språk legges til ved å opprette `src/locales/<kode>.json`, registrere det i
+    `src/i18n.ts` og legge til en knapp i `LanguageSelector.tsx`.
+
+### Endret
+- **`Tables.tsx`:** Alle hardkodede norske tekster (tabelloverskrifter, paginering,
+  filtervalg, statusmeldinger) erstattet med `useTranslation`-nøkler.
+- **`PlaylistJanitorPanel.tsx`:** Hardkodede norske kategori-labels, knappetekster
+  («Fjern», «Bekreft», «Avbryt»), status- og feilmeldinger erstattet med `useTranslation`.
+- **`Charts.tsx`:** Hardkodede norske diagramtitler, tooltip-tekster, filterknapper,
+  ukedagnavn og tomme-tilstander erstattet med `useTranslation`.
+- **`SkipTrendChart.tsx`:** Hardkodede norske trend-labels, tooltip-tekster, legende og
+  datoformat-locale erstattet med `useTranslation`. Datoformat hentes nå fra
+  `skipTrendChart.dateLocale`-nøkkelen (nb-NO / en-US).
+
 ---
 
 ## [0.4.0] — Multi-user / Alpha-klar — 2026-06-28

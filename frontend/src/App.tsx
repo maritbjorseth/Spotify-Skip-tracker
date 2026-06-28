@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "./api";
 import { NowPlaying } from "./components/NowPlaying";
@@ -10,6 +11,7 @@ import { PlaylistJanitorPanel } from "./components/PlaylistJanitorPanel";
 import { CoachInsightsPanel } from "./components/CoachInsightsPanel";
 import { ListeningScorePanel } from "./components/ListeningScorePanel";
 import { LoginScreen } from "./components/LoginScreen";
+import { LanguageSelector } from "./components/LanguageSelector";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayRateChart } from "./components/Charts";
 import { SkipTrendChart } from "./components/SkipTrendChart";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
@@ -25,6 +27,7 @@ function SectionDivider({ label }: { label: string }) {
 }
 
 function EmptyDashboard() {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -32,7 +35,6 @@ function EmptyDashboard() {
       transition={{ duration: 0.4 }}
       className="rounded-xl border border-[#2a2a2a] bg-[#141414] px-8 py-12 text-center max-w-lg mx-auto mt-8"
     >
-      {/* Ikon */}
       <div
         className="inline-flex items-center justify-center rounded-full mb-6"
         style={{ width: 56, height: 56, background: "#1db95418", color: "#1db954" }}
@@ -45,65 +47,53 @@ function EmptyDashboard() {
       </div>
 
       <h2 className="text-lg font-semibold text-[#eee] mb-2">
-        Trackeren er klar
+        {t("app.empty.heading")}
       </h2>
       <p className="text-sm text-[#888] leading-relaxed mb-6">
-        Ingen avspillinger er logget ennå. Sett på musikk i Spotify — trackeren
-        registrerer automatisk hva du hører på og hva du hopper over.
-        Data vises her etter første lyttesesjon.
+        {t("app.empty.description")}
       </p>
 
       <div className="flex flex-col gap-3 text-left">
-        <div className="flex items-start gap-3 rounded-lg bg-[#1c1c1c] px-4 py-3">
-          <span className="text-[#1db954] font-bold text-sm mt-0.5 shrink-0">1</span>
-          <p className="text-xs text-[#888] leading-relaxed">
-            Spill en sang i Spotify — på hvilken som helst enhet.
-          </p>
-        </div>
-        <div className="flex items-start gap-3 rounded-lg bg-[#1c1c1c] px-4 py-3">
-          <span className="text-[#1db954] font-bold text-sm mt-0.5 shrink-0">2</span>
-          <p className="text-xs text-[#888] leading-relaxed">
-            Hopp over sangen før den er ferdig — trackeren oppdager skipet automatisk.
-          </p>
-        </div>
-        <div className="flex items-start gap-3 rounded-lg bg-[#1c1c1c] px-4 py-3">
-          <span className="text-[#1db954] font-bold text-sm mt-0.5 shrink-0">3</span>
-          <p className="text-xs text-[#888] leading-relaxed">
-            Kom tilbake hit etter noen sanger — statistikken oppdateres i sanntid.
-          </p>
-        </div>
+        {([1, 2, 3] as const).map((n) => (
+          <div key={n} className="flex items-start gap-3 rounded-lg bg-[#1c1c1c] px-4 py-3">
+            <span className="text-[#1db954] font-bold text-sm mt-0.5 shrink-0">{n}</span>
+            <p className="text-xs text-[#888] leading-relaxed">
+              {t(`app.empty.step${n}` as const)}
+            </p>
+          </div>
+        ))}
       </div>
     </motion.div>
   );
 }
 
 function LogoutButton({ onLogout }: { onLogout: () => void }) {
+  const { t } = useTranslation();
   return (
     <button
       onClick={onLogout}
       className="rounded-lg border border-[#2a2a2a] bg-[#181818] px-3 py-1.5 text-xs text-[#666] transition-all duration-150 hover:border-[#444] hover:text-[#aaa]"
     >
-      Logg ut
+      {t("app.logout")}
     </button>
   );
 }
 
 export default function App() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
-  // Auth-sjekk — kjøres alltid, uavhengig av annen data
   const { data: authData, isLoading: authLoading } = useQuery({
     queryKey: ["authStatus"],
     queryFn: api.authStatus,
     retry: 1,
-    staleTime: 5 * 60_000,    // re-bruk cached svar i 5 min
-    refetchInterval: 10 * 60_000, // sjekk på nytt hvert 10. min
+    staleTime: 5 * 60_000,
+    refetchInterval: 10 * 60_000,
   });
 
   const logoutMutation = useMutation({
     mutationFn: api.logout,
     onSuccess: () => {
-      // Ugyldiggjør auth-cachen → App viser LoginScreen umiddelbart
       queryClient.invalidateQueries({ queryKey: ["authStatus"] });
     },
   });
@@ -113,11 +103,9 @@ export default function App() {
     queryFn: api.stats,
     refetchInterval: 10_000,
     staleTime: 5_000,
-    // Ikke hent stats-data før vi vet at brukeren er autentisert
     enabled: authData?.authenticated === true,
   });
 
-  // Brukes kun for å gate "Musikkcoach"-divider — React Query deduper requesten
   const { data: scoreData } = useQuery({
     queryKey: ["listeningScore"],
     queryFn: api.listeningScore,
@@ -126,11 +114,9 @@ export default function App() {
   });
 
   const { visible, toggle } = useSectionVisibility();
-
   const hasGraphs = ["artistChart", "contextChart", "hourChart", "weekdayRateChart"].some((id) => visible[id]);
   const hasMore = visible.mostCompleted;
 
-  // Viser ingenting mens vi venter på auth-svar (unngår blink av LoginScreen)
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
@@ -139,7 +125,6 @@ export default function App() {
     );
   }
 
-  // Ikke autentisert → vis login-skjerm
   if (!authData?.authenticated) {
     return <LoginScreen />;
   }
@@ -148,7 +133,6 @@ export default function App() {
     <div className="min-h-screen bg-[#0d0d0d] text-[#eee]">
       <div className="max-w-6xl mx-auto px-6 py-6">
 
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,38 +141,37 @@ export default function App() {
         >
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-[#1db954]">
-              Skip Stats
+              {t("app.header.title")}
             </h1>
             <p className="text-sm text-[#888] mt-1">
-              Hva skipper du egentlig?
+              {t("app.header.subtitle")}
             </p>
             <span className="text-xs text-neutral-500 mt-1 block">
-              Sist oppdatert:{" "}
-              {new Date().toLocaleDateString("nb-NO", {
+              {t("app.header.lastUpdated")}{" "}
+              {new Date().toLocaleDateString(undefined, {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
               })}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
             <LogoutButton onLogout={() => logoutMutation.mutate()} />
             <SectionToggle visible={visible} onToggle={toggle} />
           </div>
         </motion.div>
 
-        {/* Spiller nå */}
         <NowPlaying />
 
-        {/* Lasting / feil */}
         {isLoading && (
           <div className="flex items-center justify-center py-24 text-[#888] text-sm">
-            Laster statistikk…
+            {t("app.loading")}
           </div>
         )}
         {error && (
           <div className="rounded-xl border border-red-900/40 bg-red-900/10 p-6 text-red-400 text-sm">
-            Kunne ikke laste data. Sjekk at Flask-serveren kjører.
+            {t("app.error")}
           </div>
         )}
 
@@ -200,39 +183,34 @@ export default function App() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
           >
-            {/* Oppsummering */}
             <StatCardsRow
               totalSkips={data.total_skips}
               totalPlays={data.total_plays}
               uniqueTracks={data.unique_tracks}
             />
 
-            {/* Heatmap */}
             {visible.heatmap && (
               <div className="mb-4">
                 <SkipHeatmap daily={data.daily} />
               </div>
             )}
 
-            {/* Skip-rate trend over tid */}
             {visible.trendChart && (
               <SkipTrendChart daily={data.daily} />
             )}
 
-            {/* Mest skippede sanger */}
             {visible.skipped && (
               <div className="mb-4">
                 <SkippedTable
-                tracks={data.tracks}
-                playlistContexts={data.playlist_contexts ?? data.contexts ?? []}
-                albumContexts={data.album_contexts ?? []}
-              />
+                  tracks={data.tracks}
+                  playlistContexts={data.playlist_contexts ?? data.contexts ?? []}
+                  albumContexts={data.album_contexts ?? []}
+                />
               </div>
             )}
 
-            {hasGraphs && <SectionDivider label="Grafer" />}
+            {hasGraphs && <SectionDivider label={t("app.sections.charts")} />}
 
-            {/* Graf-grid */}
             <AnimatePresence mode="sync">
               {(visible.artistChart || visible.contextChart || visible.hourChart || visible.weekdayRateChart) && (
                 <motion.div
@@ -257,7 +235,7 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            {hasMore && <SectionDivider label="Mer statistikk" />}
+            {hasMore && <SectionDivider label={t("app.sections.more")} />}
 
             {visible.mostCompleted && (
               <div className="mb-6">
@@ -265,27 +243,24 @@ export default function App() {
               </div>
             )}
 
-            {/* Musikkcoach — lyttescore + innsiktskort (vises kun når score-data er tilgjengelig) */}
             {scoreData && (
               <>
-                <SectionDivider label="Musikkcoach" />
+                <SectionDivider label={t("app.sections.coach")} />
                 <ListeningScorePanel />
                 <CoachInsightsPanel />
               </>
             )}
 
-            {/* Smart Skipper — kontrollpanel + forhåndsvisning */}
-            <SectionDivider label="Smart Skipper" />
+            <SectionDivider label={t("app.sections.smartSkipper")} />
             <SmartSkipperPanel />
             <AutoSkipPreviewTable
               candidates={data.auto_skip_candidates ?? []}
               threshold={data.smart_skipper_threshold ?? 0.85}
             />
 
-            {/* Playlist Janitor */}
             {visible.playlistJanitor && (
               <>
-                <SectionDivider label="Playlist Janitor" />
+                <SectionDivider label={t("app.sections.janitor")} />
                 <PlaylistJanitorPanel />
               </>
             )}

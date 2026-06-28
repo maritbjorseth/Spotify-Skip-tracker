@@ -12,6 +12,7 @@
  */
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ComposedChart,
   Area,
@@ -46,9 +47,9 @@ function getMondayKey(dateStr: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Formater "YYYY-MM-DD" → "24. jun" (norsk kortformat). */
-function fmtWeekLabel(mondayKey: string): string {
-  return new Date(mondayKey + "T12:00:00").toLocaleDateString("nb-NO", {
+/** Formater "YYYY-MM-DD" → lokalisert kortdatoformat. */
+function fmtWeekLabel(mondayKey: string, locale: string): string {
+  return new Date(mondayKey + "T12:00:00").toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
   });
@@ -56,7 +57,7 @@ function fmtWeekLabel(mondayKey: string): string {
 
 interface WeekPoint {
   weekKey: string; // "YYYY-MM-DD" (mandag)
-  label: string;   // "24. jun"
+  label: string;   // f.eks. "24. jun" eller "Jun 24"
   skips: number;
   plays: number;
   rate: number;    // 0–100 (ukentlig skip-rate i prosent)
@@ -67,7 +68,7 @@ interface WeekPoint {
  * Grupperer daglige stats etter uke, beregner skip-rate per uke og
  * et 4-ukers glidende gjennomsnitt.  Returnerer de siste WEEKS_TO_SHOW ukene.
  */
-function buildWeeklyData(daily: Record<string, DailyStats>): WeekPoint[] {
+function buildWeeklyData(daily: Record<string, DailyStats>, locale: string): WeekPoint[] {
   // Steg 1: summer skips og avspillinger per uke
   const map = new Map<string, { skips: number; plays: number }>();
   for (const [dateStr, { skips, plays }] of Object.entries(daily)) {
@@ -92,7 +93,7 @@ function buildWeeklyData(daily: Record<string, DailyStats>): WeekPoint[] {
         window.length) * 100,
     );
 
-    return { weekKey, label: fmtWeekLabel(weekKey), skips, plays, rate, avg4 };
+    return { weekKey, label: fmtWeekLabel(weekKey, locale), skips, plays, rate, avg4 };
   });
 }
 
@@ -107,17 +108,18 @@ function TrendTooltip({
   active?: boolean;
   payload?: Array<{ payload: WeekPoint }>;
 }) {
+  const { t } = useTranslation();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 shadow-xl text-xs">
-      <p className="font-semibold text-white mb-1">Uke f.o.m. {d.label}</p>
-      <p style={{ color: skipRateColor(d.rate, d.plays) }}>{d.rate}% skip-rate</p>
+      <p className="font-semibold text-white mb-1">{t("skipTrendChart.tooltipWeek", { label: d.label })}</p>
+      <p style={{ color: skipRateColor(d.rate, d.plays) }}>{t("skipTrendChart.tooltipRate", { n: d.rate })}</p>
       <p className="text-[#888] mt-0.5">
-        {d.skips} skip / {d.plays} avspillinger
+        {t("skipTrendChart.tooltipRaw", { skips: d.skips, plays: d.plays })}
       </p>
       <p className="mt-0.5" style={{ color: C.amber }}>
-        {d.avg4}% snitt (4 uker)
+        {t("skipTrendChart.tooltipAvg4", { n: d.avg4 })}
       </p>
     </div>
   );
@@ -133,6 +135,7 @@ function TrendTooltip({
  */
 function computeTrend(
   weeks: WeekPoint[],
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ): { label: string; color: string } | null {
   if (weeks.length < 8) return null;
 
@@ -146,10 +149,10 @@ function computeTrend(
   const prev4 = sumRate(weeks.slice(-8, -4));
   const delta = Math.round(last4 - prev4);
 
-  if (Math.abs(delta) < 2) return { label: "→ Stabil", color: C.neutral };
+  if (Math.abs(delta) < 2) return { label: t("skipTrendChart.trendStable"), color: C.neutral };
   if (delta < 0)
-    return { label: `↓ Ned ${Math.abs(delta)}pp`, color: C.green };
-  return { label: `↑ Opp ${delta}pp`, color: C.red };
+    return { label: t("skipTrendChart.trendDown", { n: Math.abs(delta) }), color: C.green };
+  return { label: t("skipTrendChart.trendUp", { n: delta }), color: C.red };
 }
 
 // ---------------------------------------------------------------------------
@@ -161,14 +164,18 @@ export function SkipTrendChart({
 }: {
   daily: Record<string, DailyStats>;
 }) {
-  const weeks = useMemo(() => buildWeeklyData(daily), [daily]);
-  const trend = useMemo(() => computeTrend(weeks), [weeks]);
+  const { t } = useTranslation();
+  // Bruk locale fra i18n-nøkkel for datoformat
+  const dateLocale = t("skipTrendChart.dateLocale");
+
+  const weeks = useMemo(() => buildWeeklyData(daily, dateLocale), [daily, dateLocale]);
+  const trend = useMemo(() => computeTrend(weeks, t), [weeks, t]);
 
   if (weeks.length < 3) {
     return (
       <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-4">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-[#888] mb-3">
-          Skip-rate over tid
+          {t("skipTrendChart.heading")}
         </h2>
         <div className="flex flex-col items-center justify-center h-[140px] gap-2.5">
           <svg
@@ -180,8 +187,8 @@ export function SkipTrendChart({
           >
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
           </svg>
-          <p className="text-sm text-[#555] font-medium">Ikke nok data ennå</p>
-          <p className="text-xs text-[#444]">Trenger minst 3 ukers registrert aktivitet</p>
+          <p className="text-sm text-[#555] font-medium">{t("skipTrendChart.notEnoughData")}</p>
+          <p className="text-xs text-[#444]">{t("skipTrendChart.notEnoughDataDetail")}</p>
         </div>
       </div>
     );
@@ -200,9 +207,9 @@ export function SkipTrendChart({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-[#888] flex items-center gap-1.5">
-          Skip-rate over tid
+          {t("skipTrendChart.heading")}
           <span
-            title="Ukentlig skip-rate de siste 16 ukene. Stiplet linje = totalsnitt. Amber linje = 4-ukers glidende gjennomsnitt."
+            title={t("skipTrendChart.headingTooltip")}
             className="text-[#666] hover:text-[#999] cursor-help transition-colors text-[10px] font-normal normal-case tracking-normal"
           >
             ⓘ
@@ -218,7 +225,7 @@ export function SkipTrendChart({
               background: trend.color + "12",
             }}
           >
-            {trend.label} siste 4 uker
+            {trend.label}{t("skipTrendChart.trendSuffix")}
           </span>
         )}
       </div>
@@ -253,7 +260,7 @@ export function SkipTrendChart({
             stroke="#3a3a3a"
             strokeDasharray="4 4"
             label={{
-              value: `snitt ${overallRate}%`,
+              value: t("skipTrendChart.avgLabel", { n: overallRate }),
               position: "insideTopRight",
               fill: "#555",
               fontSize: 10,
@@ -264,7 +271,7 @@ export function SkipTrendChart({
           <Area
             type="monotone"
             dataKey="rate"
-            name="Ukentlig rate"
+            name={t("skipTrendChart.seriesWeekly")}
             stroke={C.neutral}
             strokeWidth={1.5}
             fill={C.neutral}
@@ -277,7 +284,7 @@ export function SkipTrendChart({
           <Line
             type="monotone"
             dataKey="avg4"
-            name="4-ukers snitt"
+            name={t("skipTrendChart.seriesAvg4")}
             stroke={C.amber}
             strokeWidth={2}
             dot={false}
@@ -293,18 +300,18 @@ export function SkipTrendChart({
             className="inline-block w-3 h-0.5 rounded"
             style={{ background: C.neutral }}
           />
-          Ukentlig skip-rate
+          {t("skipTrendChart.legendWeekly")}
         </span>
         <span className="flex items-center gap-1.5">
           <span
             className="inline-block w-3 h-0.5 rounded"
             style={{ background: C.amber }}
           />
-          4-ukers snitt
+          {t("skipTrendChart.legendAvg4")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block w-4 border-t border-dashed border-[#3a3a3a]" />
-          Totalsnitt
+          {t("skipTrendChart.legendTotal")}
         </span>
       </div>
     </div>

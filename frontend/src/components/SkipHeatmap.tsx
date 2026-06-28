@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import type { DailyStats } from "../types";
 
 const CELL = 11;
@@ -7,11 +8,7 @@ const GAP = 2;
 const STEP = CELL + GAP;
 const WEEKS = 53;
 
-const MONTH_NAMES = [
-  "jan", "feb", "mar", "apr", "mai", "jun",
-  "jul", "aug", "sep", "okt", "nov", "des",
-];
-const DAY_LABELS = ["", "man", "", "ons", "", "fre", ""];
+// Labels hentes fra i18n — se useTranslation() i komponenten
 
 // plays = 0       →  ingen data registrert (mørkt nøytralt)
 // plays > 0, skips = 0  →  aktiv lytting uten skip (grønn)
@@ -32,6 +29,12 @@ interface Props {
 }
 
 export function SkipHeatmap({ daily }: Props) {
+  const { t } = useTranslation();
+  const MONTH_NAMES: string[] = t("heatmap.months", { returnObjects: true }) as string[];
+  const DAY_LABELS_RAW: string[] = t("heatmap.days", { returnObjects: true }) as string[];
+  // Heatmap har 7 rader (man–søn), vi viser label for rad 1, 3, 5 (index 0, 2, 4)
+  const DAY_LABELS = ["", DAY_LABELS_RAW[0], "", DAY_LABELS_RAW[1], "", DAY_LABELS_RAW[2], ""];
+
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -104,9 +107,9 @@ export function SkipHeatmap({ daily }: Props) {
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-4">
       <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest mb-4 flex items-center gap-1.5">
-        Skip-aktivitet siste år
+        {t("heatmap.heading")}
         <span
-          title="Viser hvor mange sanger du skipper per dag i et kalender-heatmap."
+          title={t("heatmap.headingTooltip")}
           className="text-[#666] hover:text-[#999] cursor-help transition-colors text-[10px] font-normal normal-case tracking-normal"
         >
           ⓘ
@@ -185,8 +188,8 @@ export function SkipHeatmap({ daily }: Props) {
               }}
             >
               <div className="font-semibold text-white mb-0.5">{tooltip.date}</div>
-              <div className="text-[#f59e0b]">{tooltip.skips} skip</div>
-              <div className="text-[#999]">{tooltip.plays} avspillinger</div>
+              <div className="text-[#f59e0b]">{t("heatmap.tooltipSkips", { n: tooltip.skips })}</div>
+              <div className="text-[#999]">{t("heatmap.tooltipPlays", { n: tooltip.plays })}</div>
             </div>
           )}
         </div>
@@ -194,11 +197,11 @@ export function SkipHeatmap({ daily }: Props) {
 
       {/* Fargelegende */}
       <div className="flex items-center gap-2 mt-4 text-[#888] text-xs">
-        <span>Ingen data</span>
+        <span>{t("heatmap.legendNone")}</span>
         {["#1a1a1a", "#1db954", "#eab308", "#f97316", "#ef4444"].map((c) => (
           <div key={c} className="w-3 h-3 rounded-sm" style={{ background: c }} />
         ))}
-        <span>Mange skip</span>
+        <span>{t("heatmap.legendMany")}</span>
       </div>
     </div>
   );
