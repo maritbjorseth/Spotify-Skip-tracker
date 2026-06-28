@@ -33,7 +33,7 @@ from .database import (
 from .spotify_api import get_access_token, load_creds
 from .token_crypto import encrypt_token
 from .config import (
-    SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
+    SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN,
     REDIRECT_URI_WEB, FRONTEND_URL,
     APP_DIR, CREDS_PATH, SCOPE,
     FLASK_SECRET_KEY,
@@ -76,15 +76,24 @@ def create_flask_app() -> Flask:
     app = Flask(__name__, static_folder=None)
 
     # -------------------------------------------------------------------
-    # Session-konfigurasjon for cross-domain cookies (Vercel → Railway)
+    # Session-konfigurasjon
     #
-    # SameSite=None + Secure=True er påkrevd for at nettleseren skal sende
-    # cookien på tvers av domener. I lokal utvikling uten DASHBOARD_PASSWORD
-    # brukes aldri session, så dette er ufarlig for dev-miljøet.
+    # Produksjon (Railway ↔ Vercel, cross-domain):
+    #   SameSite=None + Secure=True er påkrevd for at nettleseren skal
+    #   sende cookien på tvers av domener.
+    #
+    # Lokal utvikling (alt på localhost, same-site):
+    #   SameSite=Lax + Secure=False — unngår Safari-begrensningen der
+    #   Secure-cookies ikke sendes over HTTP, og trenger ikke cross-site-regler.
+    #   RAILWAY_ENVIRONMENT og VERCEL settes automatisk i skyen; lokalt
+    #   er ingen av dem satt.
     # -------------------------------------------------------------------
+    _is_production = bool(
+        os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("VERCEL")
+    )
     app.secret_key = FLASK_SECRET_KEY
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' if _is_production else 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = _is_production
     app.config['SESSION_COOKIE_HTTPONLY'] = True
 
     _allowed_origins = [
@@ -149,11 +158,82 @@ def create_flask_app() -> Flask:
     @app.route("/api/auth/login")
     def auth_login():
         """
-        Starter web-OAuth-flyten mot Spotify.
-        Krever at REDIRECT_URI_WEB er satt i miljøvariabler og er registrert
-        i Spotify Developer Dashboard.
-        Genererer en CSRF-state og redirecter nettleseren til Spotify.
+        Starter innloggingsflyten mot Spotify.
+
+        Produksjon (RAILWAY_ENVIRONMENT eller VERCEL satt):
+            Full web-OAuth — redirecter nettleseren til Spotify.
+            Krever at REDIRECT_URI_WEB er registrert i Spotify Developer Dashboard.
+
+        Lokal utvikling (ingen av de to env-variablene, SPOTIFY_REFRESH_TOKEN finnes):
+            Dev-bypass — bruker SPOTIFY_REFRESH_TOKEN direkte, omgår OAuth-dansen.
+            Ingen Spotify Dashboard-endringer nødvendig lokalt.
         """
+        _is_production = bool(
+            os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("VERCEL")
+        )
+
+        # ------------------------------------------------------------------
+        # Lokal dev-bypass
+        # Betingelse: ikke i produksjon + refresh-token finnes i .env.local
+        # ------------------------------------------------------------------
+        if not _is_production and SPOTIFY_REFRESH_TOKEN:
+            logger.warning(
+                "DEV-BYPASS: Bruker SPOTIFY_REFRESH_TOKEN direkte — "
+                "omgår web-OAuth. Kun for lokal utvikling."
+            )
+            try:
+                creds = load_creds()           # Leser fra env-var / .env.local
+                token = get_access_token(creds)
+
+                me = http_requests.get(
+                    "https://api.spotify.com/v1/me",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=10,
+                )
+                me.raise_for_status()
+                me_data = me.json()
+                spotify_user_id: str = me_data["id"]
+                display_name: str | None = me_data.get("display_name")
+
+                with pooled_connection() as conn:
+                    upsert_user_token(
+                        conn,
+                        user_id=spotify_user_id,
+                        refresh_token_encrypted=encrypt_token(SPOTIFY_REFRESH_TOKEN),
+                        access_token=token,
+                        expires_at=creds.get("expires_at"),
+                        display_name=display_name,
+                        scope=SCOPE,
+                    )
+                    ensure_user_smart_skipper_config(conn, spotify_user_id)
+
+                session["user_id"] = spotify_user_id
+                logger.warning(
+                    "DEV-BYPASS: innlogget som '%s' (%s).",
+                    spotify_user_id, display_name or "–",
+                )
+
+                # Start tracker om den ikke allerede kjører
+                try:
+                    from .tracker import ensure_tracker_running
+                    ensure_tracker_running(spotify_user_id)
+                except Exception as exc:
+                    logger.warning("DEV-BYPASS: kunne ikke starte tracker: %s", exc)
+
+                return redirect(FRONTEND_URL)
+
+            except Exception as exc:
+                logger.error("DEV-BYPASS feilet: %s", exc)
+                return jsonify({
+                    "error": (
+                        f"Lokal dev-bypass feilet: {exc}. "
+                        "Sjekk at SPOTIFY_REFRESH_TOKEN i .env.local er gyldig."
+                    )
+                }), 500
+
+        # ------------------------------------------------------------------
+        # Normal web-OAuth (produksjon)
+        # ------------------------------------------------------------------
         if not REDIRECT_URI_WEB or not SPOTIFY_CLIENT_ID:
             return jsonify({
                 "error": (

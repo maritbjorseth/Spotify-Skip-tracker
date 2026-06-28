@@ -203,7 +203,8 @@ def _migrate_timestamp_to_timestamptz(conn) -> None:
         """
         SELECT data_type
         FROM information_schema.columns
-        WHERE table_name = 'plays' AND column_name = 'timestamp'
+        WHERE table_schema = 'public'
+          AND table_name = 'plays' AND column_name = 'timestamp'
         """,
     )
     row = cur.fetchone()
@@ -231,7 +232,8 @@ def _migrate_add_image_url(conn) -> None:
         """
         SELECT 1
         FROM information_schema.columns
-        WHERE table_name = 'plays' AND column_name = 'image_url'
+        WHERE table_schema = 'public'
+          AND table_name = 'plays' AND column_name = 'image_url'
         """,
     )
     if cur.fetchone() is None:
@@ -249,7 +251,8 @@ def _migrate_skipped_to_boolean(conn) -> None:
         """
         SELECT data_type
         FROM information_schema.columns
-        WHERE table_name = 'plays' AND column_name = 'skipped'
+        WHERE table_schema = 'public'
+          AND table_name = 'plays' AND column_name = 'skipped'
         """,
     )
     row = cur.fetchone()
@@ -344,7 +347,8 @@ def _migrate_janitor(conn) -> None:
         """
         SELECT 1
         FROM information_schema.table_constraints
-        WHERE table_name = 'janitor_suggestions'
+        WHERE table_schema = 'public'
+          AND table_name = 'janitor_suggestions'
           AND constraint_name = 'unique_playlist_track'
         """,
     )
@@ -414,7 +418,8 @@ def _migrate_add_user_id(conn) -> None:
             """
             SELECT 1
             FROM information_schema.columns
-            WHERE table_name = %s
+            WHERE table_schema = 'public'
+              AND table_name = %s
               AND column_name = 'user_id'
             """,
             (table,),
@@ -449,7 +454,8 @@ def _migrate_add_user_id(conn) -> None:
         """
         SELECT 1
         FROM information_schema.table_constraints
-        WHERE table_name = 'janitor_suggestions'
+        WHERE table_schema = 'public'
+          AND table_name = 'janitor_suggestions'
           AND constraint_name = 'unique_playlist_track_multiuser'
         """,
     )
@@ -466,7 +472,8 @@ def _migrate_add_user_id(conn) -> None:
             """
             SELECT 1
             FROM information_schema.table_constraints
-            WHERE table_name = 'janitor_suggestions'
+            WHERE table_schema = 'public'
+              AND table_name = 'janitor_suggestions'
               AND constraint_name = 'unique_playlist_track'
             """,
         )
@@ -617,7 +624,8 @@ def _migrate_add_session_id(conn) -> None:
         conn,
         """
         SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'plays' AND column_name = 'session_id'
+        WHERE table_schema = 'public'
+          AND table_name = 'plays' AND column_name = 'session_id'
         """,
     )
     if cur.fetchone() is None:
@@ -854,7 +862,8 @@ def _migrate_now_playing_per_user(conn) -> None:
         conn,
         """
         SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'now_playing' AND column_name = 'user_id'
+        WHERE table_schema = 'public'
+          AND table_name = 'now_playing' AND column_name = 'user_id'
         """,
     )
     if cur.fetchone() is not None:
@@ -1128,7 +1137,8 @@ def _migrate_smart_skipper_per_user(conn) -> None:
         conn,
         """
         SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'smart_skipper_config' AND column_name = 'id'
+        WHERE table_schema = 'public'
+          AND table_name = 'smart_skipper_config' AND column_name = 'id'
         """,
     )
     if cur.fetchone() is None:
@@ -1219,7 +1229,8 @@ def _migrate_add_auto_skips_user_id(conn) -> None:
         conn,
         """
         SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'auto_skips' AND column_name = 'user_id'
+        WHERE table_schema = 'public'
+          AND table_name = 'auto_skips' AND column_name = 'user_id'
         """,
     )
     if cur.fetchone() is not None:

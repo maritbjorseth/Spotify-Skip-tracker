@@ -1,0 +1,264 @@
+{
+  "login": {
+    "title": "Spotify Skip Tracker",
+    "titleAccent": " & Coach",
+    "subtitle": "Connect your Spotify account to see your skip statistics.",
+    "loginButton": "Log in with Spotify",
+    "footer": "Spotify Skip Tracker & Coach · Personal dashboard"
+  },
+  "app": {
+    "header": {
+      "title": "Skip Stats",
+      "subtitle": "What are you really skipping?",
+      "lastUpdated": "Last updated:"
+    },
+    "logout": "Log out",
+    "loading": "Loading statistics…",
+    "error": "Could not load data. Check that the Flask server is running.",
+    "sections": {
+      "charts": "Charts",
+      "more": "More statistics",
+      "coach": "Music Coach",
+      "smartSkipper": "Smart Skipper",
+      "janitor": "Playlist Janitor"
+    },
+    "empty": {
+      "heading": "Tracker is ready",
+      "description": "No plays have been logged yet. Play some music in Spotify — the tracker will automatically record what you listen to and what you skip. Data will appear here after your first listening session.",
+      "step1": "Play a song in Spotify — on any device.",
+      "step2": "Skip the song before it ends — the tracker detects the skip automatically.",
+      "step3": "Come back here after a few songs — statistics update in real time."
+    }
+  },
+  "sectionToggle": {
+    "skipped": "Most skipped songs",
+    "artistChart": "Most skipped artists",
+    "contextChart": "Skip rate per playlist/album",
+    "hourChart": "Skips by time of day",
+    "weekdayRateChart": "Skip rate by day of week",
+    "heatmap": "Skip activity last year",
+    "trendChart": "Skip rate over time",
+    "mostCompleted": "Almost never skipped",
+    "playlistJanitor": "Playlist Janitor",
+    "counter": "{{count}}/{{total}} visible"
+  },
+  "statCards": {
+    "totalSkipped": "Total skipped",
+    "totalSkippedTooltip": "Total number of songs you have skipped since tracking started.",
+    "skipRate": "Skip rate",
+    "skipRateTooltip": "Proportion of plays that were skipped before the song ended.",
+    "playsLogged": "Plays logged",
+    "playsLoggedTooltip": "Total number of plays recorded — includes both completed listens and skips.",
+    "uniqueSkipped": "Unique songs skipped",
+    "uniqueSkippedTooltip": "Number of unique songs you have skipped at least once."
+  },
+  "nowPlaying": {
+    "offlineBanner": "Cannot reach server — showing last known data.",
+    "idle": "Play music in Spotify to see what's playing now.",
+    "liveLabel": "Now playing",
+    "skipRateHigh": "You usually skip this song",
+    "skipRateMedium": "You sometimes skip this song",
+    "skipRateLow": "You usually listen to this song all the way through",
+    "skipRateBadge": "{{rate}}% skip rate",
+    "unknownTrack": "Unknown track"
+  },
+  "tables": {
+    "skipRateLow": "Low skip rate",
+    "skipRateMedium": "Moderate skip rate",
+    "skipRateHigh": "High skip rate",
+    "openInSpotify": "Open \"{{title}}\" in Spotify",
+    "pagination": {
+      "prev": "← Previous",
+      "next": "Next →",
+      "info": "Page {{page}} of {{totalPages}} ({{total}})"
+    },
+    "noData": "No data yet",
+    "columns": {
+      "title": "Title",
+      "artist": "Artist",
+      "context": "Playlist/album",
+      "skips": "Skips",
+      "plays": "Plays",
+      "skipRate": "Skip rate"
+    },
+    "filters": {
+      "allPlaylists": "All playlists",
+      "allAlbums": "All albums",
+      "searchPlaceholder": "Search by title or artist…"
+    },
+    "skipped": {
+      "heading": "Most skipped songs"
+    },
+    "mostPlayed": {
+      "heading": "Most played overall"
+    },
+    "mostCompleted": {
+      "heading": "Songs you almost never skip",
+      "subtitle": "Tracks you usually listen to all the way through."
+    },
+    "autoSkip": {
+      "heading": "Auto-skip candidates",
+      "subtitle": "Songs with a high enough skip rate that Smart Skipper would skip them automatically.",
+      "empty": "No candidates — no songs exceed the {{pct}}% threshold yet.",
+      "dryRunButton": "Dry-run mode",
+      "dryRunTooltip": "Disable dry-run mode to enable automatic skipping"
+    },
+    "topArtists": {
+      "heading": "Artists you listen to most",
+      "columns": {
+        "artist": "Artist",
+        "plays": "Total plays",
+        "skipRate": "Skip rate"
+      }
+    }
+  },
+  "heatmap": {
+    "heading": "Skip activity last year",
+    "headingTooltip": "Shows how many songs you skip per day in a calendar heatmap.",
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "days": ["Mon", "Wed", "Fri"],
+    "tooltipSkips": "{{n}} skips",
+    "tooltipPlays": "{{n}} plays",
+    "legendNone": "No data",
+    "legendMany": "Many skips"
+  },
+  "charts": {
+    "tooltipSkipRate": "{{n}}% skip rate",
+    "tooltipRaw": "{{skips}} skips / {{plays}} plays",
+    "tooltipNoPlays": "No plays",
+    "multiArtistSuffix": " et al.",
+    "filterPlaylists": "Playlists",
+    "filterAlbums": "Albums",
+    "filterAll": "All",
+    "contextEmpty": "No data for this filter yet.",
+    "drillDownEmpty": "No skipped songs recorded here.",
+    "drillDownMore": "+ {{n}} more",
+    "drillDownClose": "Close",
+    "artist": {
+      "title": "Highest skip rate per artist",
+      "subtitle": "Ranked by skip rate (min. 5 plays)."
+    },
+    "context": {
+      "title": "Highest skip rate per playlist/album"
+    },
+    "hourly": {
+      "title": "Skips by time of day",
+      "empty": "No data yet — tracker is collecting data in real time."
+    },
+    "weekday": {
+      "title": "Skip count by day of week",
+      "empty": "No data yet — tracker is collecting data in real time.",
+      "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      "daysFull": ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays"]
+    },
+    "hourlyRate": {
+      "title": "Skip rate per hour of day"
+    },
+    "weekdayRate": {
+      "title": "Skip rate by day of week"
+    }
+  },
+  "skipTrendChart": {
+    "heading": "Skip rate over time",
+    "headingTooltip": "Weekly skip rate for the last 16 weeks. Dashed line = overall average. Amber line = 4-week moving average.",
+    "notEnoughData": "Not enough data yet",
+    "notEnoughDataDetail": "Needs at least 3 weeks of recorded activity",
+    "avgLabel": "avg {{n}}%",
+    "trendSuffix": " last 4 weeks",
+    "trendStable": "→ Stable",
+    "trendDown": "↓ Down {{n}}pp",
+    "trendUp": "↑ Up {{n}}pp",
+    "tooltipWeek": "Week of {{label}}",
+    "tooltipRate": "{{n}}% skip rate",
+    "tooltipRaw": "{{skips}} skips / {{plays}} plays",
+    "tooltipAvg4": "{{n}}% avg (4 weeks)",
+    "legendWeekly": "Weekly skip rate",
+    "legendAvg4": "4-week average",
+    "legendTotal": "Overall average",
+    "seriesWeekly": "Weekly rate",
+    "seriesAvg4": "4-week avg",
+    "dateLocale": "en-US"
+  },
+  "listeningScore": {
+    "label": "Listening score",
+    "suffix": "/100",
+    "scoreLabel": {
+      "patient": "Patient listener",
+      "active": "Active listener",
+      "impatient": "Impatient listener"
+    },
+    "scoreMessage": {
+      "s90": "Fantastic — you are an extremely patient and dedicated listener.",
+      "s80": "Very good! You almost always listen to your music all the way through.",
+      "s65": "Pretty good, but you skip more than average on some days.",
+      "s50": "You're in the middle — a bit chaotic, but there are days you're patient.",
+      "s35": "You skip a lot during the day. Maybe time for a Janitor clean-up?",
+      "s0": "High skip rate and low consistency — your playlists might need a thorough Janitor review."
+    },
+    "explanation": "Your listening score (0–100) is calculated from three components: completion rate (50%), longest consecutive streak without skipping (30%), and consistency in daily skip rate (20%). The score updates in real time as you listen."
+  },
+  "coachInsights": {
+    "label": "Insights",
+    "categories": {
+      "skip_rate": "Skip rate",
+      "streak": "Streak",
+      "session": "Session pattern",
+      "janitor": "Playlist Janitor",
+      "pattern": "Listening pattern"
+    },
+    "explanation": "The Music Coach analyses your listening patterns and gives you personalised insights based on historical data. Insights are shown at three levels: observation (what's happening?), context (what does it mean?) and explanation (why, and what can you do?)."
+  },
+  "smartSkipper": {
+    "statusDisabled": "Disabled",
+    "statusDryRun": "Dry-run mode",
+    "statusActive": "Active",
+    "heading": "Smart Skipper — control panel",
+    "subtitle": "Automatic skipping based on your historical skip data.",
+    "loading": "Loading Smart Skipper data…",
+    "error": "Could not fetch Smart Skipper status.",
+    "enableHint": "Enable via CLI:",
+    "dryRunHint": "Disable dry-run mode for real skips:",
+    "historyHeading": "Last 20 automatic skips",
+    "historyEmpty": "No automatic skips recorded yet.",
+    "columns": {
+      "title": "Title",
+      "artist": "Artist",
+      "skipRate": "Skip rate",
+      "timestamp": "Time",
+      "mode": "Mode"
+    },
+    "modeDryRun": "Dry-run",
+    "modeReal": "Real skip",
+    "explanation": "Smart Skipper uses your historical skip data to identify songs you consistently skip, and can automatically move to the next song after a configurable delay. Runs in dry-run mode by default — no real skips without your explicit activation."
+  },
+  "playlistJanitor": {
+    "categoryRemove": "Remove",
+    "categoryCandidate": "Candidate",
+    "categoryWatchlist": "Watchlist",
+    "categoryKeep": "Keep",
+    "skipRateLow": "Low skip rate",
+    "skipRateMedium": "Moderate skip rate",
+    "skipRateHigh": "High skip rate",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "heading": "Playlist Janitor",
+    "subtitle": "Songs you consistently skip — categorised by risk.",
+    "lastUpdated": "Updated {{time}}",
+    "actionable": "{{n}} actionable",
+    "loading": "Analysing playlists…",
+    "error": "Could not fetch Playlist Janitor data. Run the analysis via CLI:",
+    "emptyHeading": "No candidates found.",
+    "emptyCLIHint": "Run the command below to analyse your playlists:",
+    "columns": {
+      "songArtist": "Song / artist",
+      "skipPct": "Skip%",
+      "score": "Score"
+    },
+    "tabEmpty": "No songs in this category.",
+    "explanation": "Playlist Janitor analyses your playlists and finds songs you consistently skip. The score (0–1) is calculated from skip rate, consistency, time since last completion, and number of plays. Songs you recently listened to in full will not be suggested for removal."
+  },
+  "algorithmTooltip": {
+    "label": "How does this work?"
+  }
+}

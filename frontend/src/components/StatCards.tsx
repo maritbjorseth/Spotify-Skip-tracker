@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { skipRateColor } from "../theme";
 
 // ---------------------------------------------------------------------------
@@ -127,7 +128,8 @@ interface StatCardProps {
 }
 
 export function StatCard({ label, value, format, color = "#1db954", icon, tooltip }: StatCardProps) {
-  const fmt = format ?? ((n: number) => n.toLocaleString("nb-NO"));
+  const { i18n } = useTranslation();
+  const fmt = format ?? ((n: number) => n.toLocaleString(i18n.language));
 
   return (
     <motion.div
@@ -173,6 +175,7 @@ export function StatCardsRow({
   totalPlays: number;
   uniqueTracks: number;
 }) {
+  const { t } = useTranslation();
   const skipRate = totalPlays > 0 ? Math.round((totalSkips / totalPlays) * 100) : 0;
   const rateColor = skipRateColor(skipRate, totalPlays);
 
@@ -180,32 +183,32 @@ export function StatCardsRow({
     <div className="flex gap-4 flex-wrap mb-6">
       <StatCard
         icon={<IconSkipForward className="w-5 h-5 text-[#6b7280]" />}
-        label="Totalt skippet"
+        label={t("statCards.totalSkipped")}
         value={totalSkips}
         color="#eeeeee"
-        tooltip="Totalt antall sanger du har skippet siden tracking startet."
+        tooltip={t("statCards.totalSkippedTooltip")}
       />
       <StatCard
         icon={<span style={{ color: rateColor }}><IconTrendingUp className="w-5 h-5" /></span>}
-        label="Skip-rate"
+        label={t("statCards.skipRate")}
         value={skipRate}
         format={(n) => `${n}%`}
         color={rateColor}
-        tooltip="Andel av avspillinger som ble skippet før sangen var ferdig."
+        tooltip={t("statCards.skipRateTooltip")}
       />
       <StatCard
         icon={<IconMusicNote className="w-5 h-5 text-green-500/70" />}
-        label="Avspillinger logget"
+        label={t("statCards.playsLogged")}
         value={totalPlays}
         color="#1db954"
-        tooltip="Totalt antall avspillinger registrert — inkluderer både fullhørte sanger og skips."
+        tooltip={t("statCards.playsLoggedTooltip")}
       />
       <StatCard
         icon={<IconDisc className="w-5 h-5 text-blue-500/70" />}
-        label="Unike sanger skippet"
+        label={t("statCards.uniqueSkipped")}
         value={uniqueTracks}
         color="#4a9eff"
-        tooltip="Antall unike sanger du har skippet minst én gang."
+        tooltip={t("statCards.uniqueSkippedTooltip")}
       />
     </div>
   );

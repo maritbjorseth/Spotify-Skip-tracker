@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import { skipRateColor } from "../theme";
 
@@ -10,6 +11,7 @@ function formatMs(ms: number): string {
 }
 
 export function NowPlaying() {
+  const { t } = useTranslation();
   const { data, error } = useQuery({
     queryKey: ["now"],
     queryFn: api.nowPlaying,
@@ -38,7 +40,7 @@ export function NowPlaying() {
           exit={{ opacity: 0 }}
           className="mb-4 rounded-lg border border-[#2a2a2a] px-4 py-2 text-xs text-[#888]"
         >
-          Kan ikke nå serveren — viser sist kjente data.
+          {t("nowPlaying.offlineBanner")}
         </motion.div>
       )}
       {data && !data.is_playing && !error && (
@@ -52,7 +54,7 @@ export function NowPlaying() {
           <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 7l12-3" />
           </svg>
-          Spill musikk i Spotify for å se hva som spilles nå.
+          {t("nowPlaying.idle")}
         </motion.div>
       )}
       {data?.is_playing ? (
@@ -97,7 +99,7 @@ export function NowPlaying() {
                 transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
               />
               <span className="text-xs font-medium text-[#1db954] uppercase tracking-widest">
-                Spiller nå
+                {t("nowPlaying.liveLabel")}
               </span>
               {data.skip_rate !== null && (
                 <span
@@ -108,19 +110,19 @@ export function NowPlaying() {
                   }}
                   title={
                     data.skip_rate > 0.5
-                      ? "Du hopper vanligvis over denne sangen"
+                      ? t("nowPlaying.skipRateHigh")
                       : data.skip_rate > 0.25
-                        ? "Du hopper av og til over denne sangen"
-                        : "Du hører vanligvis denne sangen ferdig"
+                        ? t("nowPlaying.skipRateMedium")
+                        : t("nowPlaying.skipRateLow")
                   }
                 >
-                  {Math.round(data.skip_rate * 100)}% skip-rate
+                  {t("nowPlaying.skipRateBadge", { rate: Math.round(data.skip_rate * 100) })}
                 </span>
               )}
             </div>
 
             <p className="text-base font-semibold truncate leading-tight">
-              {data.title ?? "Ukjent spor"}
+              {data.title ?? t("nowPlaying.unknownTrack")}
             </p>
             <p className="text-sm text-[#999] truncate">{data.artists ?? ""}</p>
 

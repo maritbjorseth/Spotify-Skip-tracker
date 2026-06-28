@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   BarChart,
   Bar,
@@ -61,18 +62,19 @@ function RateTooltip({
   payload?: TooltipPayload[];
   label?: string;
 }) {
+  const { t } = useTranslation();
   if (!active || !payload?.length) return null;
   const row = payload[0];
   const { skips, plays } = row.payload;
   return (
     <div className="rounded-lg border border-[#333] bg-[#111] px-3 py-2 shadow-xl text-xs">
       <p className="font-semibold text-white mb-1">{label}</p>
-      <p style={{ color: row.color }}>{row.value}% skip-rate</p>
+      <p style={{ color: row.color }}>{t("charts.tooltipSkipRate", { n: row.value })}</p>
       {plays > 0 && (
-        <p className="text-[#888] mt-0.5">{skips} skip / {plays} avsp.</p>
+        <p className="text-[#888] mt-0.5">{t("charts.tooltipRaw", { skips, plays })}</p>
       )}
       {plays === 0 && (
-        <p className="text-[#777] mt-0.5 italic">Ingen avspillinger</p>
+        <p className="text-[#777] mt-0.5 italic">{t("charts.tooltipNoPlays")}</p>
       )}
     </div>
   );
@@ -98,6 +100,10 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 // ---------------------------------------------------------------------------
 
 export function ArtistChart({ artists }: { artists: Artist[] }) {
+  const { t } = useTranslation();
+
+  const multiArtistSuffix = t("charts.multiArtistSuffix");
+
   // Sort DESC (høyest skip-rate først = data[0]).
   // Recharts layout="vertical" rendrer data[0] øverst som standard — ingen reversed nødvendig.
   const data = [...artists]
@@ -110,7 +116,7 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
       const first = a.artists.split(",")[0].trim();
       const ratePct = Math.round(a.skip_rate * 100);
       return {
-        name: a.artists.includes(",") ? first + " m.fl." : first,
+        name: a.artists.includes(",") ? first + multiArtistSuffix : first,
         skips: a.skip_count,
         rate: ratePct,
         plays: a.play_count,
@@ -121,7 +127,10 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
   const chartHeight = Math.max(240, data.length * 48);
 
   return (
-    <ChartCard title="Høyest skip-rate per artist" subtitle="Rangert etter skip-rate (min. 5 avspillinger).">
+    <ChartCard
+      title={t("charts.artist.title")}
+      subtitle={t("charts.artist.subtitle")}
+    >
       <div style={{ height: chartHeight + 64 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -182,12 +191,6 @@ export function ArtistChart({ artists }: { artists: Artist[] }) {
 
 type ContextFilter = "playlist" | "album" | "all";
 
-const FILTER_BUTTONS: { id: ContextFilter; label: string }[] = [
-  { id: "playlist", label: "Spillelister" },
-  { id: "album",    label: "Album" },
-  { id: "all",      label: "Alle" },
-];
-
 // ---------------------------------------------------------------------------
 // Drill-down: sanger i valgt kontekst
 // ---------------------------------------------------------------------------
@@ -201,6 +204,7 @@ function ContextDrillDown({
   tracks: Track[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const MAX_VISIBLE = 6;
   const contextTracks = tracks
     .filter((t) => t.context_name === contextName)
@@ -224,7 +228,7 @@ function ContextDrillDown({
           <button
             onClick={onClose}
             className="shrink-0 text-[#666] hover:text-[#bbb] transition-colors text-sm leading-none px-1 cursor-pointer"
-            aria-label="Lukk"
+            aria-label={t("charts.drillDownClose")}
           >
             ✕
           </button>
@@ -232,22 +236,22 @@ function ContextDrillDown({
 
         {contextTracks.length === 0 ? (
           <p className="text-xs text-[#777] italic py-2">
-            Ingen skippede sanger registrert her.
+            {t("charts.drillDownEmpty")}
           </p>
         ) : (
           <>
             <div className="flex flex-col gap-0.5">
-              {contextTracks.slice(0, MAX_VISIBLE).map((t) => {
-                const ratePct = Math.round(t.skip_rate * 100);
+              {contextTracks.slice(0, MAX_VISIBLE).map((track) => {
+                const ratePct = Math.round(track.skip_rate * 100);
                 return (
                   <div
-                    key={t.uri}
+                    key={track.uri}
                     className="flex items-center gap-2.5 rounded-md px-1 py-1.5 hover:bg-[#202020] transition-colors"
                   >
                     {/* Albumcover */}
-                    {t.image_url ? (
+                    {track.image_url ? (
                       <img
-                        src={t.image_url}
+                        src={track.image_url}
                         alt=""
                         className="w-7 h-7 rounded object-cover shrink-0"
                         loading="lazy"
@@ -259,17 +263,17 @@ function ContextDrillDown({
                     {/* Tittel + artist */}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-[#ddd] truncate leading-tight">
-                        {t.title ?? "Ukjent tittel"}
+                        {track.title ?? "—"}
                       </p>
                       <p className="text-[11px] text-[#666] truncate leading-tight">
-                        {t.artists ?? ""}
+                        {track.artists ?? ""}
                       </p>
                     </div>
 
                     {/* Skip-rate badge */}
                     <span
                       className="text-xs font-semibold tabular-nums shrink-0"
-                      style={{ color: skipRateColor(ratePct, t.play_count) }}
+                      style={{ color: skipRateColor(ratePct, track.play_count) }}
                     >
                       {ratePct}%
                     </span>
@@ -280,7 +284,7 @@ function ContextDrillDown({
 
             {contextTracks.length > MAX_VISIBLE && (
               <p className="text-[11px] text-[#666] mt-1.5 pl-1">
-                + {contextTracks.length - MAX_VISIBLE} til
+                {t("charts.drillDownMore", { n: contextTracks.length - MAX_VISIBLE })}
               </p>
             )}
           </>
@@ -305,8 +309,15 @@ export function ContextChart({
   albumContexts?: string[];
   tracks?: Track[];
 }) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<ContextFilter>("playlist");
   const [selectedContext, setSelectedContext] = useState<string | null>(null);
+
+  const FILTER_BUTTONS: { id: ContextFilter; label: string }[] = [
+    { id: "playlist", label: t("charts.filterPlaylists") },
+    { id: "album",    label: t("charts.filterAlbums") },
+    { id: "all",      label: t("charts.filterAll") },
+  ];
 
   const playlistSet = new Set(playlistContexts);
   const albumSet    = new Set(albumContexts);
@@ -342,7 +353,7 @@ export function ContextChart({
   };
 
   return (
-    <ChartCard title="Høyest skip-rate per spilleliste/album">
+    <ChartCard title={t("charts.context.title")}>
       {/* Filter-bryterrekke */}
       <div className="flex gap-1 mb-4">
         {FILTER_BUTTONS.map(({ id, label }) => (
@@ -363,7 +374,7 @@ export function ContextChart({
 
       {data.length === 0 ? (
         <div className="flex items-center justify-center h-[120px] text-xs text-[#777] italic">
-          Ingen data for dette filteret ennå.
+          {t("charts.contextEmpty")}
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={chartHeight}>
@@ -431,6 +442,7 @@ export function ContextChart({
 // ---------------------------------------------------------------------------
 
 export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
+  const { t } = useTranslation();
   const data = hourly.map((h, i) => ({
     hour: `${i}:00`,
     skip: h.skips,
@@ -440,10 +452,10 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
   const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
   return (
-    <ChartCard title="Skips etter tidspunkt på døgnet">
+    <ChartCard title={t("charts.hourly.title")}>
       {totalSkips === 0 ? (
         <div className="flex items-center justify-center h-[200px] text-xs text-[#777] italic">
-          Ingen data ennå – tracker samler data i sanntid.
+          {t("charts.hourly.empty")}
         </div>
       ) : (
       <ResponsiveContainer width="100%" height={180}>
@@ -474,9 +486,10 @@ export function HourlyChart({ hourly }: { hourly: HourlyStats[] }) {
 // Skip per ukedag
 // ---------------------------------------------------------------------------
 
-const DAYS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
-
 export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
+  const { t } = useTranslation();
+  const DAYS: string[] = t("charts.weekday.days", { returnObjects: true }) as string[];
+
   const data = weekday.map((w, i) => ({
     day: DAYS[i],
     skip: w.skips,
@@ -486,10 +499,10 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
   const totalSkips = data.reduce((s, d) => s + d.skip, 0);
 
   return (
-    <ChartCard title="Skip-antall etter ukedag">
+    <ChartCard title={t("charts.weekday.title")}>
       {totalSkips === 0 ? (
         <div className="flex items-center justify-center h-[200px] text-xs text-[#777] italic">
-          Ingen data ennå – tracker samler data i sanntid.
+          {t("charts.weekday.empty")}
         </div>
       ) : (
       <ResponsiveContainer width="100%" height={200}>
@@ -514,6 +527,7 @@ export function WeekdayChart({ weekday }: { weekday: WeekdayStats[] }) {
 // ---------------------------------------------------------------------------
 
 export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
+  const { t } = useTranslation();
   const data = hourly.map((h, i) => ({
     hour: `${i}:00`,
     rate: h.plays > 0 ? Math.round((h.skips / h.plays) * 100) : 0,
@@ -522,7 +536,7 @@ export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
   }));
 
   return (
-    <ChartCard title="Skip-rate per time på døgnet">
+    <ChartCard title={t("charts.hourlyRate.title")}>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="12%">
           <XAxis
@@ -561,9 +575,11 @@ export function HourlyRateChart({ hourly }: { hourly: HourlyStats[] }) {
 // Skip-RATE per ukedag (prosent, ikke antall)
 // ---------------------------------------------------------------------------
 
-const DAY_FULL = ["Mandager", "Tirsdager", "Onsdager", "Torsdager", "Fredager", "Lørdager", "Søndager"];
-
 export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
+  const { t } = useTranslation();
+  const DAYS: string[] = t("charts.weekday.days", { returnObjects: true }) as string[];
+  const DAY_FULL: string[] = t("charts.weekday.daysFull", { returnObjects: true }) as string[];
+
   const data = weekday.map((w, i) => ({
     day: DAYS[i],
     dayFull: DAY_FULL[i],
@@ -573,7 +589,7 @@ export function WeekdayRateChart({ weekday }: { weekday: WeekdayStats[] }) {
   }));
 
   return (
-    <ChartCard title="Skip-rate per ukedag">
+    <ChartCard title={t("charts.weekdayRate.title")}>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={{ left: -4, right: 4 }} barCategoryGap="18%">
           <XAxis dataKey="day" tick={TICK_STYLE} axisLine={false} tickLine={false} />

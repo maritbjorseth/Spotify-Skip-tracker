@@ -141,15 +141,17 @@ def main() -> None:
     elif args.command == "run":
         import os
         from .database import connect, init_db
-        from .tracker import polling_loop
+        from .tracker import tracker_manager
         from .web import create_flask_app
 
         conn = connect()
         init_db(conn)
         conn.close()
 
-        t = threading.Thread(target=polling_loop, daemon=True)
-        t.start()
+        # tracker_manager() starter én tracking-tråd per bruker i user_tokens.
+        # Nye brukere får tracker automatisk via ensure_tracker_running()
+        # i OAuth-callbacken (web.py).
+        tracker_manager()
 
         port = int(os.environ.get("PORT", 5000))
         app = create_flask_app()
@@ -157,13 +159,19 @@ def main() -> None:
 
     elif args.command == "track":
         from .database import connect, init_db
-        from .tracker import polling_loop
+        from .tracker import tracker_manager
 
         conn = connect()
         init_db(conn)
         conn.close()
 
-        polling_loop()
+        # tracker_manager() starter tracker-tråder for alle brukere
+        # i user_tokens — tilsvarende hva Railway gjør via server.py.
+        tracker_manager()
+
+        # Hold prosessen i live — tracker-trådene er daemon-tråder og
+        # ville avsluttet umiddelbart uten denne blokkeringen.
+        threading.Event().wait()
 
     elif args.command == "wrapped":
         from .wrapped import run_wrapped
