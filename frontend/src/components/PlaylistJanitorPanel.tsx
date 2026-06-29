@@ -92,10 +92,12 @@ function TrackRow({
   candidate,
   onRemove,
   isRemoving,
+  isDemo,
 }: {
   candidate: JanitorCandidate;
   onRemove: (playlistId: string, trackUri: string) => void;
   isRemoving: boolean;
+  isDemo: boolean;
 }) {
   const { t } = useTranslation();
   const cfg = CATEGORY_CONFIG[candidate.category];
@@ -139,9 +141,16 @@ function TrackRow({
         <ScoreBar score={candidate.janitor_score} category={candidate.category} />
       </div>
 
-      {/* Fjern-knapp — kun for Remove og Candidate */}
+      {/* Fjern-knapp — kun for Remove og Candidate; skjult i demo-modus */}
       {cfg.canRemove ? (
-        confirming ? (
+        isDemo ? (
+          <span
+            className="flex-shrink-0 text-xs text-[#555] w-[72px] text-right"
+            title={t("playlistJanitor.demoDisabled")}
+          >
+            {t("playlistJanitor.demoDisabled")}
+          </span>
+        ) : confirming ? (
           /* Inline bekreftelse — erstatter window.confirm() */
           <div className="flex-shrink-0 flex items-center gap-1.5">
             <button
@@ -198,11 +207,13 @@ function PlaylistGroup({
   candidates,
   onRemove,
   removingUri,
+  isDemo,
 }: {
   name: string;
   candidates: JanitorCandidate[];
   onRemove: (playlistId: string, trackUri: string) => void;
   removingUri: string | null;
+  isDemo: boolean;
 }) {
   return (
     <div className="mb-2 last:mb-0">
@@ -225,6 +236,7 @@ function PlaylistGroup({
           candidate={c}
           onRemove={onRemove}
           isRemoving={removingUri === c.uri}
+          isDemo={isDemo}
         />
       ))}
     </div>
@@ -239,10 +251,12 @@ function TabContent({
   candidates,
   onRemove,
   removingUri,
+  isDemo,
 }: {
   candidates: JanitorCandidate[];
   onRemove: (playlistId: string, trackUri: string) => void;
   removingUri: string | null;
+  isDemo: boolean;
 }) {
   const { t } = useTranslation();
 
@@ -278,6 +292,7 @@ function TabContent({
           candidates={cands}
           onRemove={onRemove}
           removingUri={removingUri}
+          isDemo={isDemo}
         />
       ))}
     </div>
@@ -288,7 +303,7 @@ function TabContent({
 // Hoved-panel
 // ---------------------------------------------------------------------------
 
-export function PlaylistJanitorPanel() {
+export function PlaylistJanitorPanel({ isDemo = false }: { isDemo?: boolean }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<JanitorCategory>("Remove");
@@ -432,6 +447,7 @@ export function PlaylistJanitorPanel() {
             candidates={byCategory[activeTab]}
             onRemove={(playlistId, trackUri) => mutation.mutate({ playlistId, trackUri })}
             removingUri={removingUri}
+            isDemo={isDemo}
           />
         </div>
       )}

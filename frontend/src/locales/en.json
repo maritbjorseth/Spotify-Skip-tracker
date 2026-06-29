@@ -257,9 +257,14 @@
       "score": "Score"
     },
     "tabEmpty": "No songs in this category.",
+    "demoDisabled": "Not available in demo",
     "explanation": "Playlist Janitor analyses your playlists and finds songs you consistently skip. The score (0–1) is calculated from skip rate, consistency, time since last completion, and number of plays. Songs you recently listened to in full will not be suggested for removal."
   },
   "algorithmTooltip": {
     "label": "How does this work?"
+  },
+  "demo": {
+    "banner": "This is a demo with sample data. No changes are saved.",
+    "bannerLink": "Self-host on GitHub"
   }
 }

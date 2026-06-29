@@ -67,6 +67,29 @@ function EmptyDashboard() {
   );
 }
 
+const GITHUB_URL = "https://github.com/Ulbjo/Spotify-Skip-tracker";
+
+function DemoBanner() {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="w-full px-4 py-2.5 text-center text-sm"
+      style={{ background: "#78350f", color: "#fcd34d" }}
+    >
+      {t("demo.banner")}{" "}
+      <a
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline font-semibold"
+        style={{ color: "#fde68a" }}
+      >
+        {t("demo.bannerLink")}
+      </a>
+    </div>
+  );
+}
+
 function LogoutButton({ onLogout }: { onLogout: () => void }) {
   const { t } = useTranslation();
   return (
@@ -129,8 +152,11 @@ export default function App() {
     return <LoginScreen />;
   }
 
+  const isDemo = authData?.is_demo === true;
+
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-[#eee]">
+      {isDemo && <DemoBanner />}
       <div className="max-w-6xl mx-auto px-6 py-6">
 
         <motion.div
@@ -261,7 +287,7 @@ export default function App() {
             {visible.playlistJanitor && (
               <>
                 <SectionDivider label={t("app.sections.janitor")} />
-                <PlaylistJanitorPanel />
+                <PlaylistJanitorPanel isDemo={isDemo} />
               </>
             )}
           </motion.div>

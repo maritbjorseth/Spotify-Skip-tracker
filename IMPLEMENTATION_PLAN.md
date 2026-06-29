@@ -13,7 +13,7 @@ Status-nøkkel: `[ ]` ikke startet · `[~]` påbegynt · `[x]` fullført
 - ☑ Produksjon deployet
 - ☑ Demo-data generert
 - ☑ Public Demo backend (steg 5 av 6)
-- ☐ Public Demo frontend
+- ☑ Public Demo frontend
 - ☐ Open Source-klargjøring
 - ☐ README
 
@@ -188,7 +188,7 @@ Standard for alle andre er `DEMO_MODE=false` (ingen endring nødvendig).
 
 ### Steg 7 — Frontend: oppdater `AuthStatus`-typen
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Fil:** `frontend/src/types.ts`  
 **Beskrivelse:**  
 Utvid `AuthStatus`-interfacet med `is_demo: boolean`. Dette er den eneste type-endringen og påvirker alle komponenter som leser `authData`.
@@ -219,7 +219,7 @@ Siden `/api/auth/demo` returnerer en redirect, brukes `window.location.href = BA
 
 ### Steg 9 — Frontend: demo-banner i `App.tsx`
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Fil:** `frontend/src/App.tsx`  
 **Beskrivelse:**  
 Vis et ikke-avvisbart informasjonsbanner øverst i dashbordet når `authData?.is_demo === true`.
@@ -238,7 +238,7 @@ i18n-nøkler: `demo.banner`, `demo.bannerLink` (nb og en).
 
 ### Steg 10 — Frontend: deaktiver Fjern-knapp i demo-modus
 
-**Status:** `[ ]`  
+**Status:** `[x]`  
 **Fil:** `frontend/src/components/PlaylistJanitorPanel.tsx`  
 **Beskrivelse:**  
 `PlaylistJanitorPanel` henter janitor-data og viser en «Fjern»-knapp per sang. I demo-modus:
