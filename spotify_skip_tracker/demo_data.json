@@ -2339,20 +2339,124 @@
     },
     "history": [
       {
-        "title": "Anti-Hero",
-        "artists": "Taylor Swift",
-        "skip_rate": 0.778,
+        "title": "Stay",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "skip_rate": 0.857,
         "reason": "skip_rate >= 0.85",
-        "timestamp": "2026-06-20T19:14:55+00:00",
+        "timestamp": "2026-06-25T20:41:33+00:00",
+        "undone": false
+      },
+      {
+        "title": "Industry Baby",
+        "artists": "Lil Nas X, Jack Harlow",
+        "skip_rate": 0.833,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-06-23T18:12:07+00:00",
         "undone": false
       },
       {
         "title": "Numb",
         "artists": "Linkin Park",
         "skip_rate": 0.818,
-        "reason": "skip_rate >= 0.85",
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-06-21T09:55:44+00:00",
+        "undone": true
+      },
+      {
+        "title": "Anti-Hero",
+        "artists": "Taylor Swift",
+        "skip_rate": 0.778,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-06-20T19:14:55+00:00",
+        "undone": false
+      },
+      {
+        "title": "Peaches",
+        "artists": "Justin Bieber",
+        "skip_rate": 0.8,
+        "reason": "skip_rate >= 0.75",
         "timestamp": "2026-06-18T21:03:12+00:00",
         "undone": true
+      },
+      {
+        "title": "MIDDLE OF THE NIGHT",
+        "artists": "Elley Duhé",
+        "skip_rate": 0.8,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-06-15T16:28:50+00:00",
+        "undone": false
+      },
+      {
+        "title": "Shape of You",
+        "artists": "Ed Sheeran",
+        "skip_rate": 0.786,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-06-10T11:44:19+00:00",
+        "undone": false
+      },
+      {
+        "title": "Stay",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "skip_rate": 0.857,
+        "reason": "skip_rate >= 0.85",
+        "timestamp": "2026-06-07T20:15:30+00:00",
+        "undone": false
+      },
+      {
+        "title": "Industry Baby",
+        "artists": "Lil Nas X, Jack Harlow",
+        "skip_rate": 0.833,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-05-30T14:22:08+00:00",
+        "undone": false
+      },
+      {
+        "title": "Anti-Hero",
+        "artists": "Taylor Swift",
+        "skip_rate": 0.778,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-05-24T19:50:41+00:00",
+        "undone": false
+      },
+      {
+        "title": "Numb",
+        "artists": "Linkin Park",
+        "skip_rate": 0.818,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-05-18T22:07:33+00:00",
+        "undone": false
+      },
+      {
+        "title": "Peaches",
+        "artists": "Justin Bieber",
+        "skip_rate": 0.8,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-05-11T15:39:17+00:00",
+        "undone": false
+      },
+      {
+        "title": "MIDDLE OF THE NIGHT",
+        "artists": "Elley Duhé",
+        "skip_rate": 0.8,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-05-04T09:14:55+00:00",
+        "undone": true
+      },
+      {
+        "title": "Shape of You",
+        "artists": "Ed Sheeran",
+        "skip_rate": 0.786,
+        "reason": "skip_rate >= 0.75",
+        "timestamp": "2026-04-27T18:30:22+00:00",
+        "undone": false
+      },
+      {
+        "title": "Stay",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "skip_rate": 0.857,
+        "reason": "skip_rate >= 0.85",
+        "timestamp": "2026-04-19T20:55:10+00:00",
+        "undone": false
       }
     ]
   },
@@ -2361,60 +2465,57 @@
   },
   "insights": [
     {
-      "id": "skip_peak_hour",
-      "category": "tidspunkt",
+      "id": "skip_rate_trend",
+      "category": "skip_rate",
       "stadium": 3,
-      "observation": "Du skipper mest mellom kl. 19 og 21.",
-      "context": "Det er 35 % høyere skip-rate enn resten av dagen.",
-      "explanation": "Kveldslytting skjer gjerne på farten eller mens du gjør noe annet — du er mer utålmodig med sanger som ikke treffer stemningen.",
-      "action": "Lag en spilleliste med energiske sanger for kveldsøkter.",
+      "observation": "Your skip rate this week is 42%.",
+      "context": "Last week: 38% — you're getting more impatient.",
+      "explanation": "Skip rates often rise when your playlist mix goes stale. Rotating in new music tends to help.",
+      "action": "Run Playlist Janitor to find the tracks dragging your rate up.",
+      "value": 0.42,
+      "trend": "up",
+      "trend_is_positive": false
+    },
+    {
+      "id": "skip_peak_hour",
+      "category": "session",
+      "stadium": 3,
+      "observation": "You skip most between 7–9 PM.",
+      "context": "35% higher skip rate than the rest of the day.",
+      "explanation": "Evening listening often happens on the go or while multitasking — you're quicker to skip songs that don't fit the mood.",
+      "action": "Try a focused, high-energy playlist to open your evening sessions.",
       "value": 19,
       "trend": null,
       "trend_is_positive": null
     },
     {
       "id": "most_skipped_artist",
-      "category": "artist",
+      "category": "pattern",
       "stadium": 2,
-      "observation": "Imagine Dragons er artisten du skipper oftest (64 % av gangene).",
-      "context": "Taylor Swift og Ed Sheeran følger hakk i hæl.",
+      "observation": "Imagine Dragons is the artist you skip most often — 64% of the time.",
+      "context": "Taylor Swift and Ed Sheeran follow close behind.",
       "explanation": null,
       "action": null,
       "value": 0.643,
-      "trend": null,
-      "trend_is_positive": null
+      "trend": "up",
+      "trend_is_positive": false
     },
     {
       "id": "loyal_listener",
-      "category": "artist",
+      "category": "pattern",
       "stadium": 2,
-      "observation": "Harry Styles hører du alltid ferdig — 0 % skip på 28 avspillinger.",
-      "context": "Det er din mest lojale lytterelasjon.",
+      "observation": "You always listen to Harry Styles all the way through — 0% skip rate across 28 plays.",
+      "context": "That's your most loyal listening relationship.",
       "explanation": null,
       "action": null,
       "value": 0.0,
-      "trend": null,
-      "trend_is_positive": null
+      "trend": "stable",
+      "trend_is_positive": true
     }
   ],
   "janitor_suggestions": [
     {
       "id": 1,
-      "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
-      "playlist_name": "Today's Top Hits",
-      "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
-      "title": "Anti-Hero",
-      "artists": "Taylor Swift",
-      "skip_rate": 0.778,
-      "janitor_score": 0.87,
-      "suggested_at": "2026-06-25T10:00:00+00:00",
-      "status": "pending",
-      "play_count": 18,
-      "confidence_level": "høy",
-      "category": "skipper nesten alltid"
-    },
-    {
-      "id": 2,
       "playlist_id": "37i9dQZF1DX0XUsuxWHRQd",
       "playlist_name": "RapCaviar",
       "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
@@ -2425,8 +2526,143 @@
       "suggested_at": "2026-06-24T08:30:00+00:00",
       "status": "pending",
       "play_count": 7,
-      "confidence_level": "middels",
-      "category": "skipper nesten alltid"
+      "confidence_level": "Medium confidence",
+      "category": "Remove"
+    },
+    {
+      "id": 2,
+      "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
+      "playlist_name": "Today's Top Hits",
+      "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+      "title": "Anti-Hero",
+      "artists": "Taylor Swift",
+      "skip_rate": 0.778,
+      "janitor_score": 0.87,
+      "suggested_at": "2026-06-25T10:00:00+00:00",
+      "status": "pending",
+      "play_count": 18,
+      "confidence_level": "High confidence",
+      "category": "Remove"
+    },
+    {
+      "id": 3,
+      "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
+      "playlist_name": "Today's Top Hits",
+      "uri": "spotify:track:1BxfuPKGuaTgP7aM0Chatn",
+      "title": "Shape of You",
+      "artists": "Ed Sheeran",
+      "skip_rate": 0.786,
+      "janitor_score": 0.83,
+      "suggested_at": "2026-06-23T14:15:00+00:00",
+      "status": "pending",
+      "play_count": 14,
+      "confidence_level": "High confidence",
+      "category": "Remove"
+    },
+    {
+      "id": 4,
+      "playlist_id": "6mUtNQBmSJspMFTpMMwGHl",
+      "playlist_name": "Rock Classics",
+      "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+      "title": "Numb",
+      "artists": "Linkin Park",
+      "skip_rate": 0.818,
+      "janitor_score": 0.79,
+      "suggested_at": "2026-06-22T09:00:00+00:00",
+      "status": "pending",
+      "play_count": 11,
+      "confidence_level": "Medium confidence",
+      "category": "Remove"
+    },
+    {
+      "id": 5,
+      "playlist_id": "6mUtNQBmSJspMFTpMMwGHl",
+      "playlist_name": "Rock Classics",
+      "uri": "spotify:track:5tCCzZ9AoV2oFEYJpf6nFs",
+      "title": "Thunder",
+      "artists": "Imagine Dragons",
+      "skip_rate": 0.75,
+      "janitor_score": 0.71,
+      "suggested_at": "2026-06-21T11:00:00+00:00",
+      "status": "pending",
+      "play_count": 8,
+      "confidence_level": "Medium confidence",
+      "category": "Candidate"
+    },
+    {
+      "id": 6,
+      "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
+      "playlist_name": "Today's Top Hits",
+      "uri": "spotify:track:7MXVkk9YMctZqd1Srtv4MB",
+      "title": "Blinding Lights",
+      "artists": "The Weeknd",
+      "skip_rate": 0.545,
+      "janitor_score": 0.61,
+      "suggested_at": "2026-06-20T16:30:00+00:00",
+      "status": "pending",
+      "play_count": 22,
+      "confidence_level": "High confidence",
+      "category": "Candidate"
+    },
+    {
+      "id": 7,
+      "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
+      "playlist_name": "Today's Top Hits",
+      "uri": "spotify:track:3ee8Jmje8o58CHK66QrVC2",
+      "title": "MIDDLE OF THE NIGHT",
+      "artists": "Elley Duhé",
+      "skip_rate": 0.8,
+      "janitor_score": 0.68,
+      "suggested_at": "2026-06-19T20:00:00+00:00",
+      "status": "pending",
+      "play_count": 5,
+      "confidence_level": "Low confidence",
+      "category": "Candidate"
+    },
+    {
+      "id": 8,
+      "playlist_id": "37i9dQZF1DX0XUsuxWHRQd",
+      "playlist_name": "RapCaviar",
+      "uri": "spotify:track:6DCZcSspjsKoFjzjrWoCdn",
+      "title": "God's Plan",
+      "artists": "Drake",
+      "skip_rate": 0.667,
+      "janitor_score": 0.44,
+      "suggested_at": "2026-06-18T12:00:00+00:00",
+      "status": "pending",
+      "play_count": 15,
+      "confidence_level": "High confidence",
+      "category": "Watchlist"
+    },
+    {
+      "id": 9,
+      "playlist_id": "4uhrVRBGPHnmFBHJjLuEBl",
+      "playlist_name": "Liked Songs",
+      "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
+      "title": "Flowers",
+      "artists": "Miley Cyrus",
+      "skip_rate": 0.429,
+      "janitor_score": 0.31,
+      "suggested_at": "2026-06-17T08:45:00+00:00",
+      "status": "pending",
+      "play_count": 7,
+      "confidence_level": "Medium confidence",
+      "category": "Watchlist"
+    },
+    {
+      "id": 10,
+      "playlist_id": "6mUtNQBmSJspMFTpMMwGHl",
+      "playlist_name": "Rock Classics",
+      "uri": "spotify:track:3n3Ppam7vgaVa1iaRUIOKE",
+      "title": "Mr. Brightside",
+      "artists": "The Killers",
+      "skip_rate": 0.571,
+      "janitor_score": 0.38,
+      "suggested_at": "2026-06-16T15:20:00+00:00",
+      "status": "pending",
+      "play_count": 7,
+      "confidence_level": "Medium confidence",
+      "category": "Watchlist"
     }
   ]
 }

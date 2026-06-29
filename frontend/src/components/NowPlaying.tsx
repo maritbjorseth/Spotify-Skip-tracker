@@ -19,6 +19,10 @@ export function NowPlaying() {
     staleTime: 0,
   });
 
+  // Fallback ved ødelagt albumcover-URL
+  const [imgError, setImgError] = useState(false);
+  useEffect(() => { setImgError(false); }, [data?.uri]);
+
   // Lokal progress som tikker fremover hvert sekund mellom polls
   const [localProgress, setLocalProgress] = useState(0);
   useEffect(() => {
@@ -68,11 +72,12 @@ export function NowPlaying() {
         >
           {/* Albumcover med pulserende ring */}
           <div className="relative flex-shrink-0">
-            {data.image_url ? (
+            {data.image_url && !imgError ? (
               <img
                 src={data.image_url}
                 alt={data.album ?? ""}
                 className="size-16 aspect-square rounded-md object-cover shadow-lg"
+                onError={() => setImgError(true)}
               />
             ) : (
               <div className="flex size-16 items-center justify-center rounded-md bg-[#2a2a2a]">
