@@ -4,6 +4,7 @@
     "titleAccent": " & Coach",
     "subtitle": "Connect your Spotify account to see your skip statistics.",
     "loginButton": "Log in with Spotify",
+    "demoButton": "Explore demo",
     "footer": "Spotify Skip Tracker & Coach · Personal dashboard"
   },
   "app": {

@@ -40,6 +40,10 @@ export function LoginScreen() {
     window.location.href = RAILWAY_BASE + "/api/auth/login";
   }
 
+  function handleDemo() {
+    window.location.href = RAILWAY_BASE + "/api/auth/demo";
+  }
+
   return (
     <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
@@ -64,6 +68,14 @@ export function LoginScreen() {
         >
           <SpotifyIcon />
           {t("login.loginButton")}
+        </button>
+
+        <button
+          onClick={handleDemo}
+          className="w-full flex items-center justify-center gap-3 rounded-xl py-3.5 text-sm font-semibold transition-all duration-150 active:scale-[0.98] mt-3"
+          style={{ background: "#ffffff12", color: "#aaa" }}
+        >
+          {t("login.demoButton")}
         </button>
 
         <p className="text-center text-xs text-[#555] mt-8">{t("login.footer")}</p>
