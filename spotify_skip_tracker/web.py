@@ -58,8 +58,8 @@ except FileNotFoundError:
 
 
 def _is_demo() -> bool:
-    """Returnerer True dersom den gjeldende sesjonen er en demo-sesjon."""
-    return bool(session.get("is_demo"))
+    """Returnerer True dersom den gjeldende sesjonen er en demo-sesjon og DEMO_MODE er aktivert."""
+    return DEMO_MODE and bool(session.get("is_demo"))
 
 # ---------------------------------------------------------------------------
 # Auth-hjelpere
@@ -164,6 +164,8 @@ def create_flask_app() -> Flask:
         """
         if not DEMO_MODE:
             return jsonify({"error": "Demo-modus er ikke aktivert"}), 404
+        if _DEMO_DATA is None:
+            return jsonify({"error": "Demo-data er ikke tilgjengelig"}), 503
         session["user_id"] = "_demo_"
         session["is_demo"] = True
         logger.info("Demo-sesjon startet.")
