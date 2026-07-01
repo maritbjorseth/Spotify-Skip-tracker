@@ -69,10 +69,11 @@ function InsightCard({ insight }: { insight: Insight }) {
 }
 
 export function CoachInsightsPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("en") ? "en" : "nb";
   const { data: insights } = useQuery({
-    queryKey: ["coachInsights"],
-    queryFn: api.coachInsights,
+    queryKey: ["coachInsights", lang],
+    queryFn: () => api.coachInsights(lang),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });

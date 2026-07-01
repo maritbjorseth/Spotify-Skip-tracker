@@ -29,7 +29,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playlist_id: playlistId, track_uri: trackUri }),
     }),
-  coachInsights:   () => fetchJson<Insight[]>("/api/coach/insights"),
+  coachInsights:   (lang: string) => fetchJson<Insight[]>(`/api/coach/insights?lang=${lang}`),
   listeningScore:  () => fetchJson<ListeningScore>("/api/stats/score"),
   authStatus:      () => fetchJson<AuthStatus>("/api/auth/status"),
   logout:          () => fetchJson<{ success: boolean }>("/api/auth/logout", { method: "POST" }),

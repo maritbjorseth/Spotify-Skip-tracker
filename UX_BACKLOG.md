@@ -25,6 +25,15 @@ Prioritert etter brukerverdi. Basert på design-audit av hele frontend (juni 202
 
 ---
 
+## 🔴 Bugs
+
+| # | Problem | Status |
+|---|---|---|
+| 1 | Investigate Spotify OAuth issue in Samsung Internet browser. Login appears to hang after Spotify authorization. Chrome and 1dm+ work correctly. | ⏳ |
+| 2 | English locale: Some strings in the Insights section are still displayed in Norwegian. | ✅ |
+
+---
+
 ## 🟢 Neste
 
 Alle punkter gjennomført. Se ✅ Ferdig.

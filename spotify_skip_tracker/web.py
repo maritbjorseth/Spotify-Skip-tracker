@@ -591,7 +591,8 @@ def create_flask_app() -> Flask:
             return jsonify(_DEMO_DATA["insights"])
 
         try:
-            insights = generate_insights(_resolve_user_id())
+            lang = request.args.get("lang", "nb")
+            insights = generate_insights(_resolve_user_id(), lang=lang)
             return jsonify([i.to_dict() for i in insights])
         except Exception as exc:
             logger.exception("Feil i /api/coach/insights: %s", exc)
