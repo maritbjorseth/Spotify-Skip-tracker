@@ -438,6 +438,7 @@ def _insight_session_start_pattern(conn, user_id: str, lang: str = "nb") -> Insi
         WITH positions AS (
             SELECT
                 skipped,
+                session_id,
                 ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY timestamp) AS pos
             FROM plays
             WHERE user_id = %s AND session_id IS NOT NULL
