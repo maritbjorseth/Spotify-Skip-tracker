@@ -107,10 +107,12 @@ export function SkipHeatmap({ daily }: Props) {
 
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-4">
-      <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest mb-4 flex items-center gap-1.5">
-        {t("heatmap.heading")}
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest">
+          {t("heatmap.heading")}
+        </h2>
         <AlgorithmTooltip text={t("heatmap.headingTooltip")} color="#666" />
-      </h2>
+      </div>
 
       <div className="overflow-x-auto">
         <div className="relative inline-block">
