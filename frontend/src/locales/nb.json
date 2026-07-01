@@ -115,13 +115,13 @@
   },
   "heatmap": {
     "heading": "Skip-aktivitet siste år",
-    "headingTooltip": "Viser hvor mange sanger du skipper per dag i et kalender-heatmap.",
+    "headingTooltip": "Viser daglig skip-rate i et kalender-heatmap. Fargen indikerer andelen sanger som hoppes over, ikke rått antall.",
     "months": ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"],
     "days": ["man", "ons", "fre"],
     "tooltipSkips": "{{n}} skip",
     "tooltipPlays": "{{n}} avspillinger",
     "legendNone": "Ingen data",
-    "legendMany": "Mange skip"
+    "legendMany": "Høy skip-rate"
   },
   "charts": {
     "tooltipSkipRate": "{{n}}% skip-rate",

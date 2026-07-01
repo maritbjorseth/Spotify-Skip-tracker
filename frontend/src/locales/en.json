@@ -115,13 +115,13 @@
   },
   "heatmap": {
     "heading": "Skip activity last year",
-    "headingTooltip": "Shows how many songs you skip per day in a calendar heatmap.",
+    "headingTooltip": "Shows your daily skip rate in a calendar heatmap. Colour indicates the proportion of songs skipped, not the raw count.",
     "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     "days": ["Mon", "Wed", "Fri"],
     "tooltipSkips": "{{n}} skips",
     "tooltipPlays": "{{n}} plays",
     "legendNone": "No data",
-    "legendMany": "Many skips"
+    "legendMany": "High skip rate"
   },
   "charts": {
     "tooltipSkipRate": "{{n}}% skip rate",
