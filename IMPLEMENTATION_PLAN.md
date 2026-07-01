@@ -12,8 +12,8 @@ Status-nøkkel: `[ ]` ikke startet · `[~]` påbegynt · `[x]` fullført
 - ☑ i18n ferdig
 - ☑ Produksjon deployet
 - ☑ Demo-data generert
-- ☑ Public Demo backend (steg 5 av 6)
-- ☑ Public Demo frontend
+- ☑ Public Demo backend (steg 2 av 6)
+- ☐ Public Demo frontend
 - ☐ Open Source-klargjøring
 - ☐ README
 
@@ -59,7 +59,7 @@ Nøkkelarkitektur:
 
 ### Steg 1 — Generer `demo_data.json`
 
-**Status:** `[x]`  
+**Status:** `[☑]`  
 **Fil:** `spotify_skip_tracker/demo_data.json` (ny)  
 **Beskrivelse:**  
 Opprett et statisk JSON-datasett med realistiske verdier som speiler eksakt hva hvert API-endepunkt returnerer. Strukturen:
@@ -118,7 +118,7 @@ Datasettet skal inkludere:
 
 ### Steg 3 — Backend: demo-sjekk i stats, now, smart-skipper
 
-**Status:** `[x]`  
+**Status:** `[☑]`  
 **Fil:** `web.py`  
 **Beskrivelse:**  
 Legg til tidlig demo-return øverst i funksjonslegemene for:
@@ -140,7 +140,7 @@ Plasseres etter `@require_auth`-sjekken, men før alle DB-kall.
 
 ### Steg 4 — Backend: demo-sjekk i score, insights, janitor/suggestions
 
-**Status:** `[x]`  
+**Status:** `[☑]`  
 **Fil:** `web.py`  
 **Beskrivelse:**  
 Samme mønster som steg 3 for:
@@ -155,7 +155,7 @@ Samme mønster som steg 3 for:
 
 ### Steg 5 — Backend: blokker skriving i demo-modus
 
-**Status:** `[x]`  
+**Status:** `[☑]`  
 **Fil:** `web.py`  
 **Beskrivelse:**  
 `POST /api/janitor/remove` er det eneste endepunktet som faktisk skriver data (til DB og Spotify). Legg til øverst i funksjonslegemet:
@@ -173,7 +173,7 @@ Verifiser at ingen andre endepunkter skriver data i demo-kontekst.
 
 ### Steg 6 — Backend: `DEMO_MODE`-env-flagg
 
-**Status:** `[ ]`  
+**Status:** `[☑]`  
 **Filer:** `web.py`, `config.py`  
 **Beskrivelse:**  
 `/api/auth/demo` skal returnere `404` med en tydelig melding dersom `DEMO_MODE` ikke er satt til `true` i Railway-miljøet. Dette forhindrer at selvhostede installasjoner utilsiktet eksponerer et åpent innloggingspunkt.
@@ -188,7 +188,7 @@ Standard for alle andre er `DEMO_MODE=false` (ingen endring nødvendig).
 
 ### Steg 7 — Frontend: oppdater `AuthStatus`-typen
 
-**Status:** `[x]`  
+**Status:** `[ ]`  
 **Fil:** `frontend/src/types.ts`  
 **Beskrivelse:**  
 Utvid `AuthStatus`-interfacet med `is_demo: boolean`. Dette er den eneste type-endringen og påvirker alle komponenter som leser `authData`.
@@ -219,7 +219,7 @@ Siden `/api/auth/demo` returnerer en redirect, brukes `window.location.href = BA
 
 ### Steg 9 — Frontend: demo-banner i `App.tsx`
 
-**Status:** `[x]`  
+**Status:** `[ ]`  
 **Fil:** `frontend/src/App.tsx`  
 **Beskrivelse:**  
 Vis et ikke-avvisbart informasjonsbanner øverst i dashbordet når `authData?.is_demo === true`.
@@ -238,7 +238,7 @@ i18n-nøkler: `demo.banner`, `demo.bannerLink` (nb og en).
 
 ### Steg 10 — Frontend: deaktiver Fjern-knapp i demo-modus
 
-**Status:** `[x]`  
+**Status:** `[ ]`  
 **Fil:** `frontend/src/components/PlaylistJanitorPanel.tsx`  
 **Beskrivelse:**  
 `PlaylistJanitorPanel` henter janitor-data og viser en «Fjern»-knapp per sang. I demo-modus:

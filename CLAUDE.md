@@ -133,3 +133,62 @@ Alle spørringer bruker psycopg2-stil (`%s`-plassholdere) direkte.
 - `compute_stats()` og `build_wrapped_data()` dekker overlappende logikk i separate spørringer.
   Endre begge ved endring av aggregeringslogikk.
 - `app.py` (Vercel) og `railway.toml` er allerede oppdatert til å bruke den nye pakkestrukturen.
+
+## Current Project Status
+
+Spotify Skip Tracker is feature complete.
+
+Current focus:
+
+- bug fixes
+- UX polish
+- testing
+- documentation
+- release preparation
+
+Avoid feature creep.
+
+
+## Verification
+
+Never consider a task complete before verification.
+
+Whenever possible:
+
+- run the relevant tests
+- run the build
+- fix any errors before finishing
+
+If verification cannot be run, explain why.
+
+UX_BACKLOG.md is the source of truth for UI/UX improvements.
+
+Update it whenever a tracked issue is completed.
+
+Update README.md, UX_BACKLOG.md and other documentation whenever changes make them outdated.
+
+One logical change per task.
+
+Do not refactor unrelated code.
+
+Do not introduce new features unless explicitly requested.
+
+All new user-facing text must use i18next.
+
+Never hardcode translated strings.
+
+Frontend:
+
+- React
+- TypeScript
+- Tailwind
+- React Query
+- i18next
+
+## Local Development
+
+When verifying frontend changes:
+
+- Use the Vite development server.
+- Do not verify frontend behavior through Flask's static frontend unless explicitly requested.
+- Verify the full frontend → API flow.
