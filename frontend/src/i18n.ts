@@ -34,6 +34,10 @@ i18n
     // Brukes dersom detektoren ikke finner et lagret valg.
     fallbackLng: "nb",
 
+    // Strip region from locale codes (e.g. "en-US" → "en") so that
+    // navigator detection matches the available resource keys.
+    load: "languageOnly",
+
     // Deteksjonskonfigurasjon: sjekk localStorage først, deretter
     // nettleserens Accept-Language. Aldri gå til server eller querystring.
     detection: {
