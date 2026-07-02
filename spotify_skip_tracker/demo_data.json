@@ -39,7 +39,7 @@
         "skip_count": 10,
         "play_count": 15,
         "skip_rate": 0.667,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
       },
       {
         "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
@@ -49,7 +49,7 @@
         "skip_count": 9,
         "play_count": 11,
         "skip_rate": 0.818,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
       },
       {
         "uri": "spotify:track:2xLMifQCjDGFmkHkpNLD9h",
@@ -149,7 +149,7 @@
         "skip_count": 5,
         "play_count": 6,
         "skip_rate": 0.833,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
       },
       {
         "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6",
@@ -159,7 +159,7 @@
         "skip_count": 5,
         "play_count": 14,
         "skip_rate": 0.357,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
       },
       {
         "uri": "spotify:track:3ee8Jmje8o58CHK66QrVC2",
@@ -209,7 +209,7 @@
         "skip_count": 3,
         "play_count": 6,
         "skip_rate": 0.5,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
       },
       {
         "uri": "spotify:track:3a0YB6DJWJKoRxnNFTJHNO",
@@ -239,7 +239,7 @@
         "skip_count": 2,
         "play_count": 8,
         "skip_rate": 0.25,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
       },
       {
         "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
@@ -533,7 +533,7 @@
         "skip_count": 9,
         "play_count": 13,
         "skip_rate": 0.692,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
       },
       {
         "uri": "spotify:track:2Fxmhks0bxGSBdJ92vM42m",
@@ -743,7 +743,7 @@
         "skip_count": 3,
         "play_count": 5,
         "skip_rate": 0.6,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
       }
     ],
     "most_completed": [
@@ -775,7 +775,7 @@
         "skip_count": 1,
         "play_count": 15,
         "skip_rate": 0.067,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
       },
       {
         "uri": "spotify:track:2takcwOaAZWiXQijPHIx7B",
@@ -805,7 +805,7 @@
         "skip_count": 2,
         "play_count": 11,
         "skip_rate": 0.182,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d46cf31e09"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
       },
       {
         "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA21",
@@ -2506,6 +2506,56 @@
       "stadium": 2,
       "observation": "You always listen to Harry Styles all the way through — 0% skip rate across 28 plays.",
       "context": "That's your most loyal listening relationship.",
+      "explanation": null,
+      "action": null,
+      "value": 0.0,
+      "trend": "stable",
+      "trend_is_positive": true
+    }
+  ],
+  "insights_nb": [
+    {
+      "id": "skip_rate_trend",
+      "category": "skip_rate",
+      "stadium": 3,
+      "observation": "Din skip-rate denne uken er 42 %.",
+      "context": "Forrige uke: 38 % — du er mer utålmodig nå.",
+      "explanation": "Skip-raten stiger ofte når spillelistene stagnerer. Å rotere inn ny musikk hjelper som regel.",
+      "action": "Kjør Playlist Janitor for å finne sporene som drar opp raten din.",
+      "value": 0.42,
+      "trend": "up",
+      "trend_is_positive": false
+    },
+    {
+      "id": "skip_peak_hour",
+      "category": "session",
+      "stadium": 3,
+      "observation": "Du skipper mest mellom kl. 19–21.",
+      "context": "35 % høyere skip-rate enn resten av dagen.",
+      "explanation": "Kveldsmusikk skjer ofte på farten eller under multitasking — du er raskere til å hoppe over sanger som ikke passer stemningen.",
+      "action": "Prøv en fokusert spilleliste med høyt energinivå for å starte kveldsøktene.",
+      "value": 19,
+      "trend": null,
+      "trend_is_positive": null
+    },
+    {
+      "id": "most_skipped_artist",
+      "category": "pattern",
+      "stadium": 2,
+      "observation": "Imagine Dragons er artisten du skipper oftest — 64 % av gangene.",
+      "context": "Taylor Swift og Ed Sheeran følger tett bak.",
+      "explanation": null,
+      "action": null,
+      "value": 0.643,
+      "trend": "up",
+      "trend_is_positive": false
+    },
+    {
+      "id": "loyal_listener",
+      "category": "pattern",
+      "stadium": 2,
+      "observation": "Du lytter alltid Harry Styles ferdig — 0 % skip-rate over 28 avspillinger.",
+      "context": "Det er ditt mest lojale lytteforhold.",
       "explanation": null,
       "action": null,
       "value": 0.0,
