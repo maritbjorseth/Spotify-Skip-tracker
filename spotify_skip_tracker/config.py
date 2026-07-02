@@ -114,3 +114,11 @@ SKIP_THRESHOLD: float = 0.9
 # Minste gjenværende tid (ms) for at et tidlig trackbytte teller som skip.
 # Forhindrer at naturlige outro-overganger logges som skip.
 MIN_REMAINING_MS: int = 30_000
+
+# ---------------------------------------------------------------------------
+# Demo-modus
+# ---------------------------------------------------------------------------
+
+# Sett DEMO_MODE=true i Railway for å aktivere det åpne demo-innloggingspunktet.
+# Alle andre installasjoner beholder standardverdien false.
+DEMO_MODE: bool = os.environ.get("DEMO_MODE", "false").lower() == "true"

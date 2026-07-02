@@ -27,10 +27,10 @@ from .database import execute, pooled_connection
 
 logger = logging.getLogger(__name__)
 
-_WEEKDAY_GEN = [
-    "Mandager", "Tirsdager", "Onsdager", "Torsdager",
-    "Fredager", "Lørdager", "Søndager",
-]
+_WEEKDAY_GEN = {
+    "nb": ["Mandager", "Tirsdager", "Onsdager", "Torsdager", "Fredager", "Lørdager", "Søndager"],
+    "en": ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays"],
+}
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ class Insight:
 # Innsiktsgeneratorer
 # ---------------------------------------------------------------------------
 
-def _insight_weekly_skip_rate(conn, user_id: str) -> Insight | None:
+def _insight_weekly_skip_rate(conn, user_id: str, lang: str = "nb") -> Insight | None:
     """
     Ukentlig skip-rate med trend mot forrige uke.
     Stadium 1 om forrige uke mangler data, ellers stadium 2.
@@ -109,7 +109,11 @@ def _insight_weekly_skip_rate(conn, user_id: str) -> Insight | None:
 
     tw_rate = tw_skips / tw_plays
     tw_pct = round(tw_rate * 100)
-    observation = f"Din skip-rate denne uken er {tw_pct}%"
+    observation = (
+        f"Your skip rate this week is {tw_pct}%"
+        if lang == "en" else
+        f"Din skip-rate denne uken er {tw_pct}%"
+    )
 
     if lw_plays < 5:
         return Insight(
@@ -125,15 +129,31 @@ def _insight_weekly_skip_rate(conn, user_id: str) -> Insight | None:
 
     if delta < -0.02:
         trend, tip = "down", True
-        context = f"Forrige uke: {lw_pct}% — du er i bedring"
-        explanation = "Du hører mer musikk ferdig enn forrige uke"
+        context = (
+            f"Last week: {lw_pct}% — you're improving"
+            if lang == "en" else
+            f"Forrige uke: {lw_pct}% — du er i bedring"
+        )
+        explanation = (
+            "You're completing more tracks than last week"
+            if lang == "en" else
+            "Du hører mer musikk ferdig enn forrige uke"
+        )
     elif delta > 0.02:
         trend, tip = "up", False
-        context = f"Forrige uke: {lw_pct}% — du er mer utålmodig nå"
+        context = (
+            f"Last week: {lw_pct}% — you're more impatient now"
+            if lang == "en" else
+            f"Forrige uke: {lw_pct}% — du er mer utålmodig nå"
+        )
         explanation = None
     else:
         trend, tip = "stable", None
-        context = f"Stabilt — forrige uke var det også {lw_pct}%"
+        context = (
+            f"Stable — last week it was also {lw_pct}%"
+            if lang == "en" else
+            f"Stabilt — forrige uke var det også {lw_pct}%"
+        )
         explanation = None
 
     return Insight(
@@ -143,7 +163,7 @@ def _insight_weekly_skip_rate(conn, user_id: str) -> Insight | None:
     )
 
 
-def _insight_impatient_day(conn, user_id: str) -> Insight | None:
+def _insight_impatient_day(conn, user_id: str, lang: str = "nb") -> Insight | None:
     """
     Mest utålmodige ukedag sammenlignet med daglig gjennomsnitt.
     Stadium 2 dersom avviket er > 5 pp, ellers stadium 1.
@@ -174,15 +194,24 @@ def _insight_impatient_day(conn, user_id: str) -> Insight | None:
     avg_rate = sum(rates) / len(rates)
     top_wd, _, top_rate = rows[0]
     wd_idx = int(top_wd)
-    day_name = _WEEKDAY_GEN[wd_idx] if 0 <= wd_idx <= 6 else "?"
+    weekdays = _WEEKDAY_GEN.get(lang, _WEEKDAY_GEN["nb"])
+    day_name = weekdays[wd_idx] if 0 <= wd_idx <= 6 else "?"
     day_pct = round(float(top_rate) * 100)
     avg_pct = round(avg_rate * 100)
     delta_pp = round((float(top_rate) - avg_rate) * 100)
 
-    observation = f"{day_name} er din mest utålmodige dag ({day_pct}% skip-rate)"
+    observation = (
+        f"{day_name} is your most impatient day ({day_pct}% skip rate)"
+        if lang == "en" else
+        f"{day_name} er din mest utålmodige dag ({day_pct}% skip-rate)"
+    )
 
     if delta_pp >= 5:
-        context = f"Ditt daglige snitt er {avg_pct}%"
+        context = (
+            f"Your daily average is {avg_pct}%"
+            if lang == "en" else
+            f"Ditt daglige snitt er {avg_pct}%"
+        )
         return Insight(
             id="impatient_day", category="pattern", stadium=2,
             observation=observation, context=context,
@@ -196,7 +225,7 @@ def _insight_impatient_day(conn, user_id: str) -> Insight | None:
     )
 
 
-def _insight_peak_hour(conn, user_id: str) -> Insight | None:
+def _insight_peak_hour(conn, user_id: str, lang: str = "nb") -> Insight | None:
     """
     Time på døgnet med høyest skip-rate vs. globalt timessnitt.
     """
@@ -233,10 +262,18 @@ def _insight_peak_hour(conn, user_id: str) -> Insight | None:
     avg_pct = round(float(avg_row[0]) * 100) if avg_row and avg_row[0] else 0
     delta_pp = rate_pct - avg_pct
 
-    observation = f"Du skipper mest rundt kl. {hour}:00 ({rate_pct}% skip-rate)"
+    observation = (
+        f"You skip most around {hour}:00 ({rate_pct}% skip rate)"
+        if lang == "en" else
+        f"Du skipper mest rundt kl. {hour}:00 ({rate_pct}% skip-rate)"
+    )
 
     if delta_pp >= 5:
-        context = f"Gjennomsnitt for alle timer: {avg_pct}%"
+        context = (
+            f"Average across all hours: {avg_pct}%"
+            if lang == "en" else
+            f"Gjennomsnitt for alle timer: {avg_pct}%"
+        )
         return Insight(
             id="peak_hour", category="pattern", stadium=2,
             observation=observation, context=context,
@@ -249,7 +286,7 @@ def _insight_peak_hour(conn, user_id: str) -> Insight | None:
     )
 
 
-def _insight_best_streak(conn, user_id: str) -> Insight | None:
+def _insight_best_streak(conn, user_id: str, lang: str = "nb") -> Insight | None:
     """
     Lengste rekke sanger uten et eneste skip (all-time).
     Hvis brukeren er i en aktiv streak på 5+, vises begge tall.
@@ -296,8 +333,16 @@ def _insight_best_streak(conn, user_id: str) -> Insight | None:
             break
 
     if current >= 5:
-        observation = f"Du er i en streak — {current} sanger på rad uten skip"
-        context = f"Rekorden din er {best} sanger"
+        observation = (
+            f"You're on a streak — {current} songs in a row without skipping"
+            if lang == "en" else
+            f"Du er i en streak — {current} sanger på rad uten skip"
+        )
+        context = (
+            f"Your record is {best} songs"
+            if lang == "en" else
+            f"Rekorden din er {best} sanger"
+        )
         return Insight(
             id="best_streak", category="streak", stadium=2,
             observation=observation, context=context,
@@ -306,12 +351,16 @@ def _insight_best_streak(conn, user_id: str) -> Insight | None:
 
     return Insight(
         id="best_streak", category="streak", stadium=1,
-        observation=f"Rekorden din er {best} sanger på rad uten skip",
+        observation=(
+            f"Your record is {best} songs in a row without skipping"
+            if lang == "en" else
+            f"Rekorden din er {best} sanger på rad uten skip"
+        ),
         value=float(best),
     )
 
 
-def _insight_janitor_status(conn, user_id: str) -> Insight | None:
+def _insight_janitor_status(conn, user_id: str, lang: str = "nb") -> Insight | None:
     """
     Antall ventende Janitor-forslag med kontekstuell handlingsoppfordring.
     Stadium 1 om ingen forslag, stadium 2 med action om mange.
@@ -326,24 +375,40 @@ def _insight_janitor_status(conn, user_id: str) -> Insight | None:
     if count == 0:
         return Insight(
             id="janitor_status", category="janitor", stadium=1,
-            observation="Playlist Janitor har ingen ventende forslag",
+            observation=(
+                "Playlist Janitor has no pending suggestions"
+                if lang == "en" else
+                "Playlist Janitor har ingen ventende forslag"
+            ),
             value=0.0, trend_is_positive=True,
         )
 
-    observation = f"{count} sang{'er' if count != 1 else ''} venter i Playlist Janitor"
+    observation = (
+        f"{count} song{'s' if count != 1 else ''} waiting in Playlist Janitor"
+        if lang == "en" else
+        f"{count} sang{'er' if count != 1 else ''} venter i Playlist Janitor"
+    )
 
     if count >= 10:
         return Insight(
             id="janitor_status", category="janitor", stadium=2,
             observation=observation,
-            context="Markert for gjennomgang i spillelistene dine",
+            context=(
+                "Flagged for review in your playlists"
+                if lang == "en" else
+                "Markert for gjennomgang i spillelistene dine"
+            ),
             value=float(count), trend_is_positive=False,
         )
     if count >= 3:
         return Insight(
             id="janitor_status", category="janitor", stadium=2,
             observation=observation,
-            context="Noen kandidater er klare for gjennomgang",
+            context=(
+                "Some candidates are ready for review"
+                if lang == "en" else
+                "Noen kandidater er klare for gjennomgang"
+            ),
             value=float(count), trend_is_positive=None,
         )
 
@@ -353,7 +418,7 @@ def _insight_janitor_status(conn, user_id: str) -> Insight | None:
     )
 
 
-def _insight_session_start_pattern(conn, user_id: str) -> Insight | None:
+def _insight_session_start_pattern(conn, user_id: str, lang: str = "nb") -> Insight | None:
     """
     Sammenligner skip-rate på første sang i en sesjon med resten.
     Krever session_id-data — returnerer None til backfill er fullført.
@@ -373,6 +438,7 @@ def _insight_session_start_pattern(conn, user_id: str) -> Insight | None:
         WITH positions AS (
             SELECT
                 skipped,
+                session_id,
                 ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY timestamp) AS pos
             FROM plays
             WHERE user_id = %s AND session_id IS NOT NULL
@@ -397,17 +463,41 @@ def _insight_session_start_pattern(conn, user_id: str) -> Insight | None:
     if delta >= 20:
         return Insight(
             id="session_start_pattern", category="session", stadium=3,
-            observation=f"Du starter lyttesesjoner utålmodig ({first_pct}% skip på første sang)",
-            context=f"Etter første sang faller skip-raten til {rest_pct}%",
-            explanation=f"De første sangene i en sesjon skippes langt oftere enn resten",
-            action="Vurder å lage spillelister med trygge, kjente sanger som åpning",
+            observation=(
+                f"You start listening sessions impatiently ({first_pct}% skip on first song)"
+                if lang == "en" else
+                f"Du starter lyttesesjoner utålmodig ({first_pct}% skip på første sang)"
+            ),
+            context=(
+                f"After the first song, the skip rate drops to {rest_pct}%"
+                if lang == "en" else
+                f"Etter første sang faller skip-raten til {rest_pct}%"
+            ),
+            explanation=(
+                "First songs in a session are skipped far more often than the rest"
+                if lang == "en" else
+                "De første sangene i en sesjon skippes langt oftere enn resten"
+            ),
+            action=(
+                "Consider making playlists with familiar, safe songs as openers"
+                if lang == "en" else
+                "Vurder å lage spillelister med trygge, kjente sanger som åpning"
+            ),
             value=float(first_pct), trend_is_positive=False,
         )
     if delta >= 10:
         return Insight(
             id="session_start_pattern", category="session", stadium=2,
-            observation=f"Første sang i en sesjon skippes oftere ({first_pct}% vs {rest_pct}%)",
-            context=f"Basert på {sessions} lyttesesjoner",
+            observation=(
+                f"First song in a session is skipped more often ({first_pct}% vs {rest_pct}%)"
+                if lang == "en" else
+                f"Første sang i en sesjon skippes oftere ({first_pct}% vs {rest_pct}%)"
+            ),
+            context=(
+                f"Based on {sessions} listening sessions"
+                if lang == "en" else
+                f"Basert på {sessions} lyttesesjoner"
+            ),
             value=float(first_pct), trend_is_positive=None,
         )
 
@@ -418,7 +508,7 @@ def _insight_session_start_pattern(conn, user_id: str) -> Insight | None:
 # Hoved-innsiktsgenerator
 # ---------------------------------------------------------------------------
 
-def generate_insights(user_id: str = "default_user") -> list[Insight]:
+def generate_insights(user_id: str = "default_user", lang: str = "nb") -> list[Insight]:
     """
     Genererer alle tilgjengelige innsikter for brukeren.
 
@@ -440,7 +530,7 @@ def generate_insights(user_id: str = "default_user") -> list[Insight]:
         insights: list[Insight] = []
         for gen in generators:
             try:
-                result = gen(conn, user_id)
+                result = gen(conn, user_id, lang)
                 if result is not None:
                     insights.append(result)
             except Exception as exc:

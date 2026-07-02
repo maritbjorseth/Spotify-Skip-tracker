@@ -37,7 +37,7 @@ function InsightCard({ insight }: { insight: Insight }) {
   const color = accentColor(insight);
 
   return (
-    <div className="flex items-start gap-4 rounded-xl border border-[#2a2a2a] bg-[#141414] px-5 py-4 flex-1 min-w-0">
+    <div className="flex items-start gap-4 rounded-xl border border-[#2a2a2a] bg-[#141414] px-5 py-4 min-w-0">
       <div
         className="flex items-center justify-center rounded-full shrink-0 mt-0.5"
         style={{ width: 36, height: 36, background: `${color}18`, color }}
@@ -45,23 +45,20 @@ function InsightCard({ insight }: { insight: Insight }) {
         <InsightIcon category={insight.category} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium uppercase tracking-widest text-[#777] mb-1">
+        <p className="text-xs font-medium uppercase tracking-widest text-[#777] mb-1 break-words">
           {t(`coachInsights.categories.${insight.category}` as const)}
         </p>
-        {/* observation/context/explanation/action are server-generated strings.
-            They are returned in Norwegian by the backend regardless of language.
-            Full localization requires backend changes outside the scope of this PR. */}
-        <p className="text-sm text-[#ccc] leading-snug">{insight.observation}</p>
+        <p className="text-sm text-[#ccc] leading-snug break-words">{insight.observation}</p>
         {insight.context && (
-          <p className="text-xs mt-1 leading-snug font-medium" style={{ color: contextColor(insight) }}>
+          <p className="text-xs mt-1 leading-snug font-medium break-words" style={{ color: contextColor(insight) }}>
             {insight.context}
           </p>
         )}
         {insight.explanation && (
-          <p className="text-xs text-[#888] mt-1 leading-snug italic">{insight.explanation}</p>
+          <p className="text-xs text-[#888] mt-1 leading-snug italic break-words">{insight.explanation}</p>
         )}
         {insight.action && (
-          <p className="text-xs text-[#4a9eff] mt-2 leading-snug">→ {insight.action}</p>
+          <p className="text-xs text-[#4a9eff] mt-2 leading-snug break-words">→ {insight.action}</p>
         )}
       </div>
     </div>
@@ -69,10 +66,11 @@ function InsightCard({ insight }: { insight: Insight }) {
 }
 
 export function CoachInsightsPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("en") ? "en" : "nb";
   const { data: insights } = useQuery({
-    queryKey: ["coachInsights"],
-    queryFn: api.coachInsights,
+    queryKey: ["coachInsights", lang],
+    queryFn: () => api.coachInsights(lang),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -87,7 +85,7 @@ export function CoachInsightsPanel() {
         </p>
         <AlgorithmTooltip text={t("coachInsights.explanation")} color="#6b7280" />
       </div>
-      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {insights.map((insight) => (
           <InsightCard key={insight.id} insight={insight} />
         ))}

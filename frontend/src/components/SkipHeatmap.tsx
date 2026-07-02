@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import type { DailyStats } from "../types";
+import { AlgorithmTooltip } from "./AlgorithmTooltip";
 
 const CELL = 11;
 const GAP = 2;
@@ -106,15 +107,12 @@ export function SkipHeatmap({ daily }: Props) {
 
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#181818] p-4 mb-4">
-      <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest mb-4 flex items-center gap-1.5">
-        {t("heatmap.heading")}
-        <span
-          title={t("heatmap.headingTooltip")}
-          className="text-[#666] hover:text-[#999] cursor-help transition-colors text-[10px] font-normal normal-case tracking-normal"
-        >
-          ⓘ
-        </span>
-      </h2>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-sm font-semibold text-[#999] uppercase tracking-widest">
+          {t("heatmap.heading")}
+        </h2>
+        <AlgorithmTooltip text={t("heatmap.headingTooltip")} color="#666" />
+      </div>
 
       <div className="overflow-x-auto">
         <div className="relative inline-block">

@@ -84,7 +84,7 @@ def get_playlist_tracks(token: str, playlist_id: str) -> list[dict]:
     der "artists" er en kommaseparert streng av artistnavn.
     """
     tracks: list[dict] = []
-    url: str | None = f"{_BASE}/playlists/{playlist_id}/tracks?limit=100"
+    url: str | None = f"{_BASE}/playlists/{playlist_id}/items?limit=100"
 
     while url:
         try:
@@ -100,7 +100,9 @@ def get_playlist_tracks(token: str, playlist_id: str) -> list[dict]:
         data = resp.json()
 
         for item in data.get("items") or []:
-            track = (item or {}).get("track")
+            # Spotify replaced /tracks with /items; the track object is now
+            # under the "item" key (previously "track").
+            track = (item or {}).get("item")
             if not track:
                 continue
             if track.get("type") != "track":

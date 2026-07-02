@@ -115,6 +115,7 @@ export interface ListeningScore {
 export interface AuthStatus {
   authenticated: boolean;
   user_id: string | null;
+  is_demo: boolean;
 }
 
 /**

@@ -40,7 +40,7 @@ export function AlgorithmTooltip({ text, color = "#555" }: Props) {
         onClick={() => setOpen((v) => !v)}
         aria-label={label}
         title={label}
-        className="flex items-center justify-center rounded-full transition-all duration-150 select-none"
+        className="flex items-center justify-center rounded-full transition-all duration-150 select-none font-normal leading-none"
         style={{
           width: 20, height: 20, fontSize: 12, lineHeight: 1,
           color: open ? color : "#444",

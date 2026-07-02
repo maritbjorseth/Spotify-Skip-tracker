@@ -4,6 +4,7 @@
     "titleAccent": " & Coach",
     "subtitle": "Koble til Spotify-kontoen din for å se dine skip-statistikker.",
     "loginButton": "Logg inn med Spotify",
+    "demoButton": "Utforsk demo",
     "footer": "Spotify Skip Tracker & Coach · Personlig dashbord"
   },
   "app": {
@@ -114,13 +115,13 @@
   },
   "heatmap": {
     "heading": "Skip-aktivitet siste år",
-    "headingTooltip": "Viser hvor mange sanger du skipper per dag i et kalender-heatmap.",
+    "headingTooltip": "Viser daglig skip-rate i et kalender-heatmap. Fargen indikerer andelen sanger som hoppes over, ikke rått antall.",
     "months": ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"],
     "days": ["man", "ons", "fre"],
     "tooltipSkips": "{{n}} skip",
     "tooltipPlays": "{{n}} avspillinger",
     "legendNone": "Ingen data",
-    "legendMany": "Mange skip"
+    "legendMany": "Høy skip-rate"
   },
   "charts": {
     "tooltipSkipRate": "{{n}}% skip-rate",
@@ -256,9 +257,14 @@
       "score": "Score"
     },
     "tabEmpty": "Ingen sanger i denne kategorien.",
+    "demoDisabled": "Ikke tilgjengelig i demo",
     "explanation": "Playlist Janitor analyserer spillelistene dine og finner sanger du konsekvent hopper over. Scoren (0–1) beregnes fra skip-rate, konsistens, tid siden siste fullføring og antall avspillinger. Sanger du nylig hørte ferdig blir ikke foreslått fjernet."
   },
   "algorithmTooltip": {
     "label": "Hvordan fungerer dette?"
+  },
+  "demo": {
+    "banner": "Dette er en demo med eksempeldata. Ingen endringer lagres.",
+    "bannerLink": "Self-host på GitHub"
   }
 }

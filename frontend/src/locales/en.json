@@ -4,6 +4,7 @@
     "titleAccent": " & Coach",
     "subtitle": "Connect your Spotify account to see your skip statistics.",
     "loginButton": "Log in with Spotify",
+    "demoButton": "Explore demo",
     "footer": "Spotify Skip Tracker & Coach · Personal dashboard"
   },
   "app": {
@@ -114,13 +115,13 @@
   },
   "heatmap": {
     "heading": "Skip activity last year",
-    "headingTooltip": "Shows how many songs you skip per day in a calendar heatmap.",
+    "headingTooltip": "Shows your daily skip rate in a calendar heatmap. Colour indicates the proportion of songs skipped, not the raw count.",
     "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     "days": ["Mon", "Wed", "Fri"],
     "tooltipSkips": "{{n}} skips",
     "tooltipPlays": "{{n}} plays",
     "legendNone": "No data",
-    "legendMany": "Many skips"
+    "legendMany": "High skip rate"
   },
   "charts": {
     "tooltipSkipRate": "{{n}}% skip rate",
@@ -256,9 +257,14 @@
       "score": "Score"
     },
     "tabEmpty": "No songs in this category.",
+    "demoDisabled": "Not available in demo",
     "explanation": "Playlist Janitor analyses your playlists and finds songs you consistently skip. The score (0–1) is calculated from skip rate, consistency, time since last completion, and number of plays. Songs you recently listened to in full will not be suggested for removal."
   },
   "algorithmTooltip": {
     "label": "How does this work?"
+  },
+  "demo": {
+    "banner": "This is a demo with sample data. No changes are saved.",
+    "bannerLink": "Self-host on GitHub"
   }
 }

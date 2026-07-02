@@ -260,8 +260,10 @@ def _upsert_suggestion(conn, playlist: dict, candidate: dict, user_id: str = "de
     """
     Lagrer en janitor-kandidat i janitor_suggestions-tabellen.
 
-    Bruker ON CONFLICT DO NOTHING for å unngå duplikater — samme
-    (user_id, playlist_id, uri)-kombinasjon settes bare inn én gang.
+    Nye forslag settes inn som 'pending'. Ved konflikt oppdateres
+    skip_rate og janitor_score for pending/rejected-oppføringer slik at
+    scorene holdes oppdatert ved nye kjøringer. Oppføringer med status
+    'removed' (brukeren har aktivt fjernet dem) berøres ikke.
     """
     execute(
         conn,
@@ -270,7 +272,10 @@ def _upsert_suggestion(conn, playlist: dict, candidate: dict, user_id: str = "de
             (user_id, playlist_id, playlist_name, uri, title, artists,
              skip_rate, janitor_score, status)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
-        ON CONFLICT (user_id, playlist_id, uri) DO NOTHING
+        ON CONFLICT (user_id, playlist_id, uri) DO UPDATE
+            SET skip_rate     = EXCLUDED.skip_rate,
+                janitor_score = EXCLUDED.janitor_score
+            WHERE janitor_suggestions.status IN ('pending', 'rejected')
         """,
         (
             user_id,
