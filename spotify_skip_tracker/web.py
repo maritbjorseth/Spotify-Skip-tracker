@@ -491,16 +491,40 @@ def create_flask_app() -> Flask:
                     uri, title, artists, album, image_url, \
                         progress_ms, duration_ms, is_playing, updated_at = cached
 
-                    age = (
-                        (datetime.now(timezone.utc) - updated_at).total_seconds()
-                        if updated_at is not None else None
-                    )
+                    # ── Age-beregning isolert med full type-info ──────────
+                    current_time = datetime.now(timezone.utc)
                     logger.info(
-                        "[NOW] Cache-rad funnet — uri=%s is_playing=%s updated_at=%s age=%.1fs",
-                        uri, is_playing, updated_at, age if age is not None else -1,
+                        "[NOW] AGE-DEBUG "
+                        "current_time=%r tzinfo_type=%s | "
+                        "updated_at=%r type=%s tzinfo_type=%s",
+                        current_time,
+                        type(current_time.tzinfo).__name__,
+                        updated_at,
+                        type(updated_at).__name__,
+                        type(getattr(updated_at, "tzinfo", None)).__name__,
                     )
+                    try:
+                        age = (
+                            (current_time - updated_at).total_seconds()
+                            if updated_at is not None else None
+                        )
+                        logger.info(
+                            "[NOW] AGE-DEBUG age=%.3f STALE_SECONDS=%d "
+                            "condition(age<=STALE)=%s",
+                            age if age is not None else -1.0,
+                            _STALE_SECONDS,
+                            (age is not None and age <= _STALE_SECONDS),
+                        )
+                    except Exception as age_exc:
+                        logger.warning(
+                            "[NOW] AGE-DEBUG age-beregning kastet %s: %s — "
+                            "setter age=None, går til fallback",
+                            type(age_exc).__name__, age_exc,
+                        )
+                        age = None
 
                     if age is not None and age <= _STALE_SECONDS:
+                        logger.info("[NOW] >>> CACHE HIT RETURN TRIGGERED <<<")
                         # ── [3] CACHE HIT ──────────────────────────────────
                         skip_rate_result = execute(
                             conn,
