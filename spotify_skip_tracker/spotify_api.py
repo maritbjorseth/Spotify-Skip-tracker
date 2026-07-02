@@ -276,31 +276,58 @@ def get_access_token(creds: dict) -> str:
     Dersom creds inneholder 'user_id' (DB-sti), skrives oppdatert access-token
     og eventuelt nytt refresh-token tilbake til user_tokens-tabellen.
     """
-    if creds.get("expires_at", 0) > time.time() + 30:
+    user_id = creds.get("user_id", "legacy")
+    expires_at = creds.get("expires_at", 0)
+    now = time.time()
+
+    if expires_at > now + 30:
+        logger.info("[%s] TOKEN: bruker cachet access-token (utløper om %.0fs)", user_id, expires_at - now)
         return creds["access_token"]
 
-    resp = requests.post(
-        "https://accounts.spotify.com/api/token",
-        data={
-            "grant_type": "refresh_token",
-            "refresh_token": creds["refresh_token"],
-            "client_id": creds["client_id"],
-            "client_secret": creds["client_secret"],
-        },
-        timeout=15,
-    )
-    resp.raise_for_status()
+    logger.info("[%s] TOKEN: access-token utløpt/mangler (expires_at=%s now=%s) — starter refresh", user_id, expires_at, now)
+    logger.info("[%s] TOKEN: refresh_token[:8]=%s client_id[:8]=%s",
+                user_id,
+                (creds.get("refresh_token") or "")[:8] or "MANGLER",
+                (creds.get("client_id") or "")[:8] or "MANGLER")
+
+    try:
+        resp = requests.post(
+            "https://accounts.spotify.com/api/token",
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": creds["refresh_token"],
+                "client_id": creds["client_id"],
+                "client_secret": creds["client_secret"],
+            },
+            timeout=15,
+        )
+        logger.info("[%s] TOKEN: refresh-svar status=%d", user_id, resp.status_code)
+        if resp.status_code != 200:
+            logger.error("[%s] TOKEN: refresh feilet — body=%s", user_id, resp.text[:300])
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        logger.error("[%s] TOKEN: refresh-forespørsel kastet unntak: %s", user_id, exc)
+        raise
+
     token_data = resp.json()
 
     creds["access_token"] = token_data["access_token"]
     creds["expires_at"] = time.time() + token_data["expires_in"]
+    logger.info("[%s] TOKEN: nytt access-token hentet, utløper om %ds", user_id, token_data["expires_in"])
 
     # Spotify roterer av og til refresh-tokenet — ta vare på det nye
     if "refresh_token" in token_data:
+        logger.info("[%s] TOKEN: refresh-token rotert av Spotify", user_id)
         creds["refresh_token"] = token_data["refresh_token"]
 
     # Skriv tilbake til riktig lager (DB eller fil avhengig av creds-innhold)
-    save_creds(creds)
+    logger.info("[%s] TOKEN: kaller save_creds() (DB-sti=%s)", user_id, bool(creds.get("user_id")))
+    try:
+        save_creds(creds)
+        logger.info("[%s] TOKEN: save_creds() fullført", user_id)
+    except Exception as exc:
+        logger.error("[%s] TOKEN: save_creds() feilet: %s", user_id, exc)
+
     return creds["access_token"]
 
 
