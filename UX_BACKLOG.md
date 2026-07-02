@@ -31,7 +31,7 @@ Prioritert etter brukerverdi. Basert på design-audit av hele frontend (juni 202
 | 21 | Janitor: `GET /playlists/{id}/tracks` (deprekert av Spotify, returnerer 403) erstattet med `GET /playlists/{id}/items`. Nøkkel per element endret fra `"track"` til `"item"`. | `b2fa9b4` |
 | 22 | Insights: `_insight_session_start_pattern` feilet med "column session_id does not exist" fordi `session_id` ble brukt i `PARTITION BY` men ikke inkludert i CTE-ens SELECT-liste. | `55f4790` |
 | 23 | Insights: kort bruker nå CSS Grid (1/2/3 kolonner) i stedet for `flex-wrap`. `break-words` lagt til alle tekstelementer. Forhindrer tekstoverflow og sikrer lik korthøyde i samme rad. | `89570d4` |
-| 24 | UI viste norsk for brukere med engelsk nettleser selv etter fix #16. Rotårsak: `i18next-browser-languagedetector` cachet fallback-verdien `"nb"` i `localStorage["i18nextLng"]` da `en-US` ikke matchet noen ressurs. Etter at `load:"languageOnly"` ble lagt til (fix #16) sto den stale `"nb"`-verdien igjen i localStorage og tok prioritet over nettleserdeteksjon. Løst ved å versjonere nøkkelen til `"i18nextLng_v2"`, som gjør at alle eksisterende brukere re-detekteres fra nettleserspråket ved neste besøk. | TBD |
+| 24 | UI viste norsk for brukere med engelsk nettleser selv etter fix #16. Rotårsak: `i18next-browser-languagedetector` cachet fallback-verdien `"nb"` i `localStorage["i18nextLng"]` da `en-US` ikke matchet noen ressurs. Etter at `load:"languageOnly"` ble lagt til (fix #16) sto den stale `"nb"`-verdien igjen i localStorage og tok prioritet over nettleserdeteksjon. Løst ved å versjonere nøkkelen til `"i18nextLng_v2"`, som gjør at alle eksisterende brukere re-detekteres fra nettleserspråket ved neste besøk. | `c6a4d14` |
 
 ---
 
