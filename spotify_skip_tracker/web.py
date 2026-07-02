@@ -424,21 +424,55 @@ def create_flask_app() -> Flask:
             logger.exception("Feil i /api/stats: %s", exc)
             return jsonify({"error": "Kunne ikke hente statistikk"}), 500
 
+    def _skip_rate_for_uri(user_id: str, uri: str | None) -> float | None:
+        """Henter historisk skip-rate for ett spor og én bruker fra plays-tabellen."""
+        if not uri:
+            return None
+        try:
+            with pooled_connection() as conn:
+                result = execute(
+                    conn,
+                    """
+                    SELECT
+                        SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL
+                        / NULLIF(COUNT(*), 0)
+                    FROM plays
+                    WHERE uri = %s AND user_id = %s
+                    """,
+                    (uri, user_id),
+                ).fetchone()
+            if result and result[0] is not None:
+                return round(float(result[0]), 3)
+        except Exception as exc:
+            logger.debug("skip_rate-oppslag feilet for %s: %s", uri, exc)
+        return None
+
     @app.route("/api/now")
     @require_auth
     def now_playing():
         """
-        Returnerer nåværende avspilling fra now_playing-tabellen for innlogget bruker.
-        Trackeren (Railway) skriver hit hvert 7. sekund per bruker.
-        Dersom updated_at er eldre enn 20 s, regnes ingenting som spilt.
+        Returnerer nåværende avspilling for innlogget bruker.
+
+        To-trinns strategi:
+          1. Lese tracker-cache fra now_playing-tabellen.
+             Hvis raden er fersk (≤ 30 s), returneres den direkte.
+          2. Hvis raden mangler eller er stale, spørres Spotify
+             /v1/me/player direkte med brukerens token.
+
+        Steg 2 gjør endepunktet uavhengig av at tracker-tråden kjører,
+        og løser problemet der tråden krasjer etter en Spotify-tokenfeile
+        (typisk HTTP 401 under en Railway-omstart uten retry-mekanisme).
         """
         if _is_demo():
             return jsonify(_DEMO_DATA["now"])
 
+        current_user_id = _resolve_user_id()
+        _STALE_SECONDS = 30  # 7 s poll-intervall → 4 missede polls før fallback
+
+        # ── Steg 1: prøv tracker-cache ────────────────────────────────────
         try:
-            current_user_id = _resolve_user_id()
             with pooled_connection() as conn:
-                row = execute(
+                cached = execute(
                     conn,
                     """
                     SELECT uri, title, artists, album, image_url,
@@ -449,47 +483,104 @@ def create_flask_app() -> Flask:
                     (current_user_id,),
                 ).fetchone()
 
-                if row is None:
-                    return jsonify({"is_playing": False}), 200
+                if cached is not None:
+                    uri, title, artists, album, image_url, \
+                        progress_ms, duration_ms, is_playing, updated_at = cached
 
-                uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at = row
+                    if updated_at is not None:
+                        age = (datetime.now(timezone.utc) - updated_at).total_seconds()
+                        if age <= _STALE_SECONDS:
+                            # Fersk cache — hent skip-rate og returner
+                            skip_rate_result = execute(
+                                conn,
+                                """
+                                SELECT
+                                    SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL
+                                    / NULLIF(COUNT(*), 0)
+                                FROM plays
+                                WHERE uri = %s AND user_id = %s
+                                """,
+                                (uri, current_user_id),
+                            ).fetchone()
+                            skip_rate = (
+                                round(float(skip_rate_result[0]), 3)
+                                if skip_rate_result and skip_rate_result[0] is not None
+                                else None
+                            )
+                            return jsonify({
+                                "is_playing": bool(is_playing),
+                                "uri": uri,
+                                "title": title,
+                                "artists": artists,
+                                "album": album,
+                                "image_url": image_url,
+                                "progress_ms": progress_ms or 0,
+                                "duration_ms": duration_ms or 1,
+                                "skip_rate": skip_rate,
+                                "updated_at": updated_at.isoformat(),
+                            })
+        except Exception as exc:
+            logger.debug("[%s] /api/now: cache-lesing feilet: %s", current_user_id, exc)
 
-                # Stale-sjekk: 20 s terskel (tracker poller hvert 7. s,
-                # så 20 s gir 2 missede polls som buffer for Neon-latens).
-                if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=20):
-                    is_playing = False
-
-                # Historisk skip-rate — samme tilkobling
-                skip_rate = None
-                if uri:
-                    result = execute(
-                        conn,
-                        """
-                        SELECT
-                            SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / NULLIF(COUNT(*), 0)
-                        FROM plays
-                        WHERE uri = %s
-                          AND user_id = %s
-                        """,
-                        (uri, _resolve_user_id()),
-                    ).fetchone()
-                    if result and result[0] is not None:
-                        skip_rate = round(float(result[0]), 3)
-
-        except Exception:
+        # ── Steg 2: cache mangler/stale → spør Spotify direkte ───────────
+        logger.debug(
+            "[%s] /api/now: cache mangler/stale — spør Spotify direkte.",
+            current_user_id,
+        )
+        try:
+            creds = load_creds(current_user_id)
+            token = get_access_token(creds)
+        except Exception as exc:
+            logger.warning("[%s] /api/now: kan ikke laste token: %s", current_user_id, exc)
             return jsonify({"is_playing": False}), 200
 
+        try:
+            sp_resp = http_requests.get(
+                "https://api.spotify.com/v1/me/player",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+        except Exception as exc:
+            logger.warning("[%s] /api/now: Spotify utilgjengelig: %s", current_user_id, exc)
+            return jsonify({"is_playing": False}), 200
+
+        if sp_resp.status_code == 204 or not sp_resp.content:
+            return jsonify({"is_playing": False}), 200
+        if sp_resp.status_code != 200:
+            logger.warning(
+                "[%s] /api/now: uventet Spotify-statuskode %d",
+                current_user_id, sp_resp.status_code,
+            )
+            return jsonify({"is_playing": False}), 200
+
+        sp   = sp_resp.json()
+        item = sp.get("item")
+        if not item or item.get("type") != "track":
+            return jsonify({"is_playing": False}), 200
+
+        uri        = item["uri"]
+        title      = item.get("name")
+        artists    = ", ".join(a.get("name", "") for a in item.get("artists", []))
+        album      = (item.get("album") or {}).get("name")
+        images     = (item.get("album") or {}).get("images") or []
+        image_url  = images[0]["url"] if images else None
+        progress_ms = int(sp.get("progress_ms") or 0)
+        duration_ms = int(item.get("duration_ms") or 1)
+        is_playing  = bool(sp.get("is_playing", False))
+
+        skip_rate = _skip_rate_for_uri(current_user_id, uri)
+
         return jsonify({
-            "is_playing": bool(is_playing),
+            "is_playing": is_playing,
             "uri": uri,
             "title": title,
             "artists": artists,
             "album": album,
             "image_url": image_url,
-            "progress_ms": progress_ms or 0,
-            "duration_ms": duration_ms or 1,
+            "progress_ms": progress_ms,
+            "duration_ms": duration_ms,
             "skip_rate": skip_rate,
-            "updated_at": updated_at.isoformat() if updated_at else None,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         })
 
     @app.route("/api/smart-skipper")
