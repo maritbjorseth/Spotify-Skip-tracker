@@ -831,7 +831,9 @@ def create_flask_app() -> Flask:
         Responsen er en JSON-liste sortert med høyeste stadium øverst.
         """
         if _is_demo():
-            return jsonify(_DEMO_DATA["insights"])
+            lang = request.args.get("lang", "nb")
+            demo_key = "insights_nb" if lang == "nb" else "insights"
+            return jsonify(_DEMO_DATA.get(demo_key, _DEMO_DATA["insights"]))
 
         try:
             lang = request.args.get("lang", "nb")
