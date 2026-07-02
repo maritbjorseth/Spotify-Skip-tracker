@@ -424,21 +424,56 @@ def create_flask_app() -> Flask:
             logger.exception("Feil i /api/stats: %s", exc)
             return jsonify({"error": "Kunne ikke hente statistikk"}), 500
 
+    def _skip_rate_for_uri(user_id: str, uri: str | None) -> float | None:
+        """Henter historisk skip-rate for ett spor og én bruker fra plays-tabellen."""
+        if not uri:
+            return None
+        try:
+            with pooled_connection() as conn:
+                result = execute(
+                    conn,
+                    """
+                    SELECT
+                        SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL
+                        / NULLIF(COUNT(*), 0)
+                    FROM plays
+                    WHERE uri = %s AND user_id = %s
+                    """,
+                    (uri, user_id),
+                ).fetchone()
+            if result and result[0] is not None:
+                return round(float(result[0]), 3)
+        except Exception as exc:
+            logger.debug("skip_rate-oppslag feilet for %s: %s", uri, exc)
+        return None
+
     @app.route("/api/now")
     @require_auth
     def now_playing():
         """
-        Returnerer nåværende avspilling fra now_playing-tabellen for innlogget bruker.
-        Trackeren (Railway) skriver hit hvert 7. sekund per bruker.
-        Dersom updated_at er eldre enn 20 s, regnes ingenting som spilt.
+        Returnerer nåværende avspilling for innlogget bruker.
+
+        To-trinns strategi:
+          1. Lese tracker-cache fra now_playing-tabellen.
+             Hvis raden er fersk (≤ 30 s), returneres den direkte.
+          2. Hvis raden mangler eller er stale, spørres Spotify
+             /v1/me/player direkte med brukerens token.
         """
+        print(">>> API NOW CALLED <<<", flush=True)
+
         if _is_demo():
             return jsonify(_DEMO_DATA["now"])
 
+        current_user_id = _resolve_user_id()
+        _STALE_SECONDS = 30
+
+        # ── [1] Endepunktet ble truffet ───────────────────────────────────
+        logger.info("[NOW] /api/now truffet — user_id=%s", current_user_id)
+
+        # ── [2/3] Steg 1: prøv tracker-cache ─────────────────────────────
         try:
-            current_user_id = _resolve_user_id()
             with pooled_connection() as conn:
-                row = execute(
+                cached = execute(
                     conn,
                     """
                     SELECT uri, title, artists, album, image_url,
@@ -449,48 +484,256 @@ def create_flask_app() -> Flask:
                     (current_user_id,),
                 ).fetchone()
 
-                if row is None:
-                    return jsonify({"is_playing": False}), 200
+                if cached is None:
+                    logger.info("[NOW] CACHE MISS — ingen rad i now_playing for user_id=%s",
+                                current_user_id)
+                else:
+                    uri, title, artists, album, image_url, \
+                        progress_ms, duration_ms, is_playing, updated_at = cached
 
-                uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing, updated_at = row
+                    # ── Age-beregning isolert med full type-info ──────────
+                    current_time = datetime.now(timezone.utc)
+                    logger.info(
+                        "[NOW] AGE-DEBUG "
+                        "current_time=%r tzinfo_type=%s | "
+                        "updated_at=%r type=%s tzinfo_type=%s",
+                        current_time,
+                        type(current_time.tzinfo).__name__,
+                        updated_at,
+                        type(updated_at).__name__,
+                        type(getattr(updated_at, "tzinfo", None)).__name__,
+                    )
+                    try:
+                        age = (
+                            (current_time - updated_at).total_seconds()
+                            if updated_at is not None else None
+                        )
+                        logger.info(
+                            "[NOW] AGE-DEBUG age=%.3f STALE_SECONDS=%d "
+                            "condition(age<=STALE)=%s",
+                            age if age is not None else -1.0,
+                            _STALE_SECONDS,
+                            (age is not None and age <= _STALE_SECONDS),
+                        )
+                    except Exception as age_exc:
+                        logger.warning(
+                            "[NOW] AGE-DEBUG age-beregning kastet %s: %s — "
+                            "setter age=None, går til fallback",
+                            type(age_exc).__name__, age_exc,
+                        )
+                        age = None
 
-                # Stale-sjekk: 20 s terskel (tracker poller hvert 7. s,
-                # så 20 s gir 2 missede polls som buffer for Neon-latens).
-                if updated_at and (datetime.now(timezone.utc) - updated_at) > timedelta(seconds=20):
-                    is_playing = False
+                    if age is not None and age <= _STALE_SECONDS:
+                        logger.info("[NOW] >>> CACHE HIT RETURN TRIGGERED <<<")
+                        # ── [3] CACHE HIT ──────────────────────────────────
+                        skip_rate_result = execute(
+                            conn,
+                            """
+                            SELECT
+                                SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL
+                                / NULLIF(COUNT(*), 0)
+                            FROM plays
+                            WHERE uri = %s AND user_id = %s
+                            """,
+                            (uri, current_user_id),
+                        ).fetchone()
+                        skip_rate = (
+                            round(float(skip_rate_result[0]), 3)
+                            if skip_rate_result and skip_rate_result[0] is not None
+                            else None
+                        )
+                        payload = {
+                            "is_playing": bool(is_playing),
+                            "uri": uri,
+                            "title": title,
+                            "artists": artists,
+                            "album": album,
+                            "image_url": image_url,
+                            "progress_ms": progress_ms or 0,
+                            "duration_ms": duration_ms or 1,
+                            "skip_rate": skip_rate,
+                            "updated_at": updated_at.isoformat(),
+                        }
+                        logger.info("[NOW] CACHE HIT — returnerer: %s", payload)
+                        return jsonify(payload)
+                    else:
+                        logger.info(
+                            "[NOW] CACHE MISS — rad er stale (age=%.1fs > %ds)",
+                            age if age is not None else -1, _STALE_SECONDS,
+                        )
 
-                # Historisk skip-rate — samme tilkobling
-                skip_rate = None
-                if uri:
-                    result = execute(
-                        conn,
-                        """
-                        SELECT
-                            SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / NULLIF(COUNT(*), 0)
-                        FROM plays
-                        WHERE uri = %s
-                          AND user_id = %s
-                        """,
-                        (uri, _resolve_user_id()),
-                    ).fetchone()
-                    if result and result[0] is not None:
-                        skip_rate = round(float(result[0]), 3)
+        except Exception as exc:
+            logger.warning("[NOW] Cache-lesing feilet: %s", exc)
 
-        except Exception:
-            return jsonify({"is_playing": False}), 200
+        # ── [4] Steg 2: cache mangler/stale → spør Spotify direkte ───────
+        logger.info("[NOW] Går til Spotify-fallback for user_id=%s", current_user_id)
 
-        return jsonify({
-            "is_playing": bool(is_playing),
+        # Token
+        try:
+            creds = load_creds(current_user_id)
+            had_access_token = bool(creds.get("access_token"))
+            scopes = creds.get("scope", "<ikke lagret i creds>")
+            logger.info(
+                "[NOW] Token lastet — access_token finnes=%s scope=%s",
+                had_access_token, scopes,
+            )
+            token = get_access_token(creds)
+            refreshed = token != creds.get("access_token") or not had_access_token
+            logger.info(
+                "[NOW] get_access_token OK — token_prefix=%s... refresh_brukt=%s",
+                token[:8] if token else "NONE", refreshed,
+            )
+        except Exception as exc:
+            logger.warning("[NOW] Kan ikke laste/friske token: %s", exc)
+            payload = {"is_playing": False}
+            logger.info("[NOW] Returnerer (token-feil): %s", payload)
+            return jsonify(payload), 200
+
+        # Spotify-kall
+        try:
+            sp_resp = http_requests.get(
+                "https://api.spotify.com/v1/me/player",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+        except Exception as exc:
+            logger.warning("[NOW] Spotify utilgjengelig: %s", exc)
+            payload = {"is_playing": False}
+            logger.info("[NOW] Returnerer (nettverk-feil): %s", payload)
+            return jsonify(payload), 200
+
+        # ── [5] 204 – ingenting spilles ───────────────────────────────────
+        if sp_resp.status_code == 204 or not sp_resp.content:
+            logger.info(
+                "[NOW] Spotify returnerte %s (ingen aktiv avspilling) — is_playing=False",
+                sp_resp.status_code,
+            )
+            payload = {"is_playing": False}
+            logger.info("[NOW] Returnerer: %s", payload)
+            return jsonify(payload), 200
+
+        # ── [6] 401 – token ugyldig ───────────────────────────────────────
+        if sp_resp.status_code == 401:
+            logger.warning(
+                "[NOW] Spotify 401 Unauthorized — token kan være ugyldig/utløpt. "
+                "Body: %s",
+                sp_resp.text[:500],
+            )
+            # Forsøk token-refresh og ett nytt kall
+            try:
+                creds["expires_at"] = 0  # tving refresh
+                token2 = get_access_token(creds)
+                logger.info("[NOW] 401-refresh OK — nytt token_prefix=%s...", token2[:8])
+            except Exception as exc:
+                logger.warning("[NOW] 401-refresh FEILET: %s", exc)
+                payload = {"is_playing": False}
+                logger.info("[NOW] Returnerer (401, refresh feilet): %s", payload)
+                return jsonify(payload), 200
+
+            try:
+                sp_resp2 = http_requests.get(
+                    "https://api.spotify.com/v1/me/player",
+                    headers={"Authorization": f"Bearer {token2}"},
+                    timeout=10,
+                )
+                logger.info("[NOW] Nytt Spotify-kall etter 401-refresh — status=%d",
+                            sp_resp2.status_code)
+                sp_resp = sp_resp2
+            except Exception as exc:
+                logger.warning("[NOW] Nytt Spotify-kall etter 401-refresh feilet: %s", exc)
+                payload = {"is_playing": False}
+                logger.info("[NOW] Returnerer (401, retry feilet): %s", payload)
+                return jsonify(payload), 200
+
+        # ── Andre ikke-200-statuskoder ────────────────────────────────────
+        if sp_resp.status_code != 200:
+            logger.warning(
+                "[NOW] Spotify returnerte uventet status %d — body: %s",
+                sp_resp.status_code, sp_resp.text[:500],
+            )
+            payload = {"is_playing": False}
+            logger.info("[NOW] Returnerer (status %d): %s", sp_resp.status_code, payload)
+            return jsonify(payload), 200
+
+        # ── [7] 200 – parse svar ──────────────────────────────────────────
+        sp   = sp_resp.json()
+        item = sp.get("item")
+        logger.info(
+            "[NOW] Spotify 200 — is_playing=%s item_type=%s item_uri=%s",
+            sp.get("is_playing"), item.get("type") if item else None,
+            item.get("uri") if item else None,
+        )
+
+        if not item or item.get("type") != "track":
+            logger.info(
+                "[NOW] item mangler eller er ikke en track (type=%s) — is_playing=False",
+                item.get("type") if item else "None",
+            )
+            payload = {"is_playing": False}
+            logger.info("[NOW] Returnerer: %s", payload)
+            return jsonify(payload), 200
+
+        uri        = item["uri"]
+        title      = item.get("name")
+        artists    = ", ".join(a.get("name", "") for a in item.get("artists", []))
+        album      = (item.get("album") or {}).get("name")
+        images     = (item.get("album") or {}).get("images") or []
+        image_url  = images[0]["url"] if images else None
+        progress_ms = int(sp.get("progress_ms") or 0)
+        duration_ms = int(item.get("duration_ms") or 1)
+        is_playing  = bool(sp.get("is_playing", False))
+
+        # ── [8] Forklar hvis is_playing er False tross 200 ───────────────
+        if not is_playing:
+            logger.info(
+                "[NOW] Spotify 200 men is_playing=False "
+                "(musikk er pauset eller stoppet) — returnerer is_playing=False",
+            )
+
+        # Skriv tilbake til cache
+        try:
+            with pooled_connection() as conn:
+                execute(
+                    conn,
+                    """
+                    INSERT INTO now_playing
+                        (user_id, uri, title, artists, album, image_url,
+                         progress_ms, duration_ms, is_playing, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        uri         = EXCLUDED.uri,
+                        title       = EXCLUDED.title,
+                        artists     = EXCLUDED.artists,
+                        album       = EXCLUDED.album,
+                        image_url   = EXCLUDED.image_url,
+                        progress_ms = EXCLUDED.progress_ms,
+                        duration_ms = EXCLUDED.duration_ms,
+                        is_playing  = EXCLUDED.is_playing,
+                        updated_at  = NOW()
+                    """,
+                    (current_user_id, uri, title, artists, album, image_url,
+                     progress_ms, duration_ms, is_playing),
+                )
+            logger.info("[NOW] Fallback-data skrevet til now_playing-cache.")
+        except Exception as exc:
+            logger.warning("[NOW] Kunne ikke skrive fallback til cache: %s", exc)
+
+        skip_rate = _skip_rate_for_uri(current_user_id, uri)
+
+        payload = {
+            "is_playing": is_playing,
             "uri": uri,
             "title": title,
             "artists": artists,
             "album": album,
             "image_url": image_url,
-            "progress_ms": progress_ms or 0,
-            "duration_ms": duration_ms or 1,
+            "progress_ms": progress_ms,
+            "duration_ms": duration_ms,
             "skip_rate": skip_rate,
-            "updated_at": updated_at.isoformat() if updated_at else None,
-        })
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        logger.info("[NOW] Returnerer (fallback): %s", payload)
+        return jsonify(payload)
 
     @app.route("/api/smart-skipper")
     @require_auth
