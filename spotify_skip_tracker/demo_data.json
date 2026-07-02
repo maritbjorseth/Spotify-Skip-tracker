@@ -2,34 +2,24 @@
   "stats": {
     "tracks": [
       {
-        "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+        "uri": "spotify:track:0V3wPSX9ygBnCm8psDIegu",
         "title": "Anti-Hero",
         "artists": "Taylor Swift",
         "context_name": "Today's Top Hits",
         "skip_count": 14,
         "play_count": 18,
         "skip_rate": 0.778,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273bb54dde68cd23e2a268ae0f5"
       },
       {
-        "uri": "spotify:track:7MXVkk9YMctZqd1Srtv4MB",
-        "title": "Blinding Lights",
-        "artists": "The Weeknd",
-        "context_name": "Today's Top Hits",
-        "skip_count": 12,
-        "play_count": 22,
-        "skip_rate": 0.545,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
-      },
-      {
-        "uri": "spotify:track:1BxfuPKGuaTgP7aM0Chatn",
+        "uri": "spotify:track:7qiZfU4dY1lWllzX7mPBI3",
         "title": "Shape of You",
         "artists": "Ed Sheeran",
         "context_name": "Today's Top Hits",
-        "skip_count": 11,
-        "play_count": 14,
-        "skip_rate": 0.786,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+        "skip_count": 12,
+        "play_count": 15,
+        "skip_rate": 0.800,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
       },
       {
         "uri": "spotify:track:6DCZcSspjsKoFjzjrWoCdn",
@@ -39,217 +29,127 @@
         "skip_count": 10,
         "play_count": 15,
         "skip_rate": 0.667,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273f907de96b9a4fbc04accc0d5"
       },
       {
-        "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+        "uri": "spotify:track:2nLtzopw4rPReszdYBJU6h",
         "title": "Numb",
         "artists": "Linkin Park",
         "context_name": "Rock Classics",
         "skip_count": 9,
         "play_count": 11,
         "skip_rate": 0.818,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735f1f51d14e8bea89484ecd1b"
       },
       {
-        "uri": "spotify:track:2xLMifQCjDGFmkHkpNLD9h",
-        "title": "Humble.",
+        "uri": "spotify:track:7KXjTSCq5nL1LoYtL7XAwS",
+        "title": "HUMBLE.",
         "artists": "Kendrick Lamar",
         "context_name": "RapCaviar",
         "skip_count": 9,
         "play_count": 13,
         "skip_rate": 0.692,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2738b52c6b9bc4e43d873869699"
       },
       {
-        "uri": "spotify:track:1Cv1YLb4q0RzL6pybtaMLo",
-        "title": "Peaches",
-        "artists": "Justin Bieber",
-        "context_name": "Today's Top Hits",
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
+        "title": "STAY",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "context_name": "RapCaviar",
         "skip_count": 8,
-        "play_count": 10,
-        "skip_rate": 0.8,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "play_count": 9,
+        "skip_rate": 0.889,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273b4d59e6fa7e5e7cbc57ac33a"
       },
       {
-        "uri": "spotify:track:2Fxmhks0bxGSBdJ92vM42m",
-        "title": "Positions",
-        "artists": "Ariana Grande",
-        "context_name": "Liked Songs",
-        "skip_count": 8,
-        "play_count": 12,
-        "skip_rate": 0.667,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
-      },
-      {
-        "uri": "spotify:track:5QO79kh1waicV47BqGRL3g",
-        "title": "Save Your Tears",
-        "artists": "The Weeknd",
+        "uri": "spotify:track:4ZtFanR9U6ndgddUvNcjcG",
+        "title": "good 4 u",
+        "artists": "Olivia Rodrigo",
         "context_name": "Today's Top Hits",
         "skip_count": 7,
-        "play_count": 19,
-        "skip_rate": 0.368,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "play_count": 11,
+        "skip_rate": 0.636,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a91c10fe9472d9bd89802e5a"
       },
       {
-        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
-        "title": "Sunflower",
-        "artists": "Post Malone",
-        "context_name": "Liked Songs",
-        "skip_count": 7,
-        "play_count": 16,
-        "skip_rate": 0.438,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
-      },
-      {
-        "uri": "spotify:track:5tCCzZ9AoV2oFEYJpf6nFs",
-        "title": "Thunder",
-        "artists": "Imagine Dragons",
-        "context_name": "Rock Classics",
+        "uri": "spotify:track:27NovPIUIRrOZoCHxABJwK",
+        "title": "INDUSTRY BABY",
+        "artists": "Lil Nas X, Jack Harlow",
+        "context_name": "RapCaviar",
         "skip_count": 6,
         "play_count": 8,
-        "skip_rate": 0.75,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+        "skip_rate": 0.750,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273f27e4bdc58ebe249a6b90da0"
       },
       {
-        "uri": "spotify:track:0gplL1WMoJ6iYaPgMCL0gX",
+        "uri": "spotify:track:0pqnGHJpmpxLKifKRmU6WP",
         "title": "Believer",
         "artists": "Imagine Dragons",
         "context_name": "Rock Classics",
         "skip_count": 6,
         "play_count": 9,
         "skip_rate": 0.667,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735675e83f707f1d7271e5cf8a"
       },
       {
-        "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
-        "title": "Stay",
-        "artists": "The Kid LAROI, Justin Bieber",
-        "context_name": "RapCaviar",
-        "skip_count": 6,
-        "play_count": 7,
-        "skip_rate": 0.857,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
-      },
-      {
-        "uri": "spotify:track:6PCUP3dWmTjcTtXY02oFdT",
-        "title": "Good 4 U",
-        "artists": "Olivia Rodrigo",
+        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+        "title": "Enemy",
+        "artists": "Imagine Dragons, JID",
         "context_name": "Today's Top Hits",
         "skip_count": 5,
         "play_count": 8,
         "skip_rate": 0.625,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273aa597e50829169e6994eb403"
       },
       {
-        "uri": "spotify:track:0lYBSQXN6rF3PmPeibwTah",
-        "title": "Industry Baby",
-        "artists": "Lil Nas X, Jack Harlow",
-        "context_name": "RapCaviar",
+        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
+        "title": "Blinding Lights",
+        "artists": "The Weeknd",
+        "context_name": "Today's Top Hits",
         "skip_count": 5,
-        "play_count": 6,
-        "skip_rate": 0.833,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+        "play_count": 22,
+        "skip_rate": 0.227,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36"
       },
       {
-        "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6",
-        "title": "One Dance",
-        "artists": "Drake",
+        "uri": "spotify:track:2Fxmhks0bxGSBdJ92vM42m",
+        "title": "bad guy",
+        "artists": "Billie Eilish",
         "context_name": "Liked Songs",
-        "skip_count": 5,
+        "skip_count": 4,
         "play_count": 14,
-        "skip_rate": 0.357,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "skip_rate": 0.286,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27350a3147b4edd7701a876c6ce"
       },
       {
-        "uri": "spotify:track:3ee8Jmje8o58CHK66QrVC2",
-        "title": "MIDDLE OF THE NIGHT",
-        "artists": "Elley Duhé",
-        "context_name": "Today's Top Hits",
-        "skip_count": 4,
-        "play_count": 5,
-        "skip_rate": 0.8,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
-      },
-      {
-        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
-        "title": "Levitating",
-        "artists": "Dua Lipa",
-        "context_name": "Today's Top Hits",
-        "skip_count": 4,
-        "play_count": 10,
-        "skip_rate": 0.4,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
-      },
-      {
-        "uri": "spotify:track:3n3Ppam7vgaVa1iaRUIOKE",
-        "title": "Mr. Brightside",
-        "artists": "The Killers",
-        "context_name": "Rock Classics",
-        "skip_count": 4,
-        "play_count": 7,
-        "skip_rate": 0.571,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
-      },
-      {
-        "uri": "spotify:track:6habFhsOp2NvshLv26DqMb",
+        "uri": "spotify:track:60a0Rd6pjrkxjPbaKzXjfq",
         "title": "In the End",
         "artists": "Linkin Park",
         "context_name": "Rock Classics",
         "skip_count": 3,
         "play_count": 9,
         "skip_rate": 0.333,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2736741ca6e9ba6fdc166037321"
       },
       {
-        "uri": "spotify:track:7lQ8MOhq6IN2w8EYcFNSUk",
-        "title": "Radioactive",
-        "artists": "Imagine Dragons",
-        "context_name": "Rock Classics",
-        "skip_count": 3,
-        "play_count": 6,
-        "skip_rate": 0.5,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
-      },
-      {
-        "uri": "spotify:track:3a0YB6DJWJKoRxnNFTJHNO",
-        "title": "Enemy",
-        "artists": "Imagine Dragons, JID",
+        "uri": "spotify:track:463CkQjx2Zk1yXoBuierM9",
+        "title": "Levitating",
+        "artists": "Dua Lipa",
         "context_name": "Today's Top Hits",
         "skip_count": 3,
-        "play_count": 5,
-        "skip_rate": 0.6,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+        "play_count": 10,
+        "skip_rate": 0.300,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2734aa538a481e67131c214135a"
       },
       {
-        "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
-        "title": "Flowers",
-        "artists": "Miley Cyrus",
-        "context_name": "Liked Songs",
-        "skip_count": 3,
-        "play_count": 7,
-        "skip_rate": 0.429,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
-      },
-      {
-        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA21",
-        "title": "drivers license",
-        "artists": "Olivia Rodrigo",
-        "context_name": "Today's Top Hits",
-        "skip_count": 2,
-        "play_count": 8,
-        "skip_rate": 0.25,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
-      },
-      {
-        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+        "uri": "spotify:track:02MWAaffLxlfxAUY7c5dvx",
         "title": "Heat Waves",
         "artists": "Glass Animals",
         "context_name": "Liked Songs",
         "skip_count": 2,
         "play_count": 11,
         "skip_rate": 0.182,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273712701c5e263efc8726b1464"
       }
     ],
     "contexts": [
@@ -446,64 +346,64 @@
     ],
     "most_played": [
       {
-        "uri": "spotify:track:6nGeLlakfzlBcFdZXteDq7",
+        "uri": "spotify:track:4Dvkj6JhhA12EX05fT7y2e",
         "title": "As It Was",
         "artists": "Harry Styles",
         "context_name": null,
         "skip_count": 0,
         "play_count": 28,
-        "skip_rate": 0.0,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+        "skip_rate": 0.000,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27382ce362511fb3d9dda6578ee"
       },
       {
-        "uri": "spotify:track:7MXVkk9YMctZqd1Srtv4MB",
+        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
         "title": "Blinding Lights",
         "artists": "The Weeknd",
         "context_name": null,
-        "skip_count": 12,
+        "skip_count": 5,
         "play_count": 22,
-        "skip_rate": 0.545,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+        "skip_rate": 0.227,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36"
       },
       {
         "uri": "spotify:track:5QO79kh1waicV47BqGRL3g",
         "title": "Save Your Tears",
         "artists": "The Weeknd",
         "context_name": null,
-        "skip_count": 7,
+        "skip_count": 4,
         "play_count": 19,
-        "skip_rate": 0.368,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+        "skip_rate": 0.211,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36"
       },
       {
-        "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+        "uri": "spotify:track:0V3wPSX9ygBnCm8psDIegu",
         "title": "Anti-Hero",
         "artists": "Taylor Swift",
         "context_name": null,
         "skip_count": 14,
         "play_count": 18,
         "skip_rate": 0.778,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273bb54dde68cd23e2a268ae0f5"
       },
       {
-        "uri": "spotify:track:2takcwOaAZWiXQijPHIx7B",
+        "uri": "spotify:track:5aAx2yezTd8zXrkmtKl66Z",
         "title": "Starboy",
         "artists": "The Weeknd",
         "context_name": null,
         "skip_count": 2,
         "play_count": 17,
         "skip_rate": 0.118,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2734718e2b124f79258be7bc452"
       },
       {
-        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
+        "uri": "spotify:track:3KkXRkHbMCARz0aVfEt68P",
         "title": "Sunflower",
         "artists": "Post Malone",
         "context_name": null,
-        "skip_count": 7,
+        "skip_count": 2,
         "play_count": 16,
-        "skip_rate": 0.438,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+        "skip_rate": 0.125,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e2e352d89826aef6dbd5ff8f"
       },
       {
         "uri": "spotify:track:6DCZcSspjsKoFjzjrWoCdn",
@@ -513,339 +413,249 @@
         "skip_count": 10,
         "play_count": 15,
         "skip_rate": 0.667,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273f907de96b9a4fbc04accc0d5"
       },
       {
-        "uri": "spotify:track:6UelLqGlWMcVH1E5c4H7lY",
-        "title": "bad guy",
-        "artists": "Billie Eilish",
+        "uri": "spotify:track:7qiZfU4dY1lWllzX7mPBI3",
+        "title": "Shape of You",
+        "artists": "Ed Sheeran",
         "context_name": null,
-        "skip_count": 1,
+        "skip_count": 12,
         "play_count": 15,
-        "skip_rate": 0.067,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
-      },
-      {
-        "uri": "spotify:track:2xLMifQCjDGFmkHkpNLD9h",
-        "title": "Humble.",
-        "artists": "Kendrick Lamar",
-        "context_name": null,
-        "skip_count": 9,
-        "play_count": 13,
-        "skip_rate": 0.692,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
+        "skip_rate": 0.800,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
       },
       {
         "uri": "spotify:track:2Fxmhks0bxGSBdJ92vM42m",
-        "title": "Positions",
-        "artists": "Ariana Grande",
+        "title": "bad guy",
+        "artists": "Billie Eilish",
         "context_name": null,
-        "skip_count": 8,
-        "play_count": 12,
-        "skip_rate": 0.667,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+        "skip_count": 4,
+        "play_count": 15,
+        "skip_rate": 0.267,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27350a3147b4edd7701a876c6ce"
       },
       {
-        "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6",
+        "uri": "spotify:track:1zi7xx7UVEFkmKfv06H8x0",
         "title": "One Dance",
         "artists": "Drake",
         "context_name": null,
         "skip_count": 5,
         "play_count": 14,
         "skip_rate": 0.357,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2739416ed64daf84936d89e671c"
       },
       {
-        "uri": "spotify:track:1BxfuPKGuaTgP7aM0Chatn",
-        "title": "Shape of You",
-        "artists": "Ed Sheeran",
+        "uri": "spotify:track:7KXjTSCq5nL1LoYtL7XAwS",
+        "title": "HUMBLE.",
+        "artists": "Kendrick Lamar",
         "context_name": null,
-        "skip_count": 11,
-        "play_count": 14,
-        "skip_rate": 0.786,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "skip_count": 9,
+        "play_count": 13,
+        "skip_rate": 0.692,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2738b52c6b9bc4e43d873869699"
       },
       {
-        "uri": "spotify:track:5ghIJDpPoe3CfHMGu71E6T",
+        "uri": "spotify:track:7tFiyTwD0nx5a1eklYtX2J",
         "title": "Bohemian Rhapsody",
         "artists": "Queen",
         "context_name": null,
         "skip_count": 0,
         "play_count": 13,
-        "skip_rate": 0.0,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
+        "skip_rate": 0.000,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e319baafd16e84f0408af2a0"
       },
       {
-        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+        "uri": "spotify:track:02MWAaffLxlfxAUY7c5dvx",
         "title": "Heat Waves",
         "artists": "Glass Animals",
         "context_name": null,
         "skip_count": 2,
         "play_count": 11,
         "skip_rate": 0.182,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273712701c5e263efc8726b1464"
       },
       {
-        "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+        "uri": "spotify:track:4ZtFanR9U6ndgddUvNcjcG",
+        "title": "good 4 u",
+        "artists": "Olivia Rodrigo",
+        "context_name": null,
+        "skip_count": 7,
+        "play_count": 11,
+        "skip_rate": 0.636,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273a91c10fe9472d9bd89802e5a"
+      },
+      {
+        "uri": "spotify:track:2nLtzopw4rPReszdYBJU6h",
         "title": "Numb",
         "artists": "Linkin Park",
         "context_name": null,
         "skip_count": 9,
         "play_count": 11,
         "skip_rate": 0.818,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735f1f51d14e8bea89484ecd1b"
       },
       {
-        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
+        "uri": "spotify:track:463CkQjx2Zk1yXoBuierM9",
         "title": "Levitating",
         "artists": "Dua Lipa",
         "context_name": null,
-        "skip_count": 4,
+        "skip_count": 3,
         "play_count": 10,
-        "skip_rate": 0.4,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
+        "skip_rate": 0.300,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2734aa538a481e67131c214135a"
       },
       {
-        "uri": "spotify:track:6habFhsOp2NvshLv26DqMb",
+        "uri": "spotify:track:60a0Rd6pjrkxjPbaKzXjfq",
         "title": "In the End",
         "artists": "Linkin Park",
         "context_name": null,
         "skip_count": 3,
         "play_count": 9,
         "skip_rate": 0.333,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2736741ca6e9ba6fdc166037321"
       },
       {
-        "uri": "spotify:track:6PCUP3dWmTjcTtXY02oFdT",
-        "title": "Good 4 U",
-        "artists": "Olivia Rodrigo",
-        "context_name": null,
-        "skip_count": 5,
-        "play_count": 8,
-        "skip_rate": 0.625,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
-      },
-      {
-        "uri": "spotify:track:5tCCzZ9AoV2oFEYJpf6nFs",
-        "title": "Thunder",
-        "artists": "Imagine Dragons",
-        "context_name": null,
-        "skip_count": 6,
-        "play_count": 8,
-        "skip_rate": 0.75,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
-      },
-      {
-        "uri": "spotify:track:0gplL1WMoJ6iYaPgMCL0gX",
+        "uri": "spotify:track:0pqnGHJpmpxLKifKRmU6WP",
         "title": "Believer",
         "artists": "Imagine Dragons",
         "context_name": null,
         "skip_count": 6,
         "play_count": 9,
         "skip_rate": 0.667,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735675e83f707f1d7271e5cf8a"
       },
       {
-        "uri": "spotify:track:7KXjTSCq5nL1LoYtL7XAwS",
-        "title": "MONTERO (Call Me By Your Name)",
-        "artists": "Lil Nas X",
-        "context_name": null,
-        "skip_count": 1,
-        "play_count": 7,
-        "skip_rate": 0.143,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
-      },
-      {
-        "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
-        "title": "Flowers",
-        "artists": "Miley Cyrus",
-        "context_name": null,
-        "skip_count": 3,
-        "play_count": 7,
-        "skip_rate": 0.429,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
-      },
-      {
-        "uri": "spotify:track:3n3Ppam7vgaVa1iaRUIOKE",
-        "title": "Mr. Brightside",
-        "artists": "The Killers",
-        "context_name": null,
-        "skip_count": 4,
-        "play_count": 7,
-        "skip_rate": 0.571,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
-      },
-      {
-        "uri": "spotify:track:7lQ8MOhq6IN2w8EYcFNSUk",
-        "title": "Radioactive",
-        "artists": "Imagine Dragons",
-        "context_name": null,
-        "skip_count": 3,
-        "play_count": 6,
-        "skip_rate": 0.5,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
-      },
-      {
-        "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
-        "title": "Stay",
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
+        "title": "STAY",
         "artists": "The Kid LAROI, Justin Bieber",
         "context_name": null,
-        "skip_count": 6,
-        "play_count": 7,
-        "skip_rate": 0.857,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
-      },
-      {
-        "uri": "spotify:track:1Cv1YLb4q0RzL6pybtaMLo",
-        "title": "Peaches",
-        "artists": "Justin Bieber",
-        "context_name": null,
         "skip_count": 8,
-        "play_count": 10,
-        "skip_rate": 0.8,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+        "play_count": 9,
+        "skip_rate": 0.889,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273b4d59e6fa7e5e7cbc57ac33a"
       },
       {
-        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA21",
-        "title": "drivers license",
-        "artists": "Olivia Rodrigo",
-        "context_name": null,
-        "skip_count": 2,
-        "play_count": 8,
-        "skip_rate": 0.25,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
-      },
-      {
-        "uri": "spotify:track:3ee8Jmje8o58CHK66QrVC2",
-        "title": "MIDDLE OF THE NIGHT",
-        "artists": "Elley Duhé",
-        "context_name": null,
-        "skip_count": 4,
-        "play_count": 5,
-        "skip_rate": 0.8,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101"
-      },
-      {
-        "uri": "spotify:track:0lYBSQXN6rF3PmPeibwTah",
-        "title": "Industry Baby",
-        "artists": "Lil Nas X, Jack Harlow",
-        "context_name": null,
-        "skip_count": 5,
-        "play_count": 6,
-        "skip_rate": 0.833,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647"
-      },
-      {
-        "uri": "spotify:track:3a0YB6DJWJKoRxnNFTJHNO",
+        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
         "title": "Enemy",
         "artists": "Imagine Dragons, JID",
         "context_name": null,
-        "skip_count": 3,
-        "play_count": 5,
-        "skip_rate": 0.6,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273fc2101e6889d6ce9025f85f2"
+        "skip_count": 5,
+        "play_count": 8,
+        "skip_rate": 0.625,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273aa597e50829169e6994eb403"
+      },
+      {
+        "uri": "spotify:track:27NovPIUIRrOZoCHxABJwK",
+        "title": "INDUSTRY BABY",
+        "artists": "Lil Nas X, Jack Harlow",
+        "context_name": null,
+        "skip_count": 6,
+        "play_count": 8,
+        "skip_rate": 0.750,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273f27e4bdc58ebe249a6b90da0"
       }
     ],
     "most_completed": [
       {
-        "uri": "spotify:track:6nGeLlakfzlBcFdZXteDq7",
+        "uri": "spotify:track:4Dvkj6JhhA12EX05fT7y2e",
         "title": "As It Was",
         "artists": "Harry Styles",
         "context_name": null,
         "skip_count": 0,
         "play_count": 28,
-        "skip_rate": 0.0,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "skip_rate": 0.000,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27382ce362511fb3d9dda6578ee"
       },
       {
-        "uri": "spotify:track:5ghIJDpPoe3CfHMGu71E6T",
+        "uri": "spotify:track:7tFiyTwD0nx5a1eklYtX2J",
         "title": "Bohemian Rhapsody",
         "artists": "Queen",
         "context_name": null,
         "skip_count": 0,
         "play_count": 13,
-        "skip_rate": 0.0,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de"
+        "skip_rate": 0.000,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e319baafd16e84f0408af2a0"
       },
       {
-        "uri": "spotify:track:6UelLqGlWMcVH1E5c4H7lY",
-        "title": "bad guy",
-        "artists": "Billie Eilish",
-        "context_name": null,
-        "skip_count": 1,
-        "play_count": 15,
-        "skip_rate": 0.067,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea"
-      },
-      {
-        "uri": "spotify:track:2takcwOaAZWiXQijPHIx7B",
+        "uri": "spotify:track:5aAx2yezTd8zXrkmtKl66Z",
         "title": "Starboy",
         "artists": "The Weeknd",
         "context_name": null,
         "skip_count": 2,
         "play_count": 17,
         "skip_rate": 0.118,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2734718e2b124f79258be7bc452"
       },
       {
-        "uri": "spotify:track:7KXjTSCq5nL1LoYtL7XAwS",
-        "title": "MONTERO (Call Me By Your Name)",
-        "artists": "Lil Nas X",
+        "uri": "spotify:track:3KkXRkHbMCARz0aVfEt68P",
+        "title": "Sunflower",
+        "artists": "Post Malone",
         "context_name": null,
-        "skip_count": 1,
-        "play_count": 7,
-        "skip_rate": 0.143,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "skip_count": 2,
+        "play_count": 16,
+        "skip_rate": 0.125,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273e2e352d89826aef6dbd5ff8f"
       },
       {
-        "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+        "uri": "spotify:track:02MWAaffLxlfxAUY7c5dvx",
         "title": "Heat Waves",
         "artists": "Glass Animals",
         "context_name": null,
         "skip_count": 2,
         "play_count": 11,
         "skip_rate": 0.182,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273712701c5e263efc8726b1464"
       },
       {
-        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA21",
-        "title": "drivers license",
-        "artists": "Olivia Rodrigo",
+        "uri": "spotify:track:5QO79kh1waicV47BqGRL3g",
+        "title": "Save Your Tears",
+        "artists": "The Weeknd",
         "context_name": null,
-        "skip_count": 2,
-        "play_count": 8,
-        "skip_rate": 0.25,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ef017e899c0547766997d874"
+        "skip_count": 4,
+        "play_count": 19,
+        "skip_rate": 0.211,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36"
       },
       {
-        "uri": "spotify:track:6habFhsOp2NvshLv26DqMb",
+        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
+        "title": "Blinding Lights",
+        "artists": "The Weeknd",
+        "context_name": null,
+        "skip_count": 5,
+        "play_count": 22,
+        "skip_rate": 0.227,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36"
+      },
+      {
+        "uri": "spotify:track:2Fxmhks0bxGSBdJ92vM42m",
+        "title": "bad guy",
+        "artists": "Billie Eilish",
+        "context_name": null,
+        "skip_count": 4,
+        "play_count": 15,
+        "skip_rate": 0.267,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b27350a3147b4edd7701a876c6ce"
+      },
+      {
+        "uri": "spotify:track:463CkQjx2Zk1yXoBuierM9",
+        "title": "Levitating",
+        "artists": "Dua Lipa",
+        "context_name": null,
+        "skip_count": 3,
+        "play_count": 10,
+        "skip_rate": 0.300,
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2734aa538a481e67131c214135a"
+      },
+      {
+        "uri": "spotify:track:60a0Rd6pjrkxjPbaKzXjfq",
         "title": "In the End",
         "artists": "Linkin Park",
         "context_name": null,
         "skip_count": 3,
         "play_count": 9,
         "skip_rate": 0.333,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96"
-      },
-      {
-        "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
-        "title": "Flowers",
-        "artists": "Miley Cyrus",
-        "context_name": null,
-        "skip_count": 3,
-        "play_count": 7,
-        "skip_rate": 0.429,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d"
-      },
-      {
-        "uri": "spotify:track:7lQ8MOhq6IN2w8EYcFNSUk",
-        "title": "Radioactive",
-        "artists": "Imagine Dragons",
-        "context_name": null,
-        "skip_count": 3,
-        "play_count": 6,
-        "skip_rate": 0.5,
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2736ea1deb95e1c6ebfe25b8dc6"
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2736741ca6e9ba6fdc166037321"
       }
     ],
     "hourly": [
@@ -2279,51 +2089,51 @@
     "unique_tracks": 25,
     "auto_skip_candidates": [
       {
-        "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
-        "title": "Anti-Hero",
-        "artists": "Taylor Swift",
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273a48964b5d9a3d6968ae3e0de",
-        "play_count": 18,
-        "skip_count": 14,
-        "skip_rate": 0.778
+        "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
+        "title": "STAY",
+        "artists": "The Kid LAROI, Justin Bieber",
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273b4d59e6fa7e5e7cbc57ac33a",
+        "play_count": 9,
+        "skip_count": 8,
+        "skip_rate": 0.889
       },
       {
-        "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+        "uri": "spotify:track:2nLtzopw4rPReszdYBJU6h",
         "title": "Numb",
         "artists": "Linkin Park",
-        "image_url": "https://i.scdn.co/image/ab67616d0000b2739e495fb707973f3390850eea",
+        "image_url": "https://i.scdn.co/image/ab67616d0000b2735f1f51d14e8bea89484ecd1b",
         "play_count": 11,
         "skip_count": 9,
         "skip_rate": 0.818
       },
       {
-        "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
-        "title": "Stay",
-        "artists": "The Kid LAROI, Justin Bieber",
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273e85259a1cae29a8d91f2093d",
-        "play_count": 7,
-        "skip_count": 6,
-        "skip_rate": 0.857
+        "uri": "spotify:track:0V3wPSX9ygBnCm8psDIegu",
+        "title": "Anti-Hero",
+        "artists": "Taylor Swift",
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273bb54dde68cd23e2a268ae0f5",
+        "play_count": 18,
+        "skip_count": 14,
+        "skip_rate": 0.778
       },
       {
-        "uri": "spotify:track:0lYBSQXN6rF3PmPeibwTah",
-        "title": "Industry Baby",
+        "uri": "spotify:track:27NovPIUIRrOZoCHxABJwK",
+        "title": "INDUSTRY BABY",
         "artists": "Lil Nas X, Jack Harlow",
-        "image_url": "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96",
-        "play_count": 6,
-        "skip_count": 5,
-        "skip_rate": 0.833
+        "image_url": "https://i.scdn.co/image/ab67616d0000b273f27e4bdc58ebe249a6b90da0",
+        "play_count": 8,
+        "skip_count": 6,
+        "skip_rate": 0.750
       }
     ],
     "smart_skipper_threshold": 0.85
   },
   "now": {
     "is_playing": true,
-    "uri": "spotify:track:6nGeLlakfzlBcFdZXteDq7",
+    "uri": "spotify:track:4Dvkj6JhhA12EX05fT7y2e",
     "title": "As It Was",
     "artists": "Harry Styles",
     "album": "Harry's House",
-    "image_url": "https://i.scdn.co/image/ab67616d0000b27370dfa2068cbf3e5a80117101",
+    "image_url": "https://i.scdn.co/image/ab67616d0000b27382ce362511fb3d9dda6578ee",
     "progress_ms": 97000,
     "duration_ms": 167303,
     "skip_rate": 0.0,
@@ -2568,8 +2378,8 @@
       "id": 1,
       "playlist_id": "37i9dQZF1DX0XUsuxWHRQd",
       "playlist_name": "RapCaviar",
-      "uri": "spotify:track:4iJyoBOLtHqaWxL4oJt8sG",
-      "title": "Stay",
+      "uri": "spotify:track:5HCyWlXZPP0y6Gqq8TgA20",
+      "title": "STAY",
       "artists": "The Kid LAROI, Justin Bieber",
       "skip_rate": 0.857,
       "janitor_score": 0.91,
@@ -2583,7 +2393,7 @@
       "id": 2,
       "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
       "playlist_name": "Today's Top Hits",
-      "uri": "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
+      "uri": "spotify:track:0V3wPSX9ygBnCm8psDIegu",
       "title": "Anti-Hero",
       "artists": "Taylor Swift",
       "skip_rate": 0.778,
@@ -2598,7 +2408,7 @@
       "id": 3,
       "playlist_id": "37i9dQZF1DXcBWIGoYBM5M",
       "playlist_name": "Today's Top Hits",
-      "uri": "spotify:track:1BxfuPKGuaTgP7aM0Chatn",
+      "uri": "spotify:track:7qiZfU4dY1lWllzX7mPBI3",
       "title": "Shape of You",
       "artists": "Ed Sheeran",
       "skip_rate": 0.786,
@@ -2613,7 +2423,7 @@
       "id": 4,
       "playlist_id": "6mUtNQBmSJspMFTpMMwGHl",
       "playlist_name": "Rock Classics",
-      "uri": "spotify:track:7snQQk1zcKl8gZ92AnueZW",
+      "uri": "spotify:track:2nLtzopw4rPReszdYBJU6h",
       "title": "Numb",
       "artists": "Linkin Park",
       "skip_rate": 0.818,
@@ -2628,9 +2438,9 @@
       "id": 5,
       "playlist_id": "6mUtNQBmSJspMFTpMMwGHl",
       "playlist_name": "Rock Classics",
-      "uri": "spotify:track:5tCCzZ9AoV2oFEYJpf6nFs",
-      "title": "Thunder",
-      "artists": "Imagine Dragons",
+      "uri": "spotify:track:1r9xUipOqoNwggBpENDsvJ",
+      "title": "Enemy",
+      "artists": "Imagine Dragons, JID",
       "skip_rate": 0.75,
       "janitor_score": 0.71,
       "suggested_at": "2026-06-21T11:00:00+00:00",
@@ -2677,7 +2487,7 @@
       "title": "God's Plan",
       "artists": "Drake",
       "skip_rate": 0.667,
-      "janitor_score": 0.44,
+      "janitor_score": 0.45,
       "suggested_at": "2026-06-18T12:00:00+00:00",
       "status": "pending",
       "play_count": 15,
@@ -2688,9 +2498,9 @@
       "id": 9,
       "playlist_id": "4uhrVRBGPHnmFBHJjLuEBl",
       "playlist_name": "Liked Songs",
-      "uri": "spotify:track:6PGoSes0D9eUDeeAafB2As",
-      "title": "Flowers",
-      "artists": "Miley Cyrus",
+      "uri": "spotify:track:02MWAaffLxlfxAUY7c5dvx",
+      "title": "Heat Waves",
+      "artists": "Glass Animals",
       "skip_rate": 0.429,
       "janitor_score": 0.31,
       "suggested_at": "2026-06-17T08:45:00+00:00",
@@ -2703,9 +2513,9 @@
       "id": 10,
       "playlist_id": "6mUtNQBmSJspMFTpMMwGHl",
       "playlist_name": "Rock Classics",
-      "uri": "spotify:track:3n3Ppam7vgaVa1iaRUIOKE",
-      "title": "Mr. Brightside",
-      "artists": "The Killers",
+      "uri": "spotify:track:60a0Rd6pjrkxjPbaKzXjfq",
+      "title": "In the End",
+      "artists": "Linkin Park",
       "skip_rate": 0.571,
       "janitor_score": 0.38,
       "suggested_at": "2026-06-16T15:20:00+00:00",
