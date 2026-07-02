@@ -323,8 +323,11 @@ def polling_loop(user_id: str) -> None:
                 continue
             if resp.status_code != 200:
                 logger.warning(
-                    "[%s] Uventet statuskode fra Spotify: %d", user_id, resp.status_code
-                )
+                    "[%s] Spotify %d: %s",
+                    user_id,
+                    resp.status_code,
+                    resp.text,
+                    )
                 time.sleep(POLL_SECONDS)
                 continue
 
