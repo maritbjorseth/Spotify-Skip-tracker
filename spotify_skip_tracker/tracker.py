@@ -523,6 +523,34 @@ def _upsert_now_playing(
         new_conn = reconnect()
         if new_conn is not None:
             logger.info("[%s] Koblet til databasen på nytt (now_playing).", user_id)
+            try:
+                execute(
+                    new_conn,
+                    """
+                    INSERT INTO now_playing
+                        (user_id, uri, title, artists, album, image_url,
+                         progress_ms, duration_ms, is_playing, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        uri         = EXCLUDED.uri,
+                        title       = EXCLUDED.title,
+                        artists     = EXCLUDED.artists,
+                        album       = EXCLUDED.album,
+                        image_url   = EXCLUDED.image_url,
+                        progress_ms = EXCLUDED.progress_ms,
+                        duration_ms = EXCLUDED.duration_ms,
+                        is_playing  = EXCLUDED.is_playing,
+                        updated_at  = NOW()
+                    """,
+                    (user_id, uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing),
+                )
+                new_conn.commit()
+                logger.info("[%s] now_playing skrevet på ny tilkobling.", user_id)
+            except Exception as retry_exc:
+                logger.error(
+                    "[%s] Kunne ikke skrive now_playing på ny tilkobling: %s",
+                    user_id, retry_exc,
+                )
             return new_conn
         logger.critical(
             "[%s] Kunne ikke koble til databasen på nytt. "
