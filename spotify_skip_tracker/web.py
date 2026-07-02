@@ -568,6 +568,37 @@ def create_flask_app() -> Flask:
         duration_ms = int(item.get("duration_ms") or 1)
         is_playing  = bool(sp.get("is_playing", False))
 
+        # Skriv tilbake til now_playing så neste poll treffer cache (steg 1)
+        # i stedet for å gjøre et nytt Spotify-kall hvert 5. sekund.
+        try:
+            with pooled_connection() as conn:
+                execute(
+                    conn,
+                    """
+                    INSERT INTO now_playing
+                        (user_id, uri, title, artists, album, image_url,
+                         progress_ms, duration_ms, is_playing, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        uri         = EXCLUDED.uri,
+                        title       = EXCLUDED.title,
+                        artists     = EXCLUDED.artists,
+                        album       = EXCLUDED.album,
+                        image_url   = EXCLUDED.image_url,
+                        progress_ms = EXCLUDED.progress_ms,
+                        duration_ms = EXCLUDED.duration_ms,
+                        is_playing  = EXCLUDED.is_playing,
+                        updated_at  = NOW()
+                    """,
+                    (current_user_id, uri, title, artists, album, image_url,
+                     progress_ms, duration_ms, is_playing),
+                )
+        except Exception as exc:
+            logger.debug(
+                "[%s] /api/now: kunne ikke skrive fallback til cache: %s",
+                current_user_id, exc,
+            )
+
         skip_rate = _skip_rate_for_uri(current_user_id, uri)
 
         return jsonify({
