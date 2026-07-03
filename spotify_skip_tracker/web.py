@@ -981,16 +981,29 @@ def create_flask_app() -> Flask:
                 timeout=15,
             )
             if not spotify_resp.ok:
+                # NB: raise_for_status() bruker response.url (endelig URL etter
+                # eventuelle omdirigeringer) i feilmeldingen — ikke URL-en vi sendte.
+                # Logg begge slik at vi kan se om Spotify omdirigerer /items → /tracks.
+                _req_url  = getattr(spotify_resp.request, "url", "ukjent")
+                _resp_url = spotify_resp.url
+                _history  = [(r.status_code, r.url) for r in spotify_resp.history]
                 logger.error(
-                    "Janitor remove: Spotify %d ved fjerning av uri=%s fra playlist=%s\n"
-                    "  Innlogget bruker (session): %s\n"
-                    "  Token-eier (DB): %s\n"
+                    "Janitor remove: Spotify %d\n"
+                    "  Forespurt URL (sendt av oss):  %s\n"
+                    "  Endelig URL   (response.url):  %s\n"
+                    "  Omdirigeringer (history):       %s\n"
+                    "  Innlogget bruker (session):     %s\n"
+                    "  Token-eier (DB):                %s\n"
+                    "  uri=%s  playlist=%s\n"
                     "  Response body: %s",
                     spotify_resp.status_code,
-                    track_uri,
-                    playlist_id,
+                    _req_url,
+                    _resp_url,
+                    _history,
                     user_id,
                     creds.get("user_id", "(legacy/env-var)"),
+                    track_uri,
+                    playlist_id,
                     spotify_resp.text,
                 )
             spotify_resp.raise_for_status()
