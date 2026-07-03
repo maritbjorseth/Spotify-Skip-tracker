@@ -962,18 +962,37 @@ def create_flask_app() -> Flask:
         user_id = _resolve_user_id()
 
         try:
-            creds = load_creds()
+            # Bruk den innloggede brukerens DB-token, ikke legacy env-var-token.
+            # load_creds() uten user_id kan gi et gammelt token med feil scope.
+            creds = load_creds(user_id)
             token = get_access_token(creds)
 
+            # Februar 2026: DELETE /playlists/{id}/tracks er omdøpt til
+            # DELETE /playlists/{id}/items, og body-nøkkelen "tracks" er
+            # omdøpt til "items". Development Mode-apper får 403 på det
+            # gamle endepunktet.
             spotify_resp = http_requests.delete(
-                f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+                f"https://api.spotify.com/v1/playlists/{playlist_id}/items",
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                 },
-                json={"tracks": [{"uri": track_uri}]},
+                json={"items": [{"uri": track_uri}]},
                 timeout=15,
             )
+            if not spotify_resp.ok:
+                logger.error(
+                    "Janitor remove: Spotify %d ved fjerning av uri=%s fra playlist=%s\n"
+                    "  Innlogget bruker (session): %s\n"
+                    "  Token-eier (DB): %s\n"
+                    "  Response body: %s",
+                    spotify_resp.status_code,
+                    track_uri,
+                    playlist_id,
+                    user_id,
+                    creds.get("user_id", "(legacy/env-var)"),
+                    spotify_resp.text,
+                )
             spotify_resp.raise_for_status()
 
             snapshot_id = spotify_resp.json().get("snapshot_id", "")
@@ -1032,7 +1051,8 @@ def create_flask_app() -> Flask:
                 "Spotify-feil ved fjerning av %s fra %s: %s",
                 track_uri, playlist_id, exc,
             )
-            return jsonify({"error": str(exc)}), 500
+            status_code = exc.response.status_code if exc.response is not None else 500
+            return jsonify({"error": str(exc)}), status_code
         except Exception as exc:
             logger.exception(
                 "Uventet feil i /api/janitor/remove: %s", exc

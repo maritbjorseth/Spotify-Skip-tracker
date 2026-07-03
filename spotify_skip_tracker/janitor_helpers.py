@@ -72,6 +72,51 @@ def get_all_my_playlists(token: str) -> list[dict]:
     return playlists
 
 
+def _log_403_context(token: str, playlist_id: str, resp: "requests.Response") -> None:
+    """Logger diagnostisk informasjon når Spotify svarer 403 på et spilleliste-kall."""
+    # Hent innlogget bruker
+    try:
+        me = requests.get(f"{_BASE}/me", headers=_headers(token), timeout=10)
+        me_data = me.json() if me.ok else {}
+        authed_user = me_data.get("id", "ukjent")
+        granted_scopes = me_data.get("product", "")  # product er premium/free
+    except Exception:
+        authed_user = "kunne ikke hente"
+        granted_scopes = ""
+
+    # Hent spilleliste-metadata for å finne eieren
+    try:
+        pl = requests.get(
+            f"{_BASE}/playlists/{playlist_id}",
+            headers=_headers(token),
+            params={"fields": "id,name,owner.id"},
+            timeout=10,
+        )
+        pl_data = pl.json() if pl.ok else {}
+        playlist_owner = (pl_data.get("owner") or {}).get("id", "ukjent")
+        playlist_name = pl_data.get("name", "ukjent")
+    except Exception:
+        playlist_owner = "kunne ikke hente"
+        playlist_name = "ukjent"
+
+    logger.error(
+        "Janitor: 403 Forbidden fra Spotify ved henting av spor\n"
+        "  Spilleliste-ID:    %s\n"
+        "  Spilleliste-navn:  %s\n"
+        "  Spilleliste-eier:  %s\n"
+        "  Innlogget bruker:  %s\n"
+        "  Response body:     %s\n"
+        "  Sjekk: (1) er brukeren eier/samarbeider? "
+        "(2) er 'playlist-read-private' og 'playlist-read-collaborative' i scopes? "
+        "(3) er tokenet nylig nok (kjør re-autentisering om usikkert)?",
+        playlist_id,
+        playlist_name,
+        playlist_owner,
+        authed_user,
+        resp.text,
+    )
+
+
 def get_playlist_tracks(token: str, playlist_id: str) -> list[dict]:
     """
     Henter alle musikk-spor i en spilleliste.
@@ -89,6 +134,8 @@ def get_playlist_tracks(token: str, playlist_id: str) -> list[dict]:
     while url:
         try:
             resp = requests.get(url, headers=_headers(token), timeout=10)
+            if resp.status_code == 403:
+                _log_403_context(token, playlist_id, resp)
             resp.raise_for_status()
         except requests.RequestException as exc:
             logger.error(
