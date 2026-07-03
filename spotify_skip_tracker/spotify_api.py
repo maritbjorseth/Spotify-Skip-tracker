@@ -200,9 +200,25 @@ def _load_creds_from_db(user_id: str) -> dict:
             f"Kunne ikke dekryptere refresh-token for '{user_id}': {exc}"
         ) from exc
 
+    # Klientlegitimasjonen leses alltid fra miljøvariabler — den lagres ikke i DB.
+    # Feiler her med en tydelig melding fremfor å sende tomme strenger til Spotify
+    # (som ville gitt en lite forklarende 400 invalid_client-feil).
+    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+        raise RuntimeError(
+            "SPOTIFY_CLIENT_ID og/eller SPOTIFY_CLIENT_SECRET mangler i miljøet. "
+            "Sett begge variablene i Railway-dashbordet og re-deploy."
+        )
+
+    logger.debug(
+        "[%s] _load_creds_from_db: client_id[:8]=%s refresh_token[:8]=%s",
+        user_id,
+        SPOTIFY_CLIENT_ID[:8],
+        refresh_token_plain[:8] if refresh_token_plain else "TOMT",
+    )
+
     return {
-        "client_id":     SPOTIFY_CLIENT_ID or "",
-        "client_secret": SPOTIFY_CLIENT_SECRET or "",
+        "client_id":     SPOTIFY_CLIENT_ID,
+        "client_secret": SPOTIFY_CLIENT_SECRET,
         "refresh_token": refresh_token_plain,
         "access_token":  row["access_token"] or "",
         "expires_at":    row["expires_at"] or 0.0,
@@ -303,7 +319,21 @@ def get_access_token(creds: dict) -> str:
         )
         logger.info("[%s] TOKEN: refresh-svar status=%d", user_id, resp.status_code)
         if resp.status_code != 200:
-            logger.error("[%s] TOKEN: refresh feilet — body=%s", user_id, resp.text[:300])
+            # Plukk ut Spotifys strukturerte feilkoder slik at årsaken vises klart i loggen.
+            # Typiske verdier: error=invalid_client (feil client_id/secret),
+            #                  error=invalid_grant (refresh-token ugyldig/tilbakekalt)
+            try:
+                err_json = resp.json()
+                spotify_error = err_json.get("error", "–")
+                spotify_error_desc = err_json.get("error_description", "–")
+            except Exception:
+                spotify_error = "–"
+                spotify_error_desc = resp.text[:300]
+            logger.error(
+                "[%s] TOKEN: refresh feilet — status=%d  "
+                "spotify_error=%r  spotify_error_description=%r",
+                user_id, resp.status_code, spotify_error, spotify_error_desc,
+            )
         resp.raise_for_status()
     except requests.RequestException as exc:
         logger.error("[%s] TOKEN: refresh-forespørsel kastet unntak: %s", user_id, exc)
