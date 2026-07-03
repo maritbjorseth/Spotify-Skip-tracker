@@ -489,7 +489,9 @@ class SmartSkipper:
             skip_rate * 100,
             reason,
         )
+        logger.info("Smart Skipper: kaller skip_to_next() for uri=%s", uri_to_skip)
         success = skip_to_next(token)
+        logger.info("Smart Skipper: skip_to_next() returnerte success=%s", success)
 
         if success:
             # Registrer tidspunkt for rate-limiting
@@ -497,6 +499,7 @@ class SmartSkipper:
             # Marker sangen som hoppet over denne sesjonen
             self._skipped_this_session.add(uri_to_skip)
             # Skriv til audit-logg
+            logger.info("Smart Skipper: kaller log_auto_skip() for uri=%s user_id=%s", uri_to_skip, user_id)
             log_auto_skip(
                 conn,
                 uri=uri_to_skip,
