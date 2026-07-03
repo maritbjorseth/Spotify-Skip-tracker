@@ -397,6 +397,12 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
         return name
     except Exception as exc:
         logger.warning("Kunne ikke hente kontekstnavn for %s: %s", context_uri, exc)
+        # Nullstill tilkoblingen slik at en mislykket INSERT/commit ikke etterlater
+        # den i aborted-tilstand, noe som ville fått påfølgende DB-kall til å feile.
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         return None
 
 

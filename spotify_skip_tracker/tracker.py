@@ -499,7 +499,7 @@ def polling_loop(user_id: str) -> None:
                     user_id=user_id,
                 )
             except Exception as exc:
-                logger.warning(
+                logger.exception(
                     "[%s] Smart Skipper-feil (ignorerer): %s", user_id, exc
                 )
 

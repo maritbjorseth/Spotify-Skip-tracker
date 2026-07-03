@@ -174,6 +174,15 @@ def log_auto_skip(
     user_id: str = "default_user",
 ) -> None:
     """Skriver én post til auto_skips-tabellen (audit-logg) for én bruker."""
+    # Nullstill eventuelle uferdige eller avbrutte transaksjoner på tilkoblingen
+    # før vi skriver. SELECTs i evaluate() kan ha etterlatt en åpen transaksjon,
+    # og en mislykket kontekstnavn-oppslag kan ha satt tilkoblingen i aborted-tilstand.
+    # Rollback her er ufarlig — alle foregående lese-spørringer trenger ikke commit.
+    try:
+        conn.rollback()
+    except Exception:
+        pass
+
     execute(
         conn,
         """
@@ -184,6 +193,10 @@ def log_auto_skip(
         (user_id, uri, title, artists, context_uri, skip_rate, threshold, reason),
     )
     conn.commit()
+    logger.info(
+        "Auto-skip skrevet til audit-logg: user_id=%s, uri=%s, reason=%s",
+        user_id, uri, reason,
+    )
 
 
 # ---------------------------------------------------------------------------
