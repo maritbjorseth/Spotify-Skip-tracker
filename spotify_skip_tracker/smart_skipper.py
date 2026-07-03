@@ -223,6 +223,16 @@ def skip_to_next(token: str, device_id: str | None = None) -> bool:
         )
         if resp.status_code == 204:
             return True
+        if resp.status_code == 200:
+            # Spotify returnerer av og til 200 i stedet for 204 i visse
+            # playback-kontekster. Dette er udokumentert serveradferd —
+            # dokumentasjonen spesifiserer 204 som eneste suksess-kode —
+            # men sangen hopper faktisk. Behandles som suksess.
+            logger.warning(
+                "Spotify svarte 200 (forventet 204) ved hopp — "
+                "behandler som suksess. Body: %s", resp.text or "(tom)",
+            )
+            return True
         if resp.status_code == 403:
             logger.error(
                 "Mangler 'user-modify-playback-state'-tillatelse. "
@@ -489,9 +499,7 @@ class SmartSkipper:
             skip_rate * 100,
             reason,
         )
-        logger.info("Smart Skipper: kaller skip_to_next() for uri=%s", uri_to_skip)
         success = skip_to_next(token)
-        logger.info("Smart Skipper: skip_to_next() returnerte success=%s", success)
 
         if success:
             # Registrer tidspunkt for rate-limiting
@@ -499,7 +507,6 @@ class SmartSkipper:
             # Marker sangen som hoppet over denne sesjonen
             self._skipped_this_session.add(uri_to_skip)
             # Skriv til audit-logg
-            logger.info("Smart Skipper: kaller log_auto_skip() for uri=%s user_id=%s", uri_to_skip, user_id)
             log_auto_skip(
                 conn,
                 uri=uri_to_skip,
