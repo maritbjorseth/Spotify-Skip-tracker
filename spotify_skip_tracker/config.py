@@ -40,17 +40,23 @@ WRAPPED_PATH = APP_DIR / "wrapped.html"
 # Spotify OAuth
 # ---------------------------------------------------------------------------
 
-REDIRECT_URI = "http://127.0.0.1:8888/callback"
-SCOPE = (
-    "user-read-currently-playing "
-    "user-read-playback-state "
-    "user-modify-playback-state "
-    "playlist-modify-public "
-    "playlist-modify-private "
-    "playlist-read-private "
-    "playlist-read-collaborative "
-    "user-read-email"
-)
+# Callback-URL for lokal OAuth-flyt (CLI/terminal-innlogging).
+# Kan overstyres med miljøvariabelen REDIRECT_URI — nyttig i Docker o.l.
+REDIRECT_URI: str = os.environ.get("REDIRECT_URI", "http://127.0.0.1:8888/callback")
+
+# Spotify-tillatelser som appen ber om ved innlogging.
+# Samlet som liste for lesbarhet; SCOPE er den ferdige mellomromsseparerte strengen.
+SPOTIFY_SCOPES: list[str] = [
+    "user-read-currently-playing",
+    "user-read-playback-state",
+    "user-modify-playback-state",
+    "playlist-modify-public",
+    "playlist-modify-private",
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "user-read-email",
+]
+SCOPE: str = " ".join(SPOTIFY_SCOPES)
 
 # ---------------------------------------------------------------------------
 # Spotify-bruker-ID (for data-migrasjon)
