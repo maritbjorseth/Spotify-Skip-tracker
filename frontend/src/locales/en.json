@@ -102,7 +102,11 @@
       "subtitle": "Songs with a high enough skip rate that Smart Skipper would skip them automatically.",
       "empty": "No candidates — no songs exceed the {{pct}}% threshold yet.",
       "dryRunButton": "Dry-run mode",
-      "dryRunTooltip": "Disable dry-run mode to enable automatic skipping"
+      "dryRunTooltip": "Disable dry-run mode to enable automatic skipping",
+      "activeButton": "Will be skipped",
+      "activeTooltip": "These songs will be skipped automatically",
+      "disabledButton": "Disabled",
+      "disabledTooltip": "Enable Smart Skipper to activate automatic skipping"
     },
     "topArtists": {
       "heading": "Artists you listen to most",
@@ -219,6 +223,12 @@
     "error": "Could not fetch Smart Skipper status.",
     "enableHint": "Enable via CLI:",
     "dryRunHint": "Disable dry-run mode for real skips:",
+    "toggleEnable": "Enable Smart Skipper",
+    "toggleEnableDesc": "Checks skip rate for each track and is ready to skip.",
+    "toggleDryRun": "Dry-run mode",
+    "toggleDryRunDesc": "Logs suggested skips without actually skipping any tracks.",
+    "toggleSaving": "Saving…",
+    "toggleDemoDisabled": "Not available in demo",
     "historyHeading": "Last 20 automatic skips",
     "historyEmpty": "No automatic skips recorded yet.",
     "columns": {

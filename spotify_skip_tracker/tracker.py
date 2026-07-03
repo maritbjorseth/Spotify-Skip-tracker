@@ -9,6 +9,7 @@ Håndterer:
 """
 
 import logging
+import random
 import threading
 import time
 import uuid as _uuid
@@ -282,6 +283,9 @@ def polling_loop(user_id: str) -> None:
 
     logger.info("[%s] Poller hvert %ds.", user_id, POLL_SECONDS)
 
+    consecutive_429 = 0
+    consecutive_403 = 0
+
     while True:
         # --- Hent/forny access-token —----------------------------------------
         # 400/401 fra Spotify betyr refresh-token er ugyldig eller tilbakekalt.
@@ -323,10 +327,44 @@ def polling_loop(user_id: str) -> None:
             logger.info("[%s] STEP 4: after response — status=%d content_len=%d",
                         user_id, resp.status_code, len(resp.content))
 
-            # 204 = ingenting spilles; 429 = rate limit
-            if resp.status_code in (204, 429) or not resp.content:
-                time.sleep(POLL_SECONDS)
+            # 204 = ingenting spilles
+            if resp.status_code == 204 or not resp.content:
+                consecutive_429 = 0
+                consecutive_403 = 0
+                time.sleep(POLL_SECONDS + random.uniform(-1.5, 1.5))
                 continue
+
+            # 429 = rate limit — les Retry-After, eksponentiell backoff
+            if resp.status_code == 429:
+                consecutive_429 += 1
+                retry_after = int(resp.headers.get("Retry-After", 0))
+                if retry_after <= 0:
+                    retry_after = min(POLL_SECONDS * (2 ** consecutive_429), 300)
+                logger.warning(
+                    "[%s] Spotify 429 (rate limit) — forsøk %d, sover %ds.",
+                    user_id, consecutive_429, retry_after,
+                )
+                time.sleep(retry_after)
+                continue
+
+            # 403 = ikke tilgang — ikke drep tråden permanent, prøv igjen senere
+            if resp.status_code == 403:
+                consecutive_403 += 1
+                logger.warning(
+                    "[%s] Spotify 403: %s (forsøk %d/10)",
+                    user_id, resp.text.strip(), consecutive_403,
+                )
+                if consecutive_403 >= 10:
+                    logger.error(
+                        "[%s] 10 påfølgende 403-svar — avslutter polling-tråd. "
+                        "Sjekk at brukeren er registrert i Spotify Developer Dashboard.",
+                        user_id,
+                    )
+                    return
+                # Sov lenge — 403 er vanligvis ikke transient, men gi admin tid til å fikse
+                time.sleep(min(300 * consecutive_403, 1800))
+                continue
+
             if resp.status_code != 200:
                 logger.warning(
                     "[%s] Spotify %d: %s",
@@ -336,6 +374,9 @@ def polling_loop(user_id: str) -> None:
                     )
                 time.sleep(POLL_SECONDS)
                 continue
+
+            consecutive_429 = 0
+            consecutive_403 = 0
 
             logger.info("[%s] STEP 5: before resp.json()", user_id)
             data = resp.json()
@@ -467,7 +508,7 @@ def polling_loop(user_id: str) -> None:
         except Exception as exc:
             logger.exception("[%s] Uventet feil i polling-loop: %s", user_id, exc)
 
-        time.sleep(POLL_SECONDS)
+        time.sleep(POLL_SECONDS + random.uniform(-1.5, 1.5))
 
 
 def _upsert_now_playing(

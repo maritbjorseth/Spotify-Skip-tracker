@@ -102,7 +102,11 @@
       "subtitle": "Sanger med høy nok skip-rate til at Smart Skipper ville hoppet over dem automatisk.",
       "empty": "Ingen kandidater — ingen sanger overskrider {{pct}}%-terskelen ennå.",
       "dryRunButton": "Prøvemodus",
-      "dryRunTooltip": "Slå av prøvemodus for å aktivere automatiske hopp"
+      "dryRunTooltip": "Slå av prøvemodus for å aktivere automatiske hopp",
+      "activeButton": "Vil hoppes over",
+      "activeTooltip": "Disse sangene vil bli hoppet over automatisk",
+      "disabledButton": "Deaktivert",
+      "disabledTooltip": "Aktiver Smart Skipper for å aktivere automatiske hopp"
     },
     "topArtists": {
       "heading": "Artister du hører mest på",
@@ -219,6 +223,12 @@
     "error": "Kunne ikke hente Smart Skipper-status.",
     "enableHint": "Aktiver via CLI:",
     "dryRunHint": "Slå av prøvemodus for ekte hopp:",
+    "toggleEnable": "Aktiver Smart Skipper",
+    "toggleEnableDesc": "Sjekker skip-rate for hver sang og er klar til å hoppe.",
+    "toggleDryRun": "Testmodus",
+    "toggleDryRunDesc": "Logger foreslåtte hopp uten å faktisk hoppe over sanger.",
+    "toggleSaving": "Lagrer…",
+    "toggleDemoDisabled": "Ikke tilgjengelig i demo",
     "historyHeading": "Siste 20 automatiske hopp",
     "historyEmpty": "Ingen automatiske hopp registrert ennå.",
     "columns": {

@@ -278,7 +278,7 @@ export default function App() {
             )}
 
             <SectionDivider label={t("app.sections.smartSkipper")} />
-            <SmartSkipperPanel />
+            <SmartSkipperPanel isDemo={isDemo} />
             <AutoSkipPreviewTable
               candidates={data.auto_skip_candidates ?? []}
               threshold={data.smart_skipper_threshold ?? 0.85}

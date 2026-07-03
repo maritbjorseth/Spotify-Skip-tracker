@@ -2,7 +2,7 @@
 
 > An honest mirror for your listening habits. Automatically tracks every Spotify play across all your devices, detects skips, and surfaces patterns over time — which songs you always skip, which playlists trigger the most skipping, and when during the day you're most impatient.
 
-![Dashboard screenshot](docs/screenshots/Dashboard.jpg)
+![Dashboard screenshot](docs/screenshots/Dashboard.png)
 _Screenshot placeholder — add your own_
 
 ---

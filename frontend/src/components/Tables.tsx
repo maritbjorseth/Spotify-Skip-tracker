@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { Track, Artist, AutoSkipCandidate } from "../types";
 import { skipRateColor } from "../theme";
+import { api } from "../api";
 
 // ---------------------------------------------------------------------------
 // Hjelpefunksjoner
@@ -413,6 +415,13 @@ export function AutoSkipPreviewTable({
 }) {
   const { t } = useTranslation();
   const pct = Math.round(threshold * 100);
+  const { data: skipperData } = useQuery({
+    queryKey: ["smartSkipper"],
+    queryFn: api.smartSkipper,
+    staleTime: 10_000,
+  });
+  const isEnabled = skipperData?.config?.enabled ?? false;
+  const isDryRun = skipperData?.config?.dry_run ?? true;
 
   return (
     <section className="mb-10">
@@ -468,18 +477,43 @@ export function AutoSkipPreviewTable({
                     <SkipBadge rate={c.skip_rate} />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      disabled
-                      className="rounded-md px-3 py-1 text-xs font-medium cursor-not-allowed"
-                      style={{
-                        background: "#2a2a2a",
-                        color: "#555",
-                        border: "1px solid #333",
-                      }}
-                       title={t("tables.autoSkip.dryRunTooltip")}
-                     >
-                       {t("tables.autoSkip.dryRunButton")}
-                    </button>
+                    {!isEnabled ? (
+                      <span
+                        className="inline-block rounded-md px-3 py-1 text-xs font-medium"
+                        style={{
+                          background: "#2a2a2a",
+                          color: "#555",
+                          border: "1px solid #333",
+                        }}
+                        title={t("tables.autoSkip.disabledTooltip")}
+                      >
+                        {t("tables.autoSkip.disabledButton")}
+                      </span>
+                    ) : isDryRun ? (
+                      <span
+                        className="inline-block rounded-md px-3 py-1 text-xs font-medium"
+                        style={{
+                          background: "#f9731622",
+                          color: "#f97316",
+                          border: "1px solid #f9731644",
+                        }}
+                        title={t("tables.autoSkip.dryRunTooltip")}
+                      >
+                        {t("tables.autoSkip.dryRunButton")}
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-block rounded-md px-3 py-1 text-xs font-medium"
+                        style={{
+                          background: "#1db95422",
+                          color: "#1db954",
+                          border: "1px solid #1db95444",
+                        }}
+                        title={t("tables.autoSkip.activeTooltip")}
+                      >
+                        {t("tables.autoSkip.activeButton")}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))

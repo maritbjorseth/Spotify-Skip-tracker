@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import type { AutoSkipHistoryEntry, SmartSkipperConfig } from "../types";
@@ -29,6 +29,111 @@ function StatusBadge({ config }: { config: SmartSkipperConfig }) {
     </span>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Toggle-rad
+// ---------------------------------------------------------------------------
+
+function ToggleRow({
+  checked,
+  onChange,
+  disabled,
+  label,
+  description,
+  accent,
+}: {
+  checked: boolean;
+  onChange: (val: boolean) => void;
+  disabled: boolean;
+  label: string;
+  description: string;
+  accent: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-3.5 border-b border-[#222] last:border-b-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-[#ddd] leading-snug">{label}</p>
+        <p className="text-xs text-[#666] mt-0.5 leading-snug">{description}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className="flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
+        style={{
+          background: checked ? accent : "#2a2a2a",
+          outlineColor: accent,
+        }}
+      >
+        <span
+          className="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200"
+          style={{ transform: checked ? "translateX(1.375rem)" : "translateX(0.25rem)" }}
+        />
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Kontroll-panel (toggles)
+// ---------------------------------------------------------------------------
+
+function ConfigControls({
+  config,
+  isDemo,
+}: {
+  config: SmartSkipperConfig;
+  isDemo: boolean;
+}) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: api.updateSmartSkipperConfig,
+    onSuccess: (updated) => {
+      // Oppdater cachen direkte med returverdien fra PATCH
+      queryClient.setQueryData<{ config: SmartSkipperConfig; history: AutoSkipHistoryEntry[] }>(
+        ["smartSkipper"],
+        (old) => old ? { ...old, config: updated } : old,
+      );
+    },
+  });
+
+  const saving = mutation.isPending;
+  const disabled = isDemo || saving;
+
+  return (
+    <div className="rounded-xl border border-[#2a2a2a] bg-[#1c1c1c] px-4 mb-6">
+      {isDemo && (
+        <p className="text-xs text-[#555] pt-3 pb-1">{t("smartSkipper.toggleDemoDisabled")}</p>
+      )}
+      <ToggleRow
+        checked={config.enabled}
+        onChange={(val) => mutation.mutate({ enabled: val })}
+        disabled={disabled}
+        label={saving ? t("smartSkipper.toggleSaving") : t("smartSkipper.toggleEnable")}
+        description={t("smartSkipper.toggleEnableDesc")}
+        accent="#1db954"
+      />
+      {config.enabled && (
+        <ToggleRow
+          checked={config.dry_run}
+          onChange={(val) => mutation.mutate({ dry_run: val })}
+          disabled={disabled}
+          label={t("smartSkipper.toggleDryRun")}
+          description={t("smartSkipper.toggleDryRunDesc")}
+          accent="#f97316"
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Historikk-tabell
+// ---------------------------------------------------------------------------
 
 function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
   const { t, i18n } = useTranslation();
@@ -83,7 +188,11 @@ function HistoryTable({ rows }: { rows: AutoSkipHistoryEntry[] }) {
   );
 }
 
-export function SmartSkipperPanel() {
+// ---------------------------------------------------------------------------
+// Hoved-panel
+// ---------------------------------------------------------------------------
+
+export function SmartSkipperPanel({ isDemo = false }: { isDemo?: boolean }) {
   const { t } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ["smartSkipper"],
@@ -114,22 +223,7 @@ export function SmartSkipperPanel() {
 
       {data && (
         <>
-          {!data.config.enabled && (
-            <p className="mt-3 text-xs text-[#888]">
-              {t("smartSkipper.enableHint")}{" "}
-              <code className="rounded bg-[#1c1c1c] px-1.5 py-0.5 text-[#888]">
-                python3 -m spotify_skip_tracker smart-skipper enable
-              </code>
-            </p>
-          )}
-          {data.config.enabled && data.config.dry_run && (
-            <p className="mt-3 text-xs text-[#888]">
-              {t("smartSkipper.dryRunHint")}{" "}
-              <code className="rounded bg-[#1c1c1c] px-1.5 py-0.5 text-[#888]">
-                python3 -m spotify_skip_tracker smart-skipper dry-run off
-              </code>
-            </p>
-          )}
+          <ConfigControls config={data.config} isDemo={isDemo} />
           <h3 className="text-xs font-semibold text-[#888] uppercase tracking-wider mt-6 mb-3">
             {t("smartSkipper.historyHeading")}
           </h3>

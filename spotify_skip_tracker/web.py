@@ -797,6 +797,54 @@ def create_flask_app() -> Flask:
 
         return jsonify({"config": config, "history": history})
 
+    @app.route("/api/smart-skipper/config", methods=["PATCH"])
+    @require_auth
+    def patch_smart_skipper_config():
+        """
+        Oppdaterer enabled og/eller dry_run for innlogget bruker.
+
+        Body (JSON): { "enabled": bool } og/eller { "dry_run": bool }
+        Returnerer oppdatert config-objekt.
+        Returnerer 403 i demo-modus.
+        """
+        if _is_demo():
+            return jsonify({"error": "Ikke tilgjengelig i demo-modus"}), 403
+
+        body = request.get_json(silent=True) or {}
+        allowed = {"enabled", "dry_run"}
+        patch = {k: v for k, v in body.items() if k in allowed and isinstance(v, bool)}
+        if not patch:
+            return jsonify({"error": "Ingen gyldige felt oppgitt"}), 400
+
+        current_user_id = _resolve_user_id()
+        try:
+            with pooled_connection() as conn:
+                ensure_user_smart_skipper_config(conn, current_user_id)
+                for field, value in patch.items():
+                    execute(
+                        conn,
+                        f"UPDATE smart_skipper_config SET {field} = %s WHERE user_id = %s",
+                        (value, current_user_id),
+                    )
+                conn.commit()
+                row = execute(
+                    conn,
+                    "SELECT enabled, threshold, min_plays, delay_seconds, dry_run "
+                    "FROM smart_skipper_config WHERE user_id = %s",
+                    (current_user_id,),
+                ).fetchone()
+        except Exception as exc:
+            logger.exception("Feil i PATCH /api/smart-skipper/config: %s", exc)
+            return jsonify({"error": "Kunne ikke oppdatere konfigurasjon"}), 500
+
+        return jsonify({
+            "enabled":        bool(row[0]),
+            "threshold":      float(row[1]),
+            "min_plays":      int(row[2]),
+            "delay_seconds":  int(row[3]),
+            "dry_run":        bool(row[4]),
+        })
+
     @app.route("/api/stats/score")
     @require_auth
     def listening_score():

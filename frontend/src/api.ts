@@ -31,6 +31,12 @@ export const api = {
     }),
   coachInsights:   (lang: string) => fetchJson<Insight[]>(`/api/coach/insights?lang=${lang}`),
   listeningScore:  () => fetchJson<ListeningScore>("/api/stats/score"),
+  updateSmartSkipperConfig: (patch: { enabled?: boolean; dry_run?: boolean }) =>
+    fetchJson<import("./types").SmartSkipperConfig>("/api/smart-skipper/config", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    }),
   authStatus:      () => fetchJson<AuthStatus>("/api/auth/status"),
   logout:          () => fetchJson<{ success: boolean }>("/api/auth/logout", { method: "POST" }),
   passwordLogin:   (password: string) =>
