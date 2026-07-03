@@ -369,11 +369,11 @@ Navigate to `https://<your-railway-domain>/api/auth/login` to complete the Spoti
 
 | Dashboard | Grafer | Mest skippede sanger |
 |---|---|---|
-| ![Dashboard](docs/screenshots/Dashboard.jpg) | ![Grafer](docs/screenshots/Grafer.jpg) | ![Mest skippede sanger](docs/screenshots/Mest skippede sanger.jpg) |
+| ![Dashboard](docs/screenshots/Dashboard.png) | ![Grafer](docs/screenshots/Grafer.png) | ![Mest skippede sanger](docs/screenshots/Mest-skippede-sanger.png) |
 
 | Smart Skipper | Playlist Janitor | Musikk Coach |
 |---|---|---|
-| ![Smart Skipper](docs/screenshots/Smart Skipper.jpg) | ![Playlist Janitor](docs/screenshots/Playlist Janitor.png) | ![Musikk Coach](docs/screenshots/Musikk Coach.jpg) |
+| ![Smart Skipper](docs/screenshots/Smart-Skipper.png) | ![Playlist Janitor](docs/screenshots/Playlist-Janitor.png) | ![Musikk Coach](docs/screenshots/Musikk-Coach.png) |
 
 ---
 
