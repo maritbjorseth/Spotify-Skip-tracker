@@ -48,7 +48,7 @@ SCOPE = (
     "playlist-modify-public "
     "playlist-modify-private "
     "playlist-read-private "
-    "playlist-read-collaborative"
+    "playlist-read-collaborative "
     "user-read-email"
 )
 
