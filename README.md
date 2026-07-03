@@ -2,7 +2,7 @@
 
 > An honest mirror for your listening habits. Automatically tracks every Spotify play across all your devices, detects skips, and surfaces patterns over time — which songs you always skip, which playlists trigger the most skipping, and when during the day you're most impatient.
 
-![Dashboard screenshot](docs/screenshots/dashboard.png)
+![Dashboard screenshot](docs/screenshots/Dashboard.jpg)
 _Screenshot placeholder — add your own_
 
 ---
@@ -364,17 +364,16 @@ Navigate to `https://<your-railway-domain>/api/auth/login` to complete the Spoti
 
 ---
 
+
 ## Screenshots
 
-| Dashboard | Now Playing | Heatmap |
+| Dashboard | Grafer | Mest skippede sanger |
 |---|---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Now Playing](docs/screenshots/now-playing.png) | ![Heatmap](docs/screenshots/heatmap.png) |
+| ![Dashboard](docs/screenshots/Dashboard.jpg) | ![Grafer](docs/screenshots/Grafer.jpg) | ![Mest skippede sanger](docs/screenshots/Mest skippede sanger.jpg) |
 
-| Smart Skipper | Playlist Janitor | Music Coach |
+| Smart Skipper | Playlist Janitor | Musikk Coach |
 |---|---|---|
-| ![Smart Skipper](docs/screenshots/smart-skipper.png) | ![Janitor](docs/screenshots/janitor.png) | ![Coach](docs/screenshots/coach.png) |
-
-_Screenshot placeholders — add your own under `docs/screenshots/`_
+| ![Smart Skipper](docs/screenshots/Smart Skipper.jpg) | ![Playlist Janitor](docs/screenshots/Playlist Janitor.png) | ![Musikk Coach](docs/screenshots/Musikk Coach.jpg) |
 
 ---
 
