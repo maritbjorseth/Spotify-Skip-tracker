@@ -236,8 +236,16 @@ def skip_to_next(token: str, device_id: str | None = None) -> bool:
             )
             return False
         logger.error(
-            "Uventet statuskode fra Spotify ved hopp: %d %s",
-            resp.status_code, resp.text[:120],
+            "Uventet statuskode fra Spotify ved hopp: %d\n"
+            "  URL:     %s\n"
+            "  Params:  %s\n"
+            "  Headers: %s\n"
+            "  Body:    %s",
+            resp.status_code,
+            url,
+            params,
+            dict(resp.headers),
+            resp.text,
         )
         return False
     except requests.RequestException as exc:
