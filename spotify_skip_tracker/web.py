@@ -459,8 +459,6 @@ def create_flask_app() -> Flask:
           2. Hvis raden mangler eller er stale, spørres Spotify
              /v1/me/player direkte med brukerens token.
         """
-        print(">>> API NOW CALLED <<<", flush=True)
-
         if _is_demo():
             return jsonify(_DEMO_DATA["now"])
 
