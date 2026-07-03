@@ -19,8 +19,8 @@ Always explain the plan before modifying code.
 Never consider a task complete before verification.
 
 Commands:
-- Backend: `pytest`
-- Frontend: `cd frontend && npm run build` (for typesjekk/bygg)
+- Backend-tester: `pytest`
+- Frontend dev-sjekk: `cd frontend && npm run build` (for typesjekk/bygg)
 
 Whenever possible:
 - run relevant tests
