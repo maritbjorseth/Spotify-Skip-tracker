@@ -174,7 +174,8 @@ Go to https://neon.tech and click **Sign up**. You can sign up with your GitHub 
 >
 > Instead, click **Go to project** in the bottom-right corner to proceed.
 
-📷 **Skjermbilde:** Neon setup wizard page with "Go to project" button highlighted
+<img width="1470" height="835" alt="image" src="https://github.com/user-attachments/assets/97136b21-d8bd-4c6d-9883-777b0c5e3c6f" />
+
 
 ---
 
@@ -189,8 +190,6 @@ postgresql://neondb_owner:password@ep-something.aws.neon.tech/neondb?sslmode=req
 Copy this entire string. You will paste it into `.env.local` in step 8.
 
 > If you close this page, you can find the connection string again under **Dashboard → Connection Details**.
-
-📷 **Skjermbilde:** Neon connection string panel
 
 ---
 
@@ -260,7 +259,8 @@ venv\Scripts\activate
 (venv) your-computer:spotify-skip-tracker you$
 ```
 
-📷 **Skjermbilde:** Terminal prompt showing `(venv)` prefix
+<img width="731" height="356" alt="image" src="https://github.com/user-attachments/assets/1a31eac3-3bde-49fa-8576-16ec16d23c53" />
+
 
 > If you close your terminal and come back later, you must run this command again before running any `python3` or `pip` commands.
 
@@ -419,7 +419,8 @@ FRONTEND_URL=http://localhost:5173
 
 **After filling in all values, save the file.**
 
-📷 **Skjermbilde:** `.env.local` open in a text editor with real values filled in (blur or redact the secrets)
+<img width="1034" height="817" alt="image" src="https://github.com/user-attachments/assets/1e662d77-1236-487f-9563-e9a58715377d" />
+
 
 ---
 
@@ -454,7 +455,8 @@ python3 -m spotify_skip_tracker setup \
 
 Your credentials are now saved in `~/.spotify_skip_tracker/credentials.json` on your machine.
 
-📷 **Skjermbilde:** Spotify permission screen in the browser
+<img width="1389" height="238" alt="image" src="https://github.com/user-attachments/assets/6d0c07cd-ae63-49b8-9144-367433459f48" />
+
 
 **If this fails:**
 - `INVALID_CLIENT` — your Client ID or Client Secret is wrong. Double-check them in the Spotify Developer Dashboard.
