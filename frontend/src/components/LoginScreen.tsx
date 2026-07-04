@@ -8,12 +8,9 @@
  */
 
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../config";
 
-const RAILWAY_BASE =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? ""
-    : "https://spotify-skip-tracker-production.up.railway.app";
+const RAILWAY_BASE = API_BASE;
 
 function SpotifyIcon() {
   return (

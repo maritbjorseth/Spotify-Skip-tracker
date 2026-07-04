@@ -1,9 +1,7 @@
 import type { StatsResponse, NowPlayingResponse, SmartSkipperResponse, JanitorCandidate, Insight, ListeningScore, AuthStatus } from "./types";
+import { API_BASE } from "./config";
 
-const BASE =
-  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? ""
-    : "https://spotify-skip-tracker-production.up.railway.app";
+const BASE = API_BASE;
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   // credentials: 'include' er påkrevd for at nettleseren sender session-cookien
