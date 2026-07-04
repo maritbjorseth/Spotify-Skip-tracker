@@ -1,16 +1,30 @@
+# Python / Backend
 __pycache__/
-*.pyc
+*.py[cod]
+venv/
+.venv/
+
+# Database & Secrets
 credentials.json
 data.db
+.env*
+!.env.local.example
+
+# Exports & Generert
 wrapped.html
 skips_export.csv
 *.csv
-.vercel
-.env*
-!.env.local.example
-.claude/
 
 # Frontend
 frontend/node_modules/
-# frontend/dist/ er committet med vilje - Vercel kjører ikke npm, kun pip install
+frontend/dist/
 .DS_Store
+
+# Test / Cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Tredjepart
+.vercel
+.claude/

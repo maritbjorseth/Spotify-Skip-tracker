@@ -376,11 +376,6 @@ This project uses a split deployment model: the tracking process runs on Railway
      "rewrites": [{ "source": "/:path*", "destination": "/index.html" }]
    }
    ```
-3. Set the following environment variable in Vercel:
-
-   | Variable | Value |
-   |---|---|
-   | `VITE_API_BASE_URL` | Your Railway deployment URL |
 
 ### First login after deployment
 
