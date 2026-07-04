@@ -307,6 +307,7 @@ export function PlaylistJanitorPanel({ isDemo = false }: { isDemo?: boolean }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<JanitorCategory>("Remove");
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   const { data, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ["janitorCandidates"],
@@ -319,7 +320,11 @@ export function PlaylistJanitorPanel({ isDemo = false }: { isDemo?: boolean }) {
     mutationFn: ({ playlistId, trackUri }: { playlistId: string; trackUri: string }) =>
       api.removeJanitorCandidate(playlistId, trackUri),
     onSuccess: () => {
+      setRemoveError(null);
       queryClient.invalidateQueries({ queryKey: ["janitorCandidates"] });
+    },
+    onError: () => {
+      setRemoveError(t("playlistJanitor.removeError"));
     },
   });
 
@@ -398,6 +403,13 @@ export function PlaylistJanitorPanel({ isDemo = false }: { isDemo?: boolean }) {
               python3 -m spotify_skip_tracker janitor
             </code>
           </p>
+        </div>
+      )}
+
+      {/* Fjerningsfeil */}
+      {removeError && (
+        <div className="mb-4 rounded-xl border border-red-900/40 bg-red-900/10 p-3 text-red-400 text-sm">
+          {removeError}
         </div>
       )}
 

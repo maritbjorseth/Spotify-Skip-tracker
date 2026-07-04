@@ -268,6 +268,7 @@
     },
     "tabEmpty": "No songs in this category.",
     "demoDisabled": "Not available in demo",
+    "removeError": "Could not remove the song. Please try again.",
     "explanation": "Playlist Janitor analyses your playlists and finds songs you consistently skip. The score (0–1) is calculated from skip rate, consistency, time since last completion, and number of plays. Songs you recently listened to in full will not be suggested for removal."
   },
   "algorithmTooltip": {
