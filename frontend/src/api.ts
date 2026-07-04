@@ -39,10 +39,4 @@ export const api = {
     }),
   authStatus:      () => fetchJson<AuthStatus>("/api/auth/status"),
   logout:          () => fetchJson<{ success: boolean }>("/api/auth/logout", { method: "POST" }),
-  passwordLogin:   (password: string) =>
-    fetchJson<{ success: boolean }>("/api/auth/password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    }),
 };
