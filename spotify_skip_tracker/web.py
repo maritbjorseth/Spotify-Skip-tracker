@@ -108,10 +108,8 @@ def create_flask_app() -> Flask:
     app.config['SESSION_COOKIE_SECURE'] = _is_production
     app.config['SESSION_COOKIE_HTTPONLY'] = True
 
-    _allowed_origins = [
-        o for o in [FRONTEND_URL, "http://localhost:5173", "http://localhost:5000"]
-        if o
-    ]
+    _dev_origins = [] if _is_production else ["http://localhost:5173", "http://localhost:5000"]
+    _allowed_origins = [o for o in [FRONTEND_URL, *_dev_origins] if o]
     CORS(app, supports_credentials=True, origins=_allowed_origins)
 
     # ------------------------------------------------------------------
