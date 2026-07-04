@@ -31,7 +31,7 @@ Unngå feature creep.
 |---|---|---|
 | Bekreft at `SECRET_KEY` er satt i Railway (ikke tilfeldig per restart) | 🔴 Må gjøres | Ukjent |
 | Bekreft at `TOKEN_ENCRYPTION_KEY` er satt i Railway | 🔴 Må gjøres | Ukjent |
-| Fjern `localhost` fra CORS-origins i produksjon (`web.py:112`) | 🟡 Bør gjøres | Åpen |
+| ~~Fjern `localhost` fra CORS-origins i produksjon (`web.py:112`)~~ | 🟡 Bør gjøres | Fikset |
 
 ### API-feil
 
