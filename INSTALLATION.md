@@ -484,7 +484,8 @@ INFO  Flask app running on http://0.0.0.0:5000
 
 The terminal stays running. **Do not close it.** Open a second terminal window for the next steps.
 
-📷 **Skjermbilde:** Terminal showing Flask startup output
+<img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/55d27339-47c0-45a6-87a1-9aa51266ef47" />
+
 
 **If this fails:**
 - `could not connect to server` or `connection refused` — `DATABASE_URL` is missing or wrong. Check `.env.local` and verify the Neon connection string is correct.
@@ -539,7 +540,8 @@ npm run dev
 
 The terminal stays running. **Do not close it.**
 
-📷 **Skjermbilde:** Vite dev server startup output in the terminal
+<img width="888" height="385" alt="image" src="https://github.com/user-attachments/assets/c8dc9020-bee4-4456-8228-8917bbd5b7f5" />
+
 
 **If this fails:**
 - `sh: vite: command not found` — `npm install` did not complete. Run it again.
@@ -557,7 +559,8 @@ http://localhost:5173
 
 **What you should see:** The Spotify Skip Tracker login screen.
 
-📷 **Skjermbilde:** Login screen in the browser
+<img width="1470" height="835" alt="image" src="https://github.com/user-attachments/assets/036659e1-0df6-4dce-9eab-301f37b7a3c6" />
+
 
 Click **Log in with Spotify**. You will be redirected to Spotify's login page. After approving, you are redirected back to the dashboard.
 
@@ -566,7 +569,6 @@ Click **Log in with Spotify**. You will be redirected to Spotify's login page. A
 - Statistic cards (will show zeros if no plays are recorded yet)
 - Charts (will be empty until the tracker has collected some data)
 
-📷 **Skjermbilde:** Dashboard after first login
 
 > The tracker starts collecting data immediately. Play some music on Spotify, wait a minute or two, then refresh the page to see your first entries.
 
@@ -636,7 +638,6 @@ For the tracker to run continuously — even when your laptop is off — you nee
 8. In your Spotify Developer App settings, add the new redirect URI:
    `https://your-app.up.railway.app/api/auth/callback`
 
-📷 **Skjermbilde:** Railway Variables panel with all env vars set
 
 ---
 
@@ -665,7 +666,6 @@ For the tracker to run continuously — even when your laptop is off — you nee
 
 9. Redeploy Railway (click **Redeploy** or push a commit)
 
-📷 **Skjermbilde:** Vercel deployment screen
 
 ---
 
