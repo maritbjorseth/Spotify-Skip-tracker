@@ -558,13 +558,19 @@ def _compute(conn, user_id: str) -> dict:
             SUM(CASE WHEN skipped THEN 1 ELSE 0 END)               AS skip_count
         FROM plays
         WHERE user_id = %s
+          AND uri NOT IN (
+              SELECT uri
+              FROM janitor_removals
+              WHERE user_id = %s
+                AND undone = FALSE
+          )
         GROUP BY uri
         HAVING
             COUNT(*) >= %s
             AND (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) >= %s
         ORDER BY (SUM(CASE WHEN skipped THEN 1 ELSE 0 END)::REAL / COUNT(*)) DESC
         """,
-        (user_id, ss_min_plays, ss_threshold),
+        (user_id, user_id, ss_min_plays, ss_threshold),
     ).fetchall()
     auto_skip_candidates = [
         {

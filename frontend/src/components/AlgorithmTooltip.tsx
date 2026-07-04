@@ -9,6 +9,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { Info } from "lucide-react";
 
 interface Props {
   text: string;
@@ -40,15 +41,15 @@ export function AlgorithmTooltip({ text, color = "#555" }: Props) {
         onClick={() => setOpen((v) => !v)}
         aria-label={label}
         title={label}
-        className="flex items-center justify-center rounded-full transition-all duration-150 select-none font-normal leading-none"
+        className="flex items-center justify-center rounded-full transition-all duration-150 select-none"
         style={{
-          width: 20, height: 20, fontSize: 12, lineHeight: 1,
+          width: 20, height: 20,
           color: open ? color : "#444",
           background: open ? `${color}20` : "transparent",
           border: `1px solid ${open ? `${color}50` : "#2e2e2e"}`,
         }}
       >
-        ⓘ
+        <Info size={11} strokeWidth={1.8} />
       </button>
 
       {open && (

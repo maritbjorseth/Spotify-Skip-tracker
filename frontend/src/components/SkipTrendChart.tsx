@@ -13,6 +13,7 @@
 
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Info } from "lucide-react";
 import {
   ComposedChart,
   Area,
@@ -210,9 +211,9 @@ export function SkipTrendChart({
           {t("skipTrendChart.heading")}
           <span
             title={t("skipTrendChart.headingTooltip")}
-            className="text-[#666] hover:text-[#999] cursor-help transition-colors text-[10px] font-normal normal-case tracking-normal"
+            className="inline-flex items-center text-[#666] hover:text-[#999] cursor-help transition-colors font-normal normal-case tracking-normal"
           >
-            ⓘ
+            <Info size={11} strokeWidth={1.8} />
           </span>
         </h2>
 

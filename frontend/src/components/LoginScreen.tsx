@@ -9,6 +9,7 @@
 
 import { useTranslation } from "react-i18next";
 import { API_BASE } from "../config";
+import { LanguageSelector } from "./LanguageSelector";
 
 const RAILWAY_BASE = API_BASE;
 
@@ -42,7 +43,10 @@ export function LoginScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center px-6">
+    <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center px-6 relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div

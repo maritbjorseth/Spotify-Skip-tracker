@@ -295,6 +295,11 @@ class SmartSkipper:
     def __init__(self) -> None:
         self._pending_uri: str | None = None
         self._pending_since: float | None = None
+        # Metadata captured when the countdown starts — not from the poll when
+        # the timer fires — to avoid logging stale Spotify API data during the
+        # brief propagation window after issuing a skip command.
+        self._pending_title: str | None = None
+        self._pending_artists: str | None = None
         self._skipped_this_session: set[str] = set()
         # Tidsstempel (monotonic) for hvert gjennomførte auto-hopp denne sesjonen.
         # Brukes til å håndheve MAX_AUTO_SKIPS_PER_HOUR.
@@ -422,6 +427,11 @@ class SmartSkipper:
         if self._pending_uri is None:
             self._pending_uri = current_uri
             self._pending_since = time.monotonic()
+            # Capture metadata now, before the skip command is issued.
+            # Spotify can return stale title/artists for 1–3 s after a skip
+            # command propagates, so we must not read these at timer-fire time.
+            self._pending_title = current_title
+            self._pending_artists = current_artists
 
             if config["dry_run"]:
                 logger.info(
@@ -450,6 +460,8 @@ class SmartSkipper:
         # Nedtellingen er ferdig — tid for å hoppe
         # ------------------------------------------------------------------
         uri_to_skip = self._pending_uri
+        title_to_log = self._pending_title
+        artists_to_log = self._pending_artists
         self._reset()
 
         # Hent gjeldende global skip-rate for audit-loggen (kun brukerens data)
@@ -473,16 +485,16 @@ class SmartSkipper:
                 "[DRY RUN] Smart Skipper ville nå hoppet over '%s' — %s "
                 "(skip-rate %.0f%%). Sett dry_run=FALSE i databasen for "
                 "å aktivere ekte hopp.",
-                current_title,
-                current_artists,
+                title_to_log,
+                artists_to_log,
                 skip_rate * 100,
             )
             # Logger likevel til audit-tabellen, merket som dry-run i reason
             log_auto_skip(
                 conn,
                 uri=uri_to_skip,
-                title=current_title,
-                artists=current_artists,
+                title=title_to_log,
+                artists=artists_to_log,
                 context_uri=context_uri,
                 skip_rate=skip_rate,
                 threshold=config["threshold"],
@@ -494,8 +506,8 @@ class SmartSkipper:
         # --- Gjennomfør hoppet ---
         logger.info(
             "Smart Skipper: hopper over '%s' — %s (skip-rate %.0f%%, %s)",
-            current_title,
-            current_artists,
+            title_to_log,
+            artists_to_log,
             skip_rate * 100,
             reason,
         )
@@ -510,8 +522,8 @@ class SmartSkipper:
             log_auto_skip(
                 conn,
                 uri=uri_to_skip,
-                title=current_title,
-                artists=current_artists,
+                title=title_to_log,
+                artists=artists_to_log,
                 context_uri=context_uri,
                 skip_rate=skip_rate,
                 threshold=config["threshold"],
@@ -569,5 +581,7 @@ class SmartSkipper:
         """Nullstiller nedtellingstilstand. Påvirker ikke session-historikk."""
         self._pending_uri = None
         self._pending_since = None
+        self._pending_title = None
+        self._pending_artists = None
         self._recent_outcomes = []
         self._impatience_active = False

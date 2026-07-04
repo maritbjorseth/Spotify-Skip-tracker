@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { Info } from "lucide-react";
 import { skipRateColor } from "../theme";
 
 // ---------------------------------------------------------------------------
@@ -145,9 +146,9 @@ export function StatCard({ label, value, format, color = "#1db954", icon, toolti
           {tooltip && (
             <span
               title={tooltip}
-              className="text-[#666] hover:text-[#999] cursor-help transition-colors text-[10px]"
+              className="inline-flex items-center text-[#666] hover:text-[#999] cursor-help transition-colors"
             >
-              ⓘ
+              <Info size={11} strokeWidth={1.8} />
             </span>
           )}
         </span>

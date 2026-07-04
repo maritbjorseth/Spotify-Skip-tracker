@@ -12,10 +12,11 @@
  */
 
 import { useTranslation } from "react-i18next";
+import ReactCountryFlag from "react-country-flag";
 
 const LANGUAGES = [
-  { code: "nb", flag: "🇳🇴", label: "Norsk" },
-  { code: "en", flag: "🇬🇧", label: "English" },
+  { code: "nb", countryCode: "NO", label: "Norsk" },
+  { code: "en", countryCode: "GB", label: "English" },
 ] as const;
 
 export function LanguageSelector() {
@@ -24,7 +25,7 @@ export function LanguageSelector() {
 
   return (
     <div className="flex items-center gap-1" role="group" aria-label="Language / Språk">
-      {LANGUAGES.map(({ code, flag, label }) => {
+      {LANGUAGES.map(({ code, countryCode, label }) => {
         const isActive = current === code;
         return (
           <button
@@ -40,7 +41,12 @@ export function LanguageSelector() {
               cursor: isActive ? "default" : "pointer",
             }}
           >
-            <span aria-hidden="true">{flag}</span>
+            <ReactCountryFlag
+              countryCode={countryCode}
+              svg
+              aria-hidden="true"
+              style={{ width: "1.1em", height: "0.85em", borderRadius: "2px" }}
+            />
             <span className="hidden sm:inline">{label}</span>
           </button>
         );
