@@ -224,6 +224,10 @@ No `frontend/.env.local` file is needed for local development. The Vite dev serv
 
 For production (Vercel), the API URL is resolved automatically based on the hostname. No environment variable configuration is required in Vercel beyond what is set in the Vercel dashboard.
 
+| Variable | When required | Description |
+|---|---|---|
+| `VITE_IS_PUBLIC_DEMO` | Optional | Set to `true` when hosting a public demo. Displays an informational notice on the login page explaining that "Log in with Spotify" is unavailable and that the data is constructed sample data. Leave unset for all self-hosted installations. |
+
 ---
 
 ## Development

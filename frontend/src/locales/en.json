@@ -5,7 +5,14 @@
     "subtitle": "Connect your Spotify account to see your skip statistics.",
     "loginButton": "Log in with Spotify",
     "demoButton": "Explore demo",
-    "footer": "Spotify Skip Tracker & Coach · Personal dashboard"
+    "footer": "Spotify Skip Tracker & Coach · Personal dashboard",
+    "demoNotice": {
+      "heading": "Public Demo",
+      "body": "This demo is read-only and uses constructed sample data — feel free to explore all features.",
+      "loginUnavailable": "\"Log in with Spotify\" is intentionally unavailable in the public demo.",
+      "reason": "Spotify's API (Development Mode) restricts login to the account owner only. To analyse your own Spotify account, self-host the application with your own Spotify Developer credentials.",
+      "installLink": "Installation Guide →"
+    }
   },
   "app": {
     "header": {

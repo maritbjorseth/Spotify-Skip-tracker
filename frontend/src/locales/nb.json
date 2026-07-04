@@ -5,7 +5,14 @@
     "subtitle": "Koble til Spotify-kontoen din for å se dine skip-statistikker.",
     "loginButton": "Logg inn med Spotify",
     "demoButton": "Utforsk demo",
-    "footer": "Spotify Skip Tracker & Coach · Personlig dashbord"
+    "footer": "Spotify Skip Tracker & Coach · Personlig dashbord",
+    "demoNotice": {
+      "heading": "Offentlig demo",
+      "body": "Denne demoen er skrivebeskyttet og bruker konstruerte eksempeldata — utforsk gjerne alle funksjonene.",
+      "loginUnavailable": "«Logg inn med Spotify» er bevisst utilgjengelig i den offentlige demoen.",
+      "reason": "Spotifys API-begrensninger (Development Mode) tillater kun innlogging for kontoeieren. For å analysere din egen konto, kjør applikasjonen selv med dine egne Spotify Developer-legitimasjoner.",
+      "installLink": "Installasjonsguide →"
+    }
   },
   "app": {
     "header": {

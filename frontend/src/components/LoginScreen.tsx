@@ -31,6 +31,8 @@ function MusicIcon() {
   );
 }
 
+const IS_PUBLIC_DEMO = import.meta.env.VITE_IS_PUBLIC_DEMO === "true";
+
 export function LoginScreen() {
   const { t } = useTranslation();
 
@@ -61,6 +63,21 @@ export function LoginScreen() {
           </h1>
           <p className="text-sm text-[#888] mt-2">{t("login.subtitle")}</p>
         </div>
+
+        {IS_PUBLIC_DEMO && <div className="mb-5 rounded-xl border border-blue-900/40 bg-blue-950/20 p-4 text-left">
+          <p className="text-sm font-semibold text-blue-400 mb-1.5">{t("login.demoNotice.heading")}</p>
+          <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.body")}</p>
+          <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.loginUnavailable")}</p>
+          <p className="text-xs leading-relaxed text-[#9ca3af] mb-2.5">{t("login.demoNotice.reason")}</p>
+          <a
+            href="https://github.com/Ulbjo/Spotify-Skip-tracker/blob/main/INSTALLATION.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors duration-150"
+          >
+            {t("login.demoNotice.installLink")}
+          </a>
+        </div>}
 
         <button
           onClick={handleLogin}
