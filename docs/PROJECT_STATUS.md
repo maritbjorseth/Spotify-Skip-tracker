@@ -63,7 +63,7 @@ Unngå feature creep.
 
 | Oppgave | Prioritet | Status |
 |---|---|---|
-| `onError`-handler i Janitor-mutation (`PlaylistJanitorPanel`) | 🟡 Bør gjøres | Åpen |
+| ~~`onError`-handler i Janitor-mutation (`PlaylistJanitorPanel`)~~ | 🟡 Bør gjøres | Fikset |
 | `onError`-handler i SmartSkipper config-mutation | 🟡 Bør gjøres | Åpen |
 | React `ErrorBoundary` i `main.tsx` | 🟡 Bør gjøres | Åpen |
 | Loading state i `CoachInsightsPanel` og `ListeningScorePanel` | 🟡 Bør gjøres | Åpen |
