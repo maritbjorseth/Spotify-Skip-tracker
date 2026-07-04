@@ -23,7 +23,7 @@ Unngå feature creep.
 | ~~Fjern `print(">>> API NOW CALLED <<<")` i `web.py`~~ | 🔴 Må gjøres | Fikset |
 | ~~Senk STEP 1–8-logger i `tracker.py` til `DEBUG`~~ | 🔴 Må gjøres | Fikset |
 | ~~Lukk DB-tilkobling i `tracker.py` ved token-feil og 403-exit~~ | 🔴 Må gjøres | Fikset |
-| Fjern død `passwordLogin`-funksjon i `api.ts:42–47` | 🟡 Bør gjøres | Åpen |
+| ~~Fjern død `passwordLogin`-funksjon i `api.ts:42–47`~~ | 🟡 Bør gjøres | Fikset |
 
 ### Sikkerhet
 
