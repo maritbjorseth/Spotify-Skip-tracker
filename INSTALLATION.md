@@ -337,7 +337,7 @@ Fill in the following variables one at a time:
 Paste the **Client ID** you copied from the Spotify Developer Dashboard in step 2c.
 
 ```
-SPOTIFY_CLIENT_ID=414bee9f9066468fbb2655af4f8a918a
+SPOTIFY_CLIENT_ID=xxxxxxxxxxxxxxxx
 ```
 
 ---
@@ -347,7 +347,7 @@ SPOTIFY_CLIENT_ID=414bee9f9066468fbb2655af4f8a918a
 Paste the **Client Secret** from step 2c.
 
 ```
-SPOTIFY_CLIENT_SECRET=7fd31f3517b340b593de13d842943af9
+SPOTIFY_CLIENT_SECRET=xxxxxxxxxxxxxxxx
 ```
 
 ---
