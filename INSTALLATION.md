@@ -50,6 +50,8 @@ Any version of 3.12 or higher is fine (3.13, 3.14, etc.).
 > Download the latest version from https://www.python.org/downloads/
 
 📷 **Skjermbilde:** Terminal showing `python3 --version` output
+<img width="321" height="89" alt="image" src="https://github.com/user-attachments/assets/7851a785-aba9-41c5-9860-043a2975a07e" />
+
 
 ---
 
