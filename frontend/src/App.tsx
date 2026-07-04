@@ -15,6 +15,7 @@ import { LanguageSelector } from "./components/LanguageSelector";
 import { ArtistChart, ContextChart, HourlyChart, WeekdayRateChart } from "./components/Charts";
 import { SkipTrendChart } from "./components/SkipTrendChart";
 import { useSectionVisibility, SectionToggle } from "./components/SectionToggle";
+import logo from "./assets/logo.png";
 
 function SectionDivider({ label }: { label: string }) {
   return (
@@ -166,9 +167,17 @@ export default function App() {
           className="mb-5 flex items-start justify-between"
         >
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[#1db954]">
-              {t("app.header.title")}
-            </h1>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <img
+                src={logo}
+                alt=""
+                aria-hidden="true"
+                className="h-8 w-auto sm:h-11"
+              />
+              <h1 className="text-3xl font-bold tracking-tight text-[#1db954]">
+                {t("app.header.title")}
+              </h1>
+            </div>
             <p className="text-sm text-[#888] mt-1">
               {t("app.header.subtitle")}
             </p>
