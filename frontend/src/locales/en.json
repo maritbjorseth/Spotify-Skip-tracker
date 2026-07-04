@@ -228,6 +228,7 @@
     "toggleDryRun": "Dry-run mode",
     "toggleDryRunDesc": "Logs suggested skips without actually skipping any tracks.",
     "toggleSaving": "Saving…",
+    "configError": "Could not save settings. Please try again.",
     "toggleDemoDisabled": "Not available in demo",
     "historyHeading": "Last 20 automatic skips",
     "historyEmpty": "No automatic skips recorded yet.",

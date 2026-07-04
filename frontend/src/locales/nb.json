@@ -228,6 +228,7 @@
     "toggleDryRun": "Testmodus",
     "toggleDryRunDesc": "Logger foreslåtte hopp uten å faktisk hoppe over sanger.",
     "toggleSaving": "Lagrer…",
+    "configError": "Kunne ikke lagre innstillingene. Prøv igjen.",
     "toggleDemoDisabled": "Ikke tilgjengelig i demo",
     "historyHeading": "Siste 20 automatiske hopp",
     "historyEmpty": "Ingen automatiske hopp registrert ennå.",

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
@@ -89,15 +90,20 @@ function ConfigControls({
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: api.updateSmartSkipperConfig,
     onSuccess: (updated) => {
+      setConfigError(null);
       // Oppdater cachen direkte med returverdien fra PATCH
       queryClient.setQueryData<{ config: SmartSkipperConfig; history: AutoSkipHistoryEntry[] }>(
         ["smartSkipper"],
         (old) => old ? { ...old, config: updated } : old,
       );
+    },
+    onError: () => {
+      setConfigError(t("smartSkipper.configError"));
     },
   });
 
@@ -106,6 +112,9 @@ function ConfigControls({
 
   return (
     <div className="rounded-xl border border-[#2a2a2a] bg-[#1c1c1c] px-4 mb-6">
+      {configError && (
+        <p className="text-xs text-red-400 pt-3 pb-1">{configError}</p>
+      )}
       {isDemo && (
         <p className="text-xs text-[#555] pt-3 pb-1">{t("smartSkipper.toggleDemoDisabled")}</p>
       )}
