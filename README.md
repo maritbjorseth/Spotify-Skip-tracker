@@ -1,9 +1,14 @@
 # Spotify Skip Tracker
 
+**First time installing?**
+- 📖 [INSTALLATION.md](INSTALLATION.md) — full step-by-step guide with screenshots
+- 🤖 [AI_INSTALL.md](AI_INSTALL.md) — use ChatGPT, Claude, or Gemini as an installation assistant
+
+---
+
 > An honest mirror for your listening habits. Automatically tracks every Spotify play across all your devices, detects skips, and surfaces patterns over time — which songs you always skip, which playlists trigger the most skipping, and when during the day you're most impatient.
 
 ![Dashboard screenshot](docs/screenshots/Dashboard.png)
-_Screenshot placeholder — add your own_
 
 ---
 
@@ -137,11 +142,17 @@ janitor_removals     -- confirmed Playlist Janitor removals (with undo support)
 
 ## Installation
 
+> **New to Railway, Neon, Vercel, or Spotify APIs?**  
+> See [INSTALLATION.md](INSTALLATION.md) for a step-by-step guide that explains every command, what you should see at each stage, and how to fix common errors.  
+> If you want an AI assistant to guide you through the process, see [AI_INSTALL.md](AI_INSTALL.md).
+
 ### Prerequisites
 
 - Python 3.12+
 - Node.js 20+ (for the frontend)
-- A [Spotify Developer App](https://developer.spotify.com/dashboard) with `http://127.0.0.1:8888/callback` added as a redirect URI
+- A [Spotify Developer App](https://developer.spotify.com/dashboard) — two redirect URIs must be registered:
+  - `http://127.0.0.1:8888/callback` — used by the one-time CLI `setup` command
+  - `http://127.0.0.1:5000/api/auth/callback` — used by the web-based login at `/api/auth/login`
 - A Postgres database (local or [Neon](https://neon.tech))
 
 ### Backend
@@ -151,6 +162,11 @@ janitor_removals     -- confirmed Playlist Janitor removals (with undo support)
 git clone https://github.com/your-username/spotify-skip-tracker.git
 cd spotify-skip-tracker
 
+# Create and activate a Python virtual environment
+python3 -m venv venv
+source venv/bin/activate        # macOS / Linux
+# venv\Scripts\activate         # Windows
+
 # Install Python dependencies
 pip install -r requirements.txt
 
@@ -159,11 +175,16 @@ cp .env.local.example .env.local
 # Edit .env.local — see Environment Variables below
 
 # Authenticate with Spotify (one-time, opens a browser window)
+# Note: client-id and client-secret are passed directly here because the
+# setup command runs before the main server and does not read .env.local.
+# The values you set in .env.local are used by the `run` command.
 python3 -m spotify_skip_tracker setup \
   --client-id YOUR_CLIENT_ID \
   --client-secret YOUR_CLIENT_SECRET
+# Credentials are saved to ~/.spotify_skip_tracker/credentials.json
 
 # Run tracker + API server locally (http://localhost:5000)
+# DATABASE_URL must be set in .env.local before running this command.
 python3 -m spotify_skip_tracker run
 ```
 
@@ -175,30 +196,32 @@ npm install
 npm run dev   # starts Vite dev server at http://localhost:5173
 ```
 
+If everything is working, navigate to `http://localhost:5173`. You should see the login screen. Log in with your Spotify account to start the tracker and open the dashboard.
+
 ---
 
 ## Environment Variables
 
 ### Backend (`.env.local` for local development; Railway environment variables in production)
 
-| Variable | Required | Description |
+| Variable | When required | Description |
 |---|---|---|
-| `DATABASE_URL` | **Yes** | Postgres connection string (e.g. `postgresql://user:pass@host/db?sslmode=require`) |
-| `SPOTIFY_CLIENT_ID` | **Yes** | From your Spotify Developer App |
-| `SPOTIFY_CLIENT_SECRET` | **Yes** | From your Spotify Developer App |
-| `SPOTIFY_REFRESH_TOKEN` | Legacy | Only needed for single-user / legacy mode. Multi-user setups use the DB instead. |
+| `DATABASE_URL` | **Before `run`** | Postgres connection string (e.g. `postgresql://user:pass@host/db?sslmode=require`). Not needed for the `setup` command. |
+| `SPOTIFY_CLIENT_ID` | **Yes** | From your Spotify Developer App. |
+| `SPOTIFY_CLIENT_SECRET` | **Yes** | From your Spotify Developer App. |
 | `TOKEN_ENCRYPTION_KEY` | Recommended | Fernet key for encrypting refresh tokens at rest. Generate with: `python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` |
-| `SECRET_KEY` | **Yes (prod)** | Flask session signing key. Must be stable across restarts or all sessions are invalidated. |
-| `REDIRECT_URI_WEB` | **Yes (prod)** | Spotify OAuth callback URL, e.g. `https://your-railway-app.up.railway.app/api/auth/callback`. Must match your Spotify Developer App settings. |
-| `FRONTEND_URL` | **Yes (prod)** | Your Vercel frontend URL, e.g. `https://spotify-skip-tracker.vercel.app` |
+| `SECRET_KEY` | Recommended | Flask session signing key. Auto-generated if not set, but a new value on every restart invalidates all active sessions. Set a stable value in production. |
+| `REDIRECT_URI_WEB` | **Local + prod** | Spotify OAuth callback URL for web-based login. Local: `http://127.0.0.1:5000/api/auth/callback`. Production: `https://your-railway-app.up.railway.app/api/auth/callback`. Must be registered in your Spotify Developer App. |
+| `FRONTEND_URL` | **Local + prod** | URL of the frontend — used for CORS and post-login redirect. Local: `http://localhost:5173`. Production: your Vercel URL. |
+| `SPOTIFY_REFRESH_TOKEN` | Legacy | Only needed for single-user / legacy mode. Multi-user setups authenticate via the web OAuth flow instead. |
 | `SPOTIFY_USER_ID` | Optional | Your Spotify user ID. Used by the bootstrap migration to backfill historical plays tagged `default_user`. |
 | `DEMO_MODE` | Optional | Set to `true` to enable the `/api/auth/demo` endpoint for public demos. |
 
-### Frontend (`frontend/.env.local`)
+### Frontend
 
-| Variable | Description |
-|---|---|
-| `VITE_API_BASE_URL` | URL of the Flask API, e.g. `https://your-railway-app.up.railway.app` |
+No `frontend/.env.local` file is needed for local development. The Vite dev server proxies all `/api` requests to `http://127.0.0.1:5000` automatically via `vite.config.ts`.
+
+For production (Vercel), the API URL is resolved automatically based on the hostname. No environment variable configuration is required in Vercel beyond what is set in the Vercel dashboard.
 
 ---
 
