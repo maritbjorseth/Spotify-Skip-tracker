@@ -21,8 +21,8 @@ Unngå feature creep.
 | Oppgave | Prioritet | Status |
 |---|---|---|
 | ~~Fjern `print(">>> API NOW CALLED <<<")` i `web.py`~~ | 🔴 Må gjøres | Fikset |
-| Senk STEP 1/2-logger i `tracker.py:294–297` til `DEBUG` | 🔴 Må gjøres | Åpen |
-| Lukk DB-tilkobling i `tracker.py:310` ved token-feil | 🔴 Må gjøres | Åpen |
+| ~~Senk STEP 1–8-logger i `tracker.py` til `DEBUG`~~ | 🔴 Må gjøres | Fikset |
+| ~~Lukk DB-tilkobling i `tracker.py` ved token-feil og 403-exit~~ | 🔴 Må gjøres | Fikset |
 | Fjern død `passwordLogin`-funksjon i `api.ts:42–47` | 🟡 Bør gjøres | Åpen |
 
 ### Sikkerhet
@@ -107,7 +107,7 @@ Unngå feature creep.
 | Oppgave | Prioritet | Status |
 |---|---|---|
 | ~~`print(">>> API NOW CALLED <<<")` fjernet~~ | 🔴 Må gjøres | Fikset |
-| STEP 1/2-logger i `tracker.py` senket til `DEBUG` | 🔴 Må gjøres | Åpen |
+| ~~STEP 1–8-logger i `tracker.py` senket til `DEBUG`~~ | 🔴 Må gjøres | Fikset |
 | Railway log-nivå satt til `WARNING` i produksjon | 🟡 Bør gjøres | Ukjent |
 
 ### Database

@@ -291,10 +291,10 @@ def polling_loop(user_id: str) -> None:
         # 400/401 fra Spotify betyr refresh-token er ugyldig eller tilbakekalt.
         # I det tilfellet markerer vi tokenet i DB og avslutter tråden.
         try:
-            logger.info("[%s] STEP 1: before get_access_token (expires_at=%s, now=%s)",
-                        user_id, creds.get("expires_at"), time.time())
+            logger.debug("[%s] STEP 1: before get_access_token (expires_at=%s, now=%s)",
+                         user_id, creds.get("expires_at"), time.time())
             token = get_access_token(creds)
-            logger.info("[%s] STEP 2: after get_access_token — token[:8]=%s", user_id, token[:8] if token else "None")
+            logger.debug("[%s] STEP 2: after get_access_token — token[:8]=%s", user_id, token[:8] if token else "None")
         except requests.HTTPError as exc:
             status = exc.response.status_code if exc.response is not None else None
             if status in (400, 401):
@@ -307,6 +307,7 @@ def polling_loop(user_id: str) -> None:
                     mark_token_invalid(conn, user_id)
                 except Exception:
                     pass
+                conn.close()
                 return
             logger.warning("[%s] HTTP-feil ved token-refresh: %s.", user_id, exc)
             time.sleep(POLL_SECONDS)
@@ -318,14 +319,14 @@ def polling_loop(user_id: str) -> None:
 
         # --- Poll Spotify-player API ------------------------------------------
         try:
-            logger.info("[%s] STEP 3: before GET /v1/me/player", user_id)
+            logger.debug("[%s] STEP 3: before GET /v1/me/player", user_id)
             resp = requests.get(
                 "https://api.spotify.com/v1/me/player",
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=10,
             )
-            logger.info("[%s] STEP 4: after response — status=%d content_len=%d",
-                        user_id, resp.status_code, len(resp.content))
+            logger.debug("[%s] STEP 4: after response — status=%d content_len=%d",
+                         user_id, resp.status_code, len(resp.content))
 
             # 204 = ingenting spilles
             if resp.status_code == 204 or not resp.content:
@@ -360,6 +361,7 @@ def polling_loop(user_id: str) -> None:
                         "Sjekk at brukeren er registrert i Spotify Developer Dashboard.",
                         user_id,
                     )
+                    conn.close()
                     return
                 # Sov lenge — 403 er vanligvis ikke transient, men gi admin tid til å fikse
                 time.sleep(min(300 * consecutive_403, 1800))
@@ -378,10 +380,10 @@ def polling_loop(user_id: str) -> None:
             consecutive_429 = 0
             consecutive_403 = 0
 
-            logger.info("[%s] STEP 5: before resp.json()", user_id)
+            logger.debug("[%s] STEP 5: before resp.json()", user_id)
             data = resp.json()
-            logger.info("[%s] STEP 6: after resp.json() — item_type=%s is_playing=%s",
-                        user_id, (data.get("item") or {}).get("type"), data.get("is_playing"))
+            logger.debug("[%s] STEP 6: after resp.json() — item_type=%s is_playing=%s",
+                         user_id, (data.get("item") or {}).get("type"), data.get("is_playing"))
             item = data.get("item")
 
             # Filtrer bort podcast-episoder
@@ -403,14 +405,14 @@ def polling_loop(user_id: str) -> None:
             image_url: str | None = images[0]["url"] if images else None
 
             # Oppdater now_playing-tabellen på hver poll
-            logger.info("[%s] STEP 7: before _upsert_now_playing() — uri=%s progress_ms=%s",
-                        user_id, uri, progress_ms)
+            logger.debug("[%s] STEP 7: before _upsert_now_playing() — uri=%s progress_ms=%s",
+                         user_id, uri, progress_ms)
             conn = _upsert_now_playing(
                 conn, uri, title, album, artists, image_url,
                 int(progress_ms), int(duration_ms), is_playing,
                 user_id=user_id,
             )
-            logger.info("[%s] STEP 8: after _upsert_now_playing()", user_id)
+            logger.debug("[%s] STEP 8: after _upsert_now_playing()", user_id)
 
             if uri != last_uri:
                 if last_uri is not None:
