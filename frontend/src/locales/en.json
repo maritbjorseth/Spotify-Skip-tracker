@@ -272,6 +272,11 @@
     "removeError": "Could not remove the song. Please try again.",
     "explanation": "Playlist Janitor analyses your playlists and finds songs you consistently skip. The score (0–1) is calculated from skip rate, consistency, time since last completion, and number of plays. Songs you recently listened to in full will not be suggested for removal."
   },
+  "errorBoundary": {
+    "heading": "Something went wrong",
+    "body": "An unexpected error occurred. Reload the page to try again.",
+    "reload": "Reload"
+  },
   "algorithmTooltip": {
     "label": "How does this work?"
   },

@@ -272,6 +272,11 @@
     "removeError": "Kunne ikke fjerne sangen. Prøv igjen.",
     "explanation": "Playlist Janitor analyserer spillelistene dine og finner sanger du konsekvent hopper over. Scoren (0–1) beregnes fra skip-rate, konsistens, tid siden siste fullføring og antall avspillinger. Sanger du nylig hørte ferdig blir ikke foreslått fjernet."
   },
+  "errorBoundary": {
+    "heading": "Noe gikk galt",
+    "body": "Et uventet problem oppstod. Last siden på nytt for å prøve igjen.",
+    "reload": "Last inn på nytt"
+  },
   "algorithmTooltip": {
     "label": "Hvordan fungerer dette?"
   },
