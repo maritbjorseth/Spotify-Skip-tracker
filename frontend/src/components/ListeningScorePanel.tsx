@@ -32,12 +32,30 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
 
 export function ListeningScorePanel() {
   const { t } = useTranslation();
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["listeningScore"],
     queryFn: api.listeningScore,
     refetchInterval: 120_000,
     staleTime: 60_000,
   });
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-[#2a2a2a] bg-[#141414] px-6 py-5 mb-4 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full shrink-0" style={{ width: 36, height: 36, background: "#2a2a2a" }} />
+            <div>
+              <div className="h-2.5 w-24 rounded bg-[#2a2a2a] mb-2" />
+              <div className="h-2 w-16 rounded bg-[#222]" />
+            </div>
+          </div>
+          <div className="h-10 w-16 rounded bg-[#2a2a2a]" />
+        </div>
+        <div className="w-full h-2 rounded-full bg-[#2a2a2a] mt-4" />
+      </div>
+    );
+  }
 
   if (!data) return null;
 

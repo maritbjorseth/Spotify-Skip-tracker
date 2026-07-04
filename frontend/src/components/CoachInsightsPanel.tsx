@@ -68,12 +68,25 @@ function InsightCard({ insight }: { insight: Insight }) {
 export function CoachInsightsPanel() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "nb";
-  const { data: insights } = useQuery({
+  const { data: insights, isLoading } = useQuery({
     queryKey: ["coachInsights", lang],
     queryFn: () => api.coachInsights(lang),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
+
+  if (isLoading) {
+    return (
+      <div className="mb-8">
+        <div className="h-3 w-32 rounded bg-[#222] mb-3 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-xl border border-[#2a2a2a] bg-[#141414] px-5 py-4 h-20 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!insights || insights.length === 0) return null;
 
