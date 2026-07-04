@@ -133,7 +133,8 @@ You will see two values you need to copy:
 
 Copy both values and keep them somewhere accessible. You will need them in step 8 and step 9.
 
-📷 **Skjermbilde:** App settings page showing Client ID and the "View client secret" button
+<img width="1470" height="747" alt="image" src="https://github.com/user-attachments/assets/98e05bcd-b5f3-40f0-81f7-d4aed860863e" />
+
 
 ---
 
@@ -154,7 +155,8 @@ Go to https://neon.tech and click **Sign up**. You can sign up with your GitHub 
 3. Choose a region close to you (e.g. `AWS / eu-west-1` for Europe)
 4. Click **Create project**
 
-📷 **Skjermbilde:** Neon "Create project" form
+<img width="1470" height="830" alt="image" src="https://github.com/user-attachments/assets/8434e567-4bdb-4576-9ddf-f4ca942d63cd" />
+
 
 **What you should see:** Neon creates the project and shows you a connection string.
 
