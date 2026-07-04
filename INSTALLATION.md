@@ -94,7 +94,8 @@ The tracker reads from the Spotify Web API. You need to register an app to get y
 
 Go to https://developer.spotify.com/dashboard and log in with your Spotify account.
 
-📷 **Skjermbilde:** Spotify Developer Dashboard after login
+<img width="1470" height="615" alt="image" src="https://github.com/user-attachments/assets/6a180c2c-d55f-4a7d-b178-3520e30043eb" />
+
 
 ---
 
@@ -115,7 +116,8 @@ Go to https://developer.spotify.com/dashboard and log in with your Spotify accou
 > **Why two redirect URIs?**  
 > The `setup` command (step 9) uses a temporary server on port **8888** for the one-time authentication flow. The web-based login at `/api/auth/login` uses the Flask server on port **5000**. Both URIs must be registered or Spotify will reject the request.
 
-📷 **Skjermbilde:** Create app form with both redirect URIs entered
+<img width="1470" height="835" alt="Dashbord" src="https://github.com/user-attachments/assets/e751964b-adf2-44e0-9073-4b70501783e9" />
+
 
 **What you should see:** You are redirected to your app's settings page.
 
