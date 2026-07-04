@@ -90,6 +90,8 @@ git version 2.x.x
 
 The tracker reads from the Spotify Web API. You need to register an app to get your API credentials.
 
+> **Important:** A Spotify Premium subscription is required to create a Web API app in the Spotify Developer Dashboard.
+
 ### Step 2a — Open the Spotify Developer Dashboard
 
 Go to https://developer.spotify.com/dashboard and log in with your Spotify account.
@@ -321,6 +323,10 @@ ls .env.local
 ## 8. Fill in the environment variables
 
 Open `.env.local` in a text editor. You need to replace the placeholder values with your real credentials.
+
+> **Can't find the file?**
+> - **VS Code:** Click `.env.local` in the Explorer panel on the left. If you don't see it, make sure you have the project root folder open (not a subfolder).
+> - **Finder on macOS:** Files starting with `.` are hidden by default. Press **⌘ + ⇧ + .** (Command + Shift + Period) to show hidden files, then right-click `.env.local` and open it in your preferred text editor.
 
 Fill in the following variables one at a time:
 

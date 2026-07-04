@@ -150,6 +150,7 @@ janitor_removals     -- confirmed Playlist Janitor removals (with undo support)
 
 - Python 3.12+
 - Node.js 20+ (for the frontend)
+- A **Spotify Premium** account — required to create a Web API app in the Spotify Developer Dashboard
 - A [Spotify Developer App](https://developer.spotify.com/dashboard) — two redirect URIs must be registered:
   - `http://127.0.0.1:8888/callback` — used by the one-time CLI `setup` command
   - `http://127.0.0.1:5000/api/auth/callback` — used by the web-based login at `/api/auth/login`
