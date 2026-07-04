@@ -9,8 +9,8 @@
     "demoNotice": {
       "heading": "Public Demo",
       "body": "This is a public read-only demo using constructed sample data.",
-      "loginUnavailable": "\"Log in with Spotify\" is intentionally disabled on this deployment.",
-      "reason": "Spotify's API (Development Mode) only allows authorized Spotify accounts to log in to this deployment. This is not a bug — if you self-host this project with your own Spotify Developer credentials, login works normally on your own installation.",
+      "loginUnavailable": "\"Log in with Spotify\" only works when you self-host this project with your own Spotify Developer credentials.",
+      "reason": "On this demo, you can explore the app without logging in. This is due to Spotify's Development Mode restrictions, not a bug in the app.",
       "installLink": "Installation Guide →"
     }
   },

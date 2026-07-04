@@ -9,8 +9,8 @@
     "demoNotice": {
       "heading": "Offentlig demo",
       "body": "Dette er en offentlig skrivebeskyttet demo med konstruerte eksempeldata.",
-      "loginUnavailable": "«Logg inn med Spotify» er bevisst deaktivert på denne installasjonen.",
-      "reason": "Spotifys API (Development Mode) tillater kun autoriserte Spotify-kontoer å logge inn på denne installasjonen. Dette er ikke en feil — hoster du prosjektet selv med egne Spotify Developer-legitimasjoner, fungerer innlogging helt normalt på din egen installasjon.",
+      "loginUnavailable": "«Logg inn med Spotify» fungerer kun når du hoster prosjektet selv med dine egne Spotify Developer-legitimasjoner.",
+      "reason": "På denne demoen kan du utforske appen uten å logge inn. Dette skyldes Spotifys Development Mode, ikke en feil i appen.",
       "installLink": "Installasjonsguide →"
     }
   },
