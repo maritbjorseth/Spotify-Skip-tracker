@@ -67,7 +67,7 @@ Unngå feature creep.
 | ~~`onError`-handler i SmartSkipper config-mutation~~ | 🟡 Bør gjøres | Fikset |
 | ~~React `ErrorBoundary` i `main.tsx`~~ | 🟡 Bør gjøres | Fikset |
 | ~~Loading state i `CoachInsightsPanel` og `ListeningScorePanel`~~ | 🟡 Bør gjøres | Fikset |
-| Felles konstant for Railway-URL (`api.ts` + `LoginScreen.tsx`) | 🟡 Bør gjøres | Åpen |
+| ~~Felles konstant for Railway-URL (`api.ts` + `LoginScreen.tsx`)~~ | 🟡 Bør gjøres | Fikset |
 | Mobilvisning: tabeller, heatmap, knapper | 🟡 Bør gjøres | Ukjent |
 | Hardkodede strenger i Recharts-tooltips (`Charts.tsx`) | 🟢 Kan vente | Åpen |
 | Hardkodede strenger i `Tables.tsx:448` og `PlaylistJanitorPanel` | 🟢 Kan vente | Åpen |
