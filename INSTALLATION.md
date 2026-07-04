@@ -162,6 +162,22 @@ Go to https://neon.tech and click **Sign up**. You can sign up with your GitHub 
 
 ---
 
+### Step 3b (continued) — Skip the setup wizard
+
+> **Important:** After creating the project, Neon may show a page suggesting that you run:
+> ```
+> npx neonctl@latest init
+> ```
+> **You do not need this for Spotify Skip Tracker.**
+>
+> This command installs AI-development tools (MCP server, IDE extensions, and agent integrations) and is unrelated to the database itself.
+>
+> Instead, click **Go to project** in the bottom-right corner to proceed.
+
+📷 **Skjermbilde:** Neon setup wizard page with "Go to project" button highlighted
+
+---
+
 ### Step 3c — Copy the connection string
 
 On the project page, you will see a **Connection string** panel. It looks like:
