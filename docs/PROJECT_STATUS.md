@@ -86,7 +86,7 @@ Unngå feature creep.
 | `REDIRECT_URI_WEB` registrert i Spotify Developer Dashboard | 🔴 Må gjøres | Ukjent |
 | `DATABASE_URL` peker på Railway PostgreSQL | 🔴 Må gjøres | Ukjent |
 | `FRONTEND_URL` peker på korrekt Vercel-URL | 🔴 Må gjøres | Ukjent |
-| `RAILWAY_ENVIRONMENT` satt (aktiverer tracker-tråder) | 🔴 Må gjøres | Ukjent |
+| `RAILWAY_ENVIRONMENT` settes automatisk av Railway — ingen handling nødvendig | 🟢 Kan vente | OK |
 | Gunicorn kjøres med `--workers 1` (se `railway.toml`) | 🔴 Må gjøres | OK |
 
 ### Spotify
