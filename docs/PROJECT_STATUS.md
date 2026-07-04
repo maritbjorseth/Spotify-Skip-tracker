@@ -64,7 +64,7 @@ Unngå feature creep.
 | Oppgave | Prioritet | Status |
 |---|---|---|
 | ~~`onError`-handler i Janitor-mutation (`PlaylistJanitorPanel`)~~ | 🟡 Bør gjøres | Fikset |
-| `onError`-handler i SmartSkipper config-mutation | 🟡 Bør gjøres | Åpen |
+| ~~`onError`-handler i SmartSkipper config-mutation~~ | 🟡 Bør gjøres | Fikset |
 | React `ErrorBoundary` i `main.tsx` | 🟡 Bør gjøres | Åpen |
 | Loading state i `CoachInsightsPanel` og `ListeningScorePanel` | 🟡 Bør gjøres | Åpen |
 | Felles konstant for Railway-URL (`api.ts` + `LoginScreen.tsx`) | 🟡 Bør gjøres | Åpen |
