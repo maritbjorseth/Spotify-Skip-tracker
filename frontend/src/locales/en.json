@@ -8,9 +8,9 @@
     "footer": "Spotify Skip Tracker & Coach · Personal dashboard",
     "demoNotice": {
       "heading": "Public Demo",
-      "body": "This demo is read-only and uses constructed sample data — feel free to explore all features.",
-      "loginUnavailable": "\"Log in with Spotify\" is intentionally unavailable in the public demo.",
-      "reason": "Spotify's API (Development Mode) restricts login to the account owner only. To analyse your own Spotify account, self-host the application with your own Spotify Developer credentials.",
+      "body": "This is a public read-only demo using constructed sample data.",
+      "loginUnavailable": "\"Log in with Spotify\" is intentionally disabled on this deployment.",
+      "reason": "Spotify's API (Development Mode) only allows authorized Spotify accounts to log in to this deployment. This is not a bug — if you self-host this project with your own Spotify Developer credentials, login works normally on your own installation.",
       "installLink": "Installation Guide →"
     }
   },

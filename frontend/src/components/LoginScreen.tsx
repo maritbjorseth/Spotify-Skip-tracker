@@ -31,8 +31,6 @@ function MusicIcon() {
   );
 }
 
-const IS_PUBLIC_DEMO = import.meta.env.VITE_IS_PUBLIC_DEMO === "true";
-
 export function LoginScreen() {
   const { t } = useTranslation();
 
@@ -64,7 +62,7 @@ export function LoginScreen() {
           <p className="text-sm text-[#888] mt-2">{t("login.subtitle")}</p>
         </div>
 
-        {IS_PUBLIC_DEMO && <div className="mb-5 rounded-xl border border-blue-900/40 bg-blue-950/20 p-4 text-left">
+        <div className="mb-5 rounded-xl border border-blue-900/40 bg-blue-950/20 p-4 text-left">
           <p className="text-sm font-semibold text-blue-400 mb-1.5">{t("login.demoNotice.heading")}</p>
           <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.body")}</p>
           <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.loginUnavailable")}</p>
@@ -77,7 +75,7 @@ export function LoginScreen() {
           >
             {t("login.demoNotice.installLink")}
           </a>
-        </div>}
+        </div>
 
         <button
           onClick={handleLogin}

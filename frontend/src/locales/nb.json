@@ -8,9 +8,9 @@
     "footer": "Spotify Skip Tracker & Coach · Personlig dashbord",
     "demoNotice": {
       "heading": "Offentlig demo",
-      "body": "Denne demoen er skrivebeskyttet og bruker konstruerte eksempeldata — utforsk gjerne alle funksjonene.",
-      "loginUnavailable": "«Logg inn med Spotify» er bevisst utilgjengelig i den offentlige demoen.",
-      "reason": "Spotifys API-begrensninger (Development Mode) tillater kun innlogging for kontoeieren. For å analysere din egen konto, kjør applikasjonen selv med dine egne Spotify Developer-legitimasjoner.",
+      "body": "Dette er en offentlig skrivebeskyttet demo med konstruerte eksempeldata.",
+      "loginUnavailable": "«Logg inn med Spotify» er bevisst deaktivert på denne installasjonen.",
+      "reason": "Spotifys API (Development Mode) tillater kun autoriserte Spotify-kontoer å logge inn på denne installasjonen. Dette er ikke en feil — hoster du prosjektet selv med egne Spotify Developer-legitimasjoner, fungerer innlogging helt normalt på din egen installasjon.",
       "installLink": "Installasjonsguide →"
     }
   },
