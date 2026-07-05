@@ -200,7 +200,7 @@ Copy this entire string. You will paste it into `.env.local` in step 8.
 Navigate to the folder where you want to store the project, then run:
 
 ```bash
-git clone https://github.com/your-username/spotify-skip-tracker.git
+git clone https://github.com/Ulbjo/spotify-skip-tracker.git
 ```
 
 > Replace `your-username` with the actual GitHub username or organisation that hosts this repository.
