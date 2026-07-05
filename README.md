@@ -11,9 +11,16 @@
 ![Dashboard screenshot](docs/screenshots/Dashboard.png)
 
 ---
+## 💬 Community
+
+This project was recently shared on Reddit and received lots of valuable feedback from the Spotify community.
+
+**Join the discussion:**
+https://www.reddit.com/r/truespotify/comments/1unh711/update_im_the_18yo_who_built_a_spotify_skip/
 
 ## Features
 
+---
 ### Core Tracking
 - **Cross-device skip detection** — polls the Spotify Web API every 7 seconds and detects skips retroactively when the next track starts
 - **Accurate skip logic** — a track is only counted as skipped if less than 90% was played, more than 30 seconds remained, and the skip was not caused by a shuffle toggle or playlist switch
