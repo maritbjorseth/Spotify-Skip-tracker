@@ -28,3 +28,6 @@ frontend/dist/
 # Tredjepart
 .vercel
 .claude/
+
+# AI instruksjoner
+CLAUDE.md
