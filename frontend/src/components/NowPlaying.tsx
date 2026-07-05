@@ -15,7 +15,7 @@ export function NowPlaying() {
   const { data, error } = useQuery({
     queryKey: ["now"],
     queryFn: api.nowPlaying,
-    refetchInterval: 5000,
+    refetchInterval: 10_000,
     staleTime: 0,
   });
 

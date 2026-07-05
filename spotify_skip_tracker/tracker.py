@@ -332,19 +332,28 @@ def polling_loop(user_id: str) -> None:
             if resp.status_code == 204 or not resp.content:
                 consecutive_429 = 0
                 consecutive_403 = 0
+                logger.info("[%s] Spotify 204 — ingen aktiv avspilling.", user_id)
                 time.sleep(POLL_SECONDS + random.uniform(-1.5, 1.5))
                 continue
 
             # 429 = rate limit — les Retry-After, eksponentiell backoff
             if resp.status_code == 429:
                 consecutive_429 += 1
-                retry_after = int(resp.headers.get("Retry-After", 0))
-                if retry_after <= 0:
+                spotify_retry_after = int(resp.headers.get("Retry-After", 0))
+                if spotify_retry_after > 0:
+                    retry_after = spotify_retry_after
+                    logger.warning(
+                        "[%s] Spotify 429 — forsøk %d. "
+                        "Spotify sier Retry-After=%ds — sover i %.1f min.",
+                        user_id, consecutive_429, retry_after, retry_after / 60,
+                    )
+                else:
                     retry_after = min(POLL_SECONDS * (2 ** consecutive_429), 300)
-                logger.warning(
-                    "[%s] Spotify 429 (rate limit) — forsøk %d, sover %ds.",
-                    user_id, consecutive_429, retry_after,
-                )
+                    logger.warning(
+                        "[%s] Spotify 429 — forsøk %d. "
+                        "Ingen Retry-After-header — eksponentiell backoff %ds.",
+                        user_id, consecutive_429, retry_after,
+                    )
                 time.sleep(retry_after)
                 continue
 
@@ -388,6 +397,10 @@ def polling_loop(user_id: str) -> None:
 
             # Filtrer bort podcast-episoder
             if not item or item.get("type") != "track":
+                logger.info(
+                    "[%s] Spotify 200 — item er ikke en track (type=%s), hopper over.",
+                    user_id, (item or {}).get("type"),
+                )
                 time.sleep(POLL_SECONDS)
                 continue
 
@@ -405,14 +418,13 @@ def polling_loop(user_id: str) -> None:
             image_url: str | None = images[0]["url"] if images else None
 
             # Oppdater now_playing-tabellen på hver poll
-            logger.debug("[%s] STEP 7: before _upsert_now_playing() — uri=%s progress_ms=%s",
-                         user_id, uri, progress_ms)
+            logger.info("[%s] Poller OK (200) — uri=%s is_playing=%s progress_ms=%s — kaller _upsert_now_playing()",
+                        user_id, uri, is_playing, progress_ms)
             conn = _upsert_now_playing(
                 conn, uri, title, album, artists, image_url,
                 int(progress_ms), int(duration_ms), is_playing,
                 user_id=user_id,
             )
-            logger.debug("[%s] STEP 8: after _upsert_now_playing()", user_id)
 
             if uri != last_uri:
                 if last_uri is not None:
@@ -556,6 +568,10 @@ def _upsert_now_playing(
             (user_id, uri, title, artists, album, image_url, progress_ms, duration_ms, is_playing),
         )
         conn.commit()
+        logger.info(
+            "[%s] now_playing skrevet og committet — uri=%s is_playing=%s",
+            user_id, uri, is_playing,
+        )
         return conn
     except Exception as exc:
         logger.warning("[%s] Kunne ikke oppdatere now_playing: %s", user_id, exc)

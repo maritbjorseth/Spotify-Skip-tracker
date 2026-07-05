@@ -222,9 +222,17 @@ class TestNowPlayingAPI:
         assert data["progress_ms"] == 30_000
         assert data["duration_ms"] == 180_000
 
-    def test_stale_updated_at_gir_is_playing_false(self, client, monkeypatch):
-        """updated_at eldre enn 20 s skal gi is_playing=False."""
-        stale_time = datetime.now(timezone.utc) - timedelta(seconds=25)
+    def test_stale_updated_at_beholder_is_playing(self, client, monkeypatch):
+        """
+        Stale cache (>30 s) skal returnere den cachede is_playing-verdien,
+        ikke overstyre den med False.
+
+        /api/now kaller ikke Spotify direkte — det er tracker.py sitt ansvar.
+        Dersom tracker er i backoff pga. 429, er siste kjente tilstand det
+        beste vi kan gjøre. Å returnere is_playing=False ville vist feil
+        status i frontend selv om musikk faktisk spilte.
+        """
+        stale_time = datetime.now(timezone.utc) - timedelta(seconds=60)
         row = _make_now_playing_row(is_playing=True, updated_at=stale_time)
         self._mock_db(monkeypatch, row)
 
@@ -232,10 +240,10 @@ class TestNowPlayingAPI:
             sess["user_id"] = "test_user"
 
         resp = client.get("/api/now")
-        assert resp.get_json()["is_playing"] is False
+        assert resp.get_json()["is_playing"] is True
 
     def test_fersk_updated_at_beholder_is_playing(self, client, monkeypatch):
-        """updated_at innenfor 20 s skal beholde is_playing=True."""
+        """updated_at innenfor 30 s skal beholde is_playing=True."""
         fresh_time = datetime.now(timezone.utc) - timedelta(seconds=5)
         row = _make_now_playing_row(is_playing=True, updated_at=fresh_time)
         self._mock_db(monkeypatch, row)
