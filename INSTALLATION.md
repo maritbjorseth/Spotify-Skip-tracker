@@ -16,15 +16,16 @@ This guide takes you from zero to a running dashboard. Every step is explained i
 3. [Create a Neon database](#3-create-a-neon-database)
 4. [Clone the repository](#4-clone-the-repository)
 5. [Create a Python virtual environment](#5-create-a-python-virtual-environment)
-6. [Install Python dependencies](#6-install-python-dependencies)
-7. [Create your environment file](#7-create-your-environment-file)
-8. [Fill in the environment variables](#8-fill-in-the-environment-variables)
-9. [Authenticate with Spotify](#9-authenticate-with-spotify)
-10. [Start the backend](#10-start-the-backend)
-11. [Install frontend dependencies](#11-install-frontend-dependencies)
-12. [Start the frontend](#12-start-the-frontend)
-13. [Log in and verify](#13-log-in-and-verify)
-14. [Deploy to production (optional)](#14-deploy-to-production-optional)
+6. [Activate the virtual environment](#6-activate-the-virtual-enviroment)
+7. [Install Python dependencies](#7-install-python-dependencies)
+8. [Create your environment file](#8-create-your-environment-file)
+9. [Fill in the environment variables](#9-fill-in-the-environment-variables)
+10. [Authenticate with Spotify](#10-authenticate-with-spotify)
+11. [Start the backend](#11-start-the-backend)
+12. [Install frontend dependencies](#12-install-frontend-dependencies)
+13. [Start the frontend](#13-start-the-frontend)
+14. [Log in and verify](#14-log-in-and-verify)
+15. [Deploy to production (optional)](#15-deploy-to-production-optional)
 
 ---
 
@@ -268,7 +269,7 @@ venv\Scripts\activate
 
 ---
 
-## 6. Install Python dependencies
+## 7. Install Python dependencies
 
 With the virtual environment active, install the required Python packages:
 
@@ -290,7 +291,7 @@ This may take 30–60 seconds.
 
 ---
 
-## 7. Create your environment file
+## 8. Create your environment file
 
 The project uses a file called `.env.local` to store secret credentials. A template is included in the repository.
 
@@ -320,7 +321,7 @@ ls .env.local
 
 ---
 
-## 8. Fill in the environment variables
+## 9. Fill in the environment variables
 
 Open `.env.local` in a text editor. You need to replace the placeholder values with your real credentials.
 
@@ -430,7 +431,7 @@ FRONTEND_URL=http://localhost:5173
 
 ---
 
-## 9. Authenticate with Spotify
+## 10. Authenticate with Spotify
 
 This step runs a one-time browser-based login that gives the tracker permission to read your Spotify playback history.
 
@@ -472,7 +473,7 @@ Your credentials are now saved in `~/.spotify_skip_tracker/credentials.json` on 
 
 ---
 
-## 10. Start the backend
+## 11. Start the backend
 
 Make sure `DATABASE_URL` is filled in `.env.local` before this step.
 
@@ -500,7 +501,7 @@ The terminal stays running. **Do not close it.** Open a second terminal window f
 
 ---
 
-## 11. Install frontend dependencies
+## 12. Install frontend dependencies
 
 Open a **second terminal window**. Navigate to the project folder, then into the `frontend` subfolder:
 
@@ -527,7 +528,7 @@ This may take 30–60 seconds.
 
 ---
 
-## 12. Start the frontend
+## 13. Start the frontend
 
 Still in the `frontend` folder, run:
 
@@ -555,7 +556,7 @@ The terminal stays running. **Do not close it.**
 
 ---
 
-## 13. Log in and verify
+## 14. Log in and verify
 
 Open your browser and go to:
 
@@ -606,11 +607,11 @@ Then open http://localhost:5173.
 
 ---
 
-## 14. Deploy to production (optional)
+## 15. Deploy to production (optional)
 
 For the tracker to run continuously — even when your laptop is off — you need to deploy to Railway (backend) and Vercel (frontend). This section walks through both.
 
-### 14a. Deploy the backend to Railway
+### 15a. Deploy the backend to Railway
 
 **What you need:**
 - A [Railway](https://railway.app) account (free tier available)
@@ -647,7 +648,7 @@ For the tracker to run continuously — even when your laptop is off — you nee
 
 ---
 
-### 14b. Deploy the frontend to Vercel
+### 15b. Deploy the frontend to Vercel
 
 **What you need:**
 - A [Vercel](https://vercel.com) account (free tier available)
@@ -675,7 +676,7 @@ For the tracker to run continuously — even when your laptop is off — you nee
 
 ---
 
-### 14c. First login after deployment
+### 15c. First login after deployment
 
 Navigate to `https://your-app.up.railway.app/api/auth/login` in your browser. Log in with Spotify. This stores your token in the Neon database and starts the background tracker thread.
 
