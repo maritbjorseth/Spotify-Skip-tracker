@@ -163,14 +163,15 @@ def _create_tables(conn) -> None:
         conn,
         """
         CREATE TABLE IF NOT EXISTS user_tokens (
-            user_id       TEXT        PRIMARY KEY,
-            refresh_token TEXT        NOT NULL,
-            access_token  TEXT,
-            expires_at    REAL,
-            display_name  TEXT,
-            scope         TEXT,
-            created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            last_active   TIMESTAMPTZ
+            user_id          TEXT        PRIMARY KEY,
+            refresh_token    TEXT        NOT NULL,
+            access_token     TEXT,
+            expires_at       REAL,
+            display_name     TEXT,
+            scope            TEXT,
+            created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            last_active      TIMESTAMPTZ,
+            tracking_enabled BOOLEAN     NOT NULL DEFAULT TRUE
         )
         """,
     )
@@ -191,6 +192,7 @@ def _migrate(conn) -> None:
     _migrate_now_playing_per_user(conn)
     _migrate_smart_skipper_per_user(conn)
     _migrate_add_auto_skips_user_id(conn)
+    _migrate_add_tracking_enabled(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -1015,15 +1017,21 @@ def get_user_token_row(conn, user_id: str) -> dict | None:
 
 def list_active_user_ids(conn) -> list[str]:
     """
-    Returnerer alle user_id-er som har refresh-tokens lagret i databasen,
-    sortert med den sist aktive brukeren først.
+    Returnerer user_id-er for brukere som skal ha en aktiv tracker-tråd.
 
-    Brukes av tracker_manager() (Steg 5) for å starte tracking-tråder
-    ved oppstart.
+    Filtrerer på tracking_enabled = TRUE, slik at brukere med lagret token
+    men deaktivert tracking ikke starter tracker-tråder ved oppstart.
+
+    Skiller dermed eksplisitt mellom «bruker med token i databasen» og
+    «bruker som faktisk skal trackes».
     """
     rows = execute(
         conn,
-        "SELECT user_id FROM user_tokens ORDER BY last_active DESC NULLS LAST",
+        """
+        SELECT user_id FROM user_tokens
+        WHERE tracking_enabled = TRUE
+        ORDER BY last_active DESC NULLS LAST
+        """,
     ).fetchall()
     return [row[0] for row in rows]
 
@@ -1262,3 +1270,34 @@ def _migrate_add_auto_skips_user_id(conn) -> None:
         )
 
     logger.info("auto_skips user_id-migrasjon fullført.")
+
+
+def _migrate_add_tracking_enabled(conn) -> None:
+    """
+    Legger til tracking_enabled-kolonnen i user_tokens-tabellen.
+
+    Idempotent: hopper over dersom kolonnen allerede finnes.
+
+    Alle eksisterende brukere får tracking_enabled = TRUE slik at
+    oppførselen er identisk med det som var før kolonnen eksisterte.
+    Kolonnen gir fra nå av et eksplisitt skille mellom «bruker med
+    lagret token» og «bruker som skal ha en aktiv tracker-tråd».
+    """
+    cur = execute(
+        conn,
+        """
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'user_tokens' AND column_name = 'tracking_enabled'
+        """,
+    )
+    if cur.fetchone() is not None:
+        return  # Allerede migrert
+
+    logger.info("Legger til tracking_enabled-kolonne i user_tokens …")
+    execute(
+        conn,
+        "ALTER TABLE user_tokens ADD COLUMN tracking_enabled BOOLEAN NOT NULL DEFAULT TRUE",
+    )
+    conn.commit()
+    logger.info("user_tokens: tracking_enabled lagt til (alle eksisterende brukere = TRUE).")
