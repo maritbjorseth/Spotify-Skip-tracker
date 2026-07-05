@@ -365,46 +365,81 @@ def get_access_token(creds: dict) -> str:
 # Kontekstnavn (spilleliste / album)
 # ---------------------------------------------------------------------------
 
+def _cache_context_name(conn, context_uri: str, name: str | None) -> None:
+    """Skriver (eller oppdaterer) et kontekstnavn i contexts-tabellen."""
+    execute(
+        conn,
+        "INSERT INTO contexts (uri, name) VALUES (%s, %s) "
+        "ON CONFLICT (uri) DO UPDATE SET name = EXCLUDED.name",
+        (context_uri, name),
+    )
+    conn.commit()
+
+
 def get_context_name(conn, token: str, context_uri: str) -> str | None:
     """
     Slår opp visningsnavnet for en Spotify-kontekst (spilleliste eller album).
     Resultatet caches i contexts-tabellen for å unngå gjentatte API-kall.
 
-    Spesialtilfelle: spotify:user:<id>:collection er «Liked Songs» / Likte sanger.
-    Spotify eksponerer ikke dette som et vanlig API-endepunkt, så vi hardkoder
-    visningsnavnet og lagrer det i contexts-tabellen med én gang.
+    Kjente spesialtilfeller som håndteres uten API-kall:
+      - spotify:user:<id>:collection            → «Liked Songs»
+      - spotify:station:<subtype>:<id>           → «AI DJ»
+      - spotify:user:<id>:station:<id>           → «AI DJ»
+
+    Spotify AI DJ benytter context.type = "station" og URIer på én av de to
+    station-formatene over. Disse er interne Spotify-kilder — ikke brukerspillel-
+    ister — og eksponeres ikke via det vanlige playlists/albums-endepunktet.
+
+    Ukjente konteksttyper caches med name = NULL slik at samme URI ikke
+    behandles på nytt ved neste poll, og slik at rå URI-strenger aldri lekker
+    til brukergrensesnittet via COALESCE-fallback i SQL-spørringene.
     """
     if not context_uri:
         return None
 
+    # ── Cache-oppslag ────────────────────────────────────────────────────────
     row = execute(
         conn, "SELECT name FROM contexts WHERE uri = %s", (context_uri,)
     ).fetchone()
     if row:
         return row[0]
 
-    # spotify:user:<bruker-id>:collection → «Liked Songs»
     parts = context_uri.split(":")
-    if len(parts) == 4 and parts[1] == "user" and parts[3] == "collection":
-        name = "Liked Songs"
-        execute(
-            conn,
-            "INSERT INTO contexts (uri, name) VALUES (%s, %s) "
-            "ON CONFLICT (uri) DO UPDATE SET name = EXCLUDED.name",
-            (context_uri, name),
-        )
-        conn.commit()
-        return name
 
+    # ── Liked Songs: spotify:user:<id>:collection ────────────────────────────
+    if len(parts) == 4 and parts[1] == "user" and parts[3] == "collection":
+        _cache_context_name(conn, context_uri, "Liked Songs")
+        return "Liked Songs"
+
+    # ── Spotify AI DJ og andre station-kontekster ────────────────────────────
+    # AI DJ bruker context.type = "station" med URIer på formatet:
+    #   spotify:station:<subtype>:<id>         (vanligst)
+    #   spotify:user:<id>:station:<id>         (sett i eldre klienter)
+    # Ingen API-kall er nødvendig — disse er interne Spotify-kilder.
+    is_station = (
+        (len(parts) >= 3 and parts[1] == "station")
+        or (len(parts) >= 5 and parts[1] == "user" and parts[3] == "station")
+    )
+    if is_station:
+        _cache_context_name(conn, context_uri, "AI DJ")
+        return "AI DJ"
+
+    # ── Spilleliste / album — gjør API-kall ─────────────────────────────────
     try:
         if len(parts) < 3:
+            _cache_context_name(conn, context_uri, None)
             return None
-        # Eldre spillelistelenker har formatet spotify:user:<bruker>:playlist:<id>
+
+        # Eldre spillelistelenker: spotify:user:<bruker>:playlist:<id>
         if parts[1] == "user" and len(parts) >= 5:
             kind, id_ = parts[3], parts[4]
         else:
             kind, id_ = parts[1], parts[2]
+
         if kind not in ("playlist", "album"):
+            # Ukjent konteksttype. Cache med NULL slik at URIen ikke slås opp
+            # igjen, og slik at rå URI-strenger ikke lekker til UI-et.
+            _cache_context_name(conn, context_uri, None)
             return None
 
         url = f"https://api.spotify.com/v1/{kind}s/{id_}"
@@ -417,14 +452,9 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
             return None
 
         name = resp.json().get("name")
-        execute(
-            conn,
-            "INSERT INTO contexts (uri, name) VALUES (%s, %s) "
-            "ON CONFLICT (uri) DO UPDATE SET name = EXCLUDED.name",
-            (context_uri, name),
-        )
-        conn.commit()
+        _cache_context_name(conn, context_uri, name)
         return name
+
     except Exception as exc:
         logger.warning("Kunne ikke hente kontekstnavn for %s: %s", context_uri, exc)
         # Nullstill tilkoblingen slik at en mislykket INSERT/commit ikke etterlater

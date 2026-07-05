@@ -193,6 +193,7 @@ def _migrate(conn) -> None:
     _migrate_smart_skipper_per_user(conn)
     _migrate_add_auto_skips_user_id(conn)
     _migrate_add_tracking_enabled(conn)
+    _migrate_backfill_ai_dj_contexts(conn)
 
 
 def _migrate_timestamp_to_timestamptz(conn) -> None:
@@ -1301,3 +1302,61 @@ def _migrate_add_tracking_enabled(conn) -> None:
     )
     conn.commit()
     logger.info("user_tokens: tracking_enabled lagt til (alle eksisterende brukere = TRUE).")
+
+
+def _migrate_backfill_ai_dj_contexts(conn) -> None:
+    """
+    Backfiller contexts-tabellen for AI DJ og andre station-avspillinger.
+
+    Spotify AI DJ bruker context.type = "station" med URIer på formatet
+    spotify:station:<subtype>:<id> eller spotify:user:<id>:station:<id>.
+    Disse ble aldri populert i contexts-tabellen av get_context_name() fordi
+    eldre versjoner av koden ikke hadde støtte for station-typen.
+
+    Migrasjonen finner alle unike station-URIer i plays som mangler en rad
+    i contexts, og oppretter dem med name = 'AI DJ'.
+
+    Idempotent: ON CONFLICT (uri) DO NOTHING gjør at eksisterende rader
+    aldri overskrives og at migrasjonen er trygg å kjøre flere ganger.
+    """
+    # Steg 1: oppdater eksisterende rader uten navn (cachet som NULL av en
+    # tidligere versjon av koden som ikke gjenkjente station-typen).
+    updated_cur = execute(
+        conn,
+        """
+        UPDATE contexts
+        SET name = 'AI DJ'
+        WHERE name IS NULL
+          AND (
+              uri LIKE 'spotify:station:%%'
+              OR uri LIKE 'spotify:user:%%:station:%%'
+          )
+        """,
+    )
+    updated = updated_cur.rowcount if updated_cur.rowcount and updated_cur.rowcount > 0 else 0
+
+    # Steg 2: opprett rader for URIer som mangler helt i contexts.
+    inserted_cur = execute(
+        conn,
+        """
+        INSERT INTO contexts (uri, name)
+        SELECT DISTINCT p.context_uri, 'AI DJ'
+        FROM plays p
+        WHERE p.context_uri IS NOT NULL
+          AND (
+              p.context_uri LIKE 'spotify:station:%%'
+              OR p.context_uri LIKE 'spotify:user:%%:station:%%'
+          )
+        ON CONFLICT (uri) DO NOTHING
+        """,
+    )
+    conn.commit()
+    inserted = inserted_cur.rowcount if inserted_cur.rowcount and inserted_cur.rowcount > 0 else 0
+
+    if updated or inserted:
+        logger.info(
+            "AI DJ-kontekster backfyllt: %d oppdatert (NULL→'AI DJ'), %d ny(e) lagt til.",
+            updated, inserted,
+        )
+    else:
+        logger.debug("AI DJ-backfill: ingen endringer nødvendig.")

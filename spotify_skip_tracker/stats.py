@@ -253,7 +253,6 @@ def _compute(conn, user_id: str) -> dict:
                 c.name,
                 CASE WHEN p.context_uri LIKE 'spotify:user:%%:collection'
                      THEN 'Liked Songs'
-                     ELSE p.context_uri
                 END
             )                                                   AS context_name,
             SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END)         AS skip_count,
@@ -366,7 +365,6 @@ def _compute(conn, user_id: str) -> dict:
                 c.name,
                 CASE WHEN p.context_uri LIKE 'spotify:user:%%:collection'
                      THEN 'Liked Songs'
-                     ELSE p.context_uri
                 END
             )                                                   AS context_name,
             SUM(CASE WHEN p.skipped THEN 1 ELSE 0 END)         AS skip_count,

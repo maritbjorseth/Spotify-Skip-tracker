@@ -391,6 +391,13 @@ def polling_loop(user_id: str) -> None:
 
             logger.debug("[%s] STEP 5: before resp.json()", user_id)
             data = resp.json()
+
+            logger.info(
+                 "[%s] context=%s item=%s",
+                 user_id,
+                 data.get("context"),
+                 data.get("item", {}).get("name"),
+                 )
             logger.debug("[%s] STEP 6: after resp.json() — item_type=%s is_playing=%s",
                          user_id, (data.get("item") or {}).get("type"), data.get("is_playing"))
             item = data.get("item")

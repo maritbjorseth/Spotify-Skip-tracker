@@ -140,7 +140,7 @@ def _build_data(conn, month: int | None, year: int | None, user_id: str = "defau
     top_context = execute(
         conn,
         f"""
-        SELECT COALESCE(c.name, p.context_uri) AS context_name,
+        SELECT c.name AS context_name,
                COUNT(*) AS play_count
         FROM plays p
         LEFT JOIN contexts c ON c.uri = p.context_uri

@@ -25,7 +25,7 @@ def run_export(output_path: str | Path, user_id: str = "default_user") -> None:
                 p.title,
                 p.artists,
                 p.album,
-                COALESCE(c.name, p.context_uri) AS context_name,
+                c.name AS context_name,
                 p.skipped,
                 p.progress_ratio
             FROM plays p
