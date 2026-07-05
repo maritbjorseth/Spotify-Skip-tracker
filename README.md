@@ -417,7 +417,19 @@ The project is feature-complete in its core tracking and dashboard functionality
 See [`UX_BACKLOG.md`](UX_BACKLOG.md) for the full prioritised backlog.
 
 ---
+## Feedback
 
+I'm actively developing Spotify Skip Tracker and would love to hear from you.
+
+If you've tried the app, have suggestions, or run into problems:
+
+- Open a GitHub Discussion
+- Open an Issue
+- Star the repository if you find it useful
+
+Every piece of feedback helps improve the project!
+
+---
 ## Contributing
 
 Contributions are welcome. Please open an issue before submitting a pull request so the change can be discussed first.
