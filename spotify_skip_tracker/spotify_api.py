@@ -448,10 +448,20 @@ def get_context_name(conn, token: str, context_uri: str) -> str | None:
             headers={"Authorization": f"Bearer {token}"},
             timeout=10,
         )
+
+        # TEMP-LOGGING: fjernes når årsaken er identifisert.
         if resp.status_code != 200:
+            logger.warning(
+                "[context_name] API-kall feilet — uri=%s status=%d body=%s",
+                context_uri, resp.status_code, resp.text[:300],
+            )
             return None
 
         name = resp.json().get("name")
+        logger.info(
+            "[context_name] API-kall OK — uri=%s status=200 name=%r",
+            context_uri, name,
+        )
         _cache_context_name(conn, context_uri, name)
         return name
 
