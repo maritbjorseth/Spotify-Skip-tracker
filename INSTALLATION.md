@@ -257,6 +257,15 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
+Note: If you receive the error “running scripts is disabled on this system” when activating the virtual environment in PowerShell, run the following command first:
+```
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+This only affects the current PowerShell session and does not permanently change your system’s execution policy. After running the command, activate the virtual environment again:
+```
+venv\Scripts\activate
+```
+
 **What you should see:** Your terminal prompt changes to show `(venv)` at the beginning:
 ```
 (venv) your-computer:spotify-skip-tracker you$
