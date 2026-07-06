@@ -110,13 +110,13 @@ Go to https://developer.spotify.com/dashboard and log in with your Spotify accou
    - **Website:** leave blank
    - **Redirect URIs:** add the following two URIs, one at a time, by clicking **Add**:
      - `http://127.0.0.1:8888/callback`
-     - `http://127.0.0.1:5000/api/auth/callback`
+     - `http://localhost:5173/api/auth/callback`
    - **Which API/SDKs are you planning to use?** Select **Web API**
 3. Check the terms of service box
 4. Click **Save**
 
 > **Why two redirect URIs?**  
-> The `setup` command (step 9) uses a temporary server on port **8888** for the one-time authentication flow. The web-based login at `/api/auth/login` uses the Flask server on port **5000**. Both URIs must be registered or Spotify will reject the request.
+> The `setup` command (step 9) uses a temporary server on port **8888** for the one-time CLI authentication flow. The web-based login at `/api/auth/login` uses the Vite dev server on port **5173** as the callback so that the session cookie is set on the same origin (`localhost`) as the frontend. Both URIs must be registered or Spotify will reject the request.
 
 <img width="1470" height="835" alt="Dashbord" src="https://github.com/user-attachments/assets/e751964b-adf2-44e0-9073-4b70501783e9" />
 
@@ -408,8 +408,10 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 Leave this as-is for local development:
 
 ```
-REDIRECT_URI_WEB=http://127.0.0.1:5000/api/auth/callback
+REDIRECT_URI_WEB=http://localhost:5173/api/auth/callback
 ```
+
+> This routes the Spotify OAuth callback through the Vite dev proxy so that the session cookie is set on `localhost`, matching the origin the frontend runs on.
 
 ---
 
@@ -579,7 +581,7 @@ Click **Log in with Spotify**. You will be redirected to Spotify's login page. A
 > The tracker starts collecting data immediately. Play some music on Spotify, wait a minute or two, then refresh the page to see your first entries.
 
 **If the login fails:**
-- `redirect_uri_mismatch` — `http://127.0.0.1:5000/api/auth/callback` is not registered in your Spotify app. Go back to step 2b and add it.
+- `redirect_uri_mismatch` — `http://localhost:5173/api/auth/callback` is not registered in your Spotify app. Go back to step 2b and add it.
 - Blank page or 502 error — the backend is not running. Check the first terminal window (step 10) for errors.
 - CORS error in the browser console — `FRONTEND_URL` in `.env.local` does not match `http://localhost:5173`. Correct it and restart the backend.
 
@@ -608,9 +610,11 @@ Then open http://localhost:5173.
 
 ## 14. Deploy to production (optional)
 
-For the tracker to run continuously — even when your laptop is off — you need to deploy to Railway (backend) and Vercel (frontend). This section walks through both.
+For the tracker to run continuously — even when your laptop is off — you deploy the entire app (backend + frontend) to Railway. A single Railway service serves everything: the `Dockerfile` builds the React frontend and Flask serves it alongside the API on the same domain.
 
-### 14a. Deploy the backend to Railway
+> **Why one platform?** Frontend and backend on the same domain means no CORS configuration, no cross-domain cookie rules, and one less account to create. The `Dockerfile` in the repository root handles the full build automatically.
+
+### 14a. Deploy to Railway
 
 **What you need:**
 - A [Railway](https://railway.app) account (free tier available)
@@ -621,11 +625,11 @@ For the tracker to run continuously — even when your laptop is off — you nee
 1. Go to https://railway.app and log in
 2. Click **New Project → Deploy from GitHub repo**
 3. Select your repository
-4. Railway detects `railway.toml` automatically and sets the start command
+4. Railway detects the `Dockerfile` automatically (via `railway.toml`) and builds both the frontend and backend
 
-📷 **Skjermbilde:** Railway "New Project" screen with GitHub repo selected
+5. Go to **Settings → Networking → Generate Domain** to get your Railway URL (e.g. `your-app.up.railway.app`). You need it for the variables in the next step.
 
-5. Go to **Variables** and add the following:
+6. Go to **Variables** and add the following:
 
 | Variable | Value |
 |---|---|
@@ -634,52 +638,23 @@ For the tracker to run continuously — even when your laptop is off — you nee
 | `SPOTIFY_CLIENT_SECRET` | From Spotify Developer Dashboard |
 | `TOKEN_ENCRYPTION_KEY` | Your generated Fernet key |
 | `SECRET_KEY` | A stable random string |
-| `REDIRECT_URI_WEB` | `https://<your-railway-domain>/api/auth/callback` |
-| `FRONTEND_URL` | Your Vercel URL (set this after step 14b) |
+| `REDIRECT_URI_WEB` | `https://your-app.up.railway.app/api/auth/callback` |
+| `FRONTEND_URL` | `https://your-app.up.railway.app` |
 
-6. Click **Deploy**. Railway builds and starts the container.
+> `REDIRECT_URI_WEB` and `FRONTEND_URL` both point to your own Railway domain — the frontend and backend share it.
 
-7. Go to **Settings → Networking → Generate Domain** to get your Railway URL (e.g. `your-app.up.railway.app`).
+7. Click **Deploy**. Railway builds the Docker image (installs Python dependencies, runs `npm ci && npm run build` for the frontend) and starts Gunicorn.
 
-8. In your Spotify Developer App settings, add the new redirect URI:
+8. In your Spotify Developer App settings, add the production redirect URI:
    `https://your-app.up.railway.app/api/auth/callback`
 
-
 ---
 
-### 14b. Deploy the frontend to Vercel
+### 14b. First login after deployment
 
-**What you need:**
-- A [Vercel](https://vercel.com) account (free tier available)
+Open `https://your-app.up.railway.app` in your browser and click **Log in with Spotify**. This stores your token in the Neon database and starts the background tracker thread.
 
-**Steps:**
-
-1. Go to https://vercel.com and log in
-2. Click **Add New → Project**
-3. Import your GitHub repository
-4. Vercel detects `vercel.json` automatically. No build configuration changes needed.
-5. Go to **Environment Variables** and add:
-
-| Variable | Value |
-|---|---|
-| *(none required)* | The frontend resolves the API URL automatically |
-
-6. Click **Deploy**
-
-7. After deployment, copy your Vercel URL (e.g. `https://spotify-skip-tracker.vercel.app`)
-
-8. Go back to Railway and update the `FRONTEND_URL` variable to your Vercel URL
-
-9. Redeploy Railway (click **Redeploy** or push a commit)
-
-
----
-
-### 14c. First login after deployment
-
-Navigate to `https://your-app.up.railway.app/api/auth/login` in your browser. Log in with Spotify. This stores your token in the Neon database and starts the background tracker thread.
-
-After that, all future visits should go to your Vercel frontend URL.
+That single URL is now your dashboard — bookmark it.
 
 ---
 
@@ -691,7 +666,7 @@ After that, all future visits should go to your Vercel frontend URL.
 | `ModuleNotFoundError` | venv not active | Run `source venv/bin/activate` |
 | `could not connect to server` | Wrong DATABASE_URL | Re-check Neon connection string |
 | `INVALID_REDIRECT_URI` | URI not in Spotify app | Add URI in Spotify Developer Dashboard |
-| `redirect_uri_mismatch` | URI not in Spotify app | Add `http://127.0.0.1:5000/api/auth/callback` |
+| `redirect_uri_mismatch` | URI not in Spotify app | Add `http://localhost:5173/api/auth/callback` (local) or `https://your-app.up.railway.app/api/auth/callback` (production) |
 | Dashboard blank / 502 | Backend not running | Check terminal 1 for errors |
 | CORS error in browser | FRONTEND_URL mismatch | Match FRONTEND_URL to the URL in your browser |
 | Charts empty | No data collected yet | Play music and wait a few minutes |

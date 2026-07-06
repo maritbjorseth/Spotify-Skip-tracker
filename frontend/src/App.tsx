@@ -150,7 +150,7 @@ export default function App() {
   }
 
   if (!authData?.authenticated) {
-    return <LoginScreen />;
+    return <LoginScreen demoAvailable={authData?.demo_available === true} />;
   }
 
   const isDemo = authData?.is_demo === true;

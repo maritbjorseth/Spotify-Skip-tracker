@@ -12,6 +12,10 @@
       "loginUnavailable": "\"Log in with Spotify\" only works when you self-host this project with your own Spotify Developer credentials.",
       "reason": "On this demo, you can explore the app without logging in. This is due to Spotify's Development Mode restrictions, not a bug in the app.",
       "installLink": "Installation Guide →"
+    },
+    "selfHostNotice": {
+      "heading": "Your own Spotify account",
+      "body": "Sign in below to connect your Spotify account and start tracking your listening habits."
     }
   },
   "app": {
