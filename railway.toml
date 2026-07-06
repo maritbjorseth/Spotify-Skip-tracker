@@ -1,3 +1,8 @@
+# Railway-only deployment: the Dockerfile builds the React frontend and
+# runs Gunicorn, which serves both the API and the static frontend.
+# The start command lives in the Dockerfile CMD (single source of truth).
+[build]
+builder = "DOCKERFILE"
+
 [deploy]
-startCommand = "gunicorn server:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1"
 restartPolicyType = "ALWAYS"

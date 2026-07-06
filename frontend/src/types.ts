@@ -116,6 +116,8 @@ export interface AuthStatus {
   authenticated: boolean;
   user_id: string | null;
   is_demo: boolean;
+  /** True når backend har DEMO_MODE aktivert — styrer demo-knappen på login-skjermen. */
+  demo_available: boolean;
 }
 
 /**

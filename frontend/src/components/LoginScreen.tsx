@@ -3,15 +3,12 @@
  *
  * Vises når /api/auth/status returnerer authenticated=false.
  * Brukeren klikker innloggingsknappen, nettleseren navigerer til
- * /api/auth/login på Railway-backenden, Spotify OAuth-flyten kjøres,
- * og brukeren sendes tilbake til frontenden som nå er innlogget.
+ * /api/auth/login. Flask (via Vite-proxy lokalt, direkte i produksjon)
+ * kjører OAuth-flyten og sender brukeren tilbake hit som innlogget.
  */
 
 import { useTranslation } from "react-i18next";
-import { API_BASE } from "../config";
 import { LanguageSelector } from "./LanguageSelector";
-
-const RAILWAY_BASE = API_BASE;
 
 function SpotifyIcon() {
   return (
@@ -31,15 +28,24 @@ function MusicIcon() {
   );
 }
 
-export function LoginScreen() {
+interface LoginScreenProps {
+  /**
+   * True når backenden har DEMO_MODE aktivert (fra /api/auth/status).
+   * Styrer om demo-notisen og demo-knappen vises. Selvhostede
+   * installasjoner uten DEMO_MODE får en enkel innloggingsforklaring.
+   */
+  demoAvailable?: boolean;
+}
+
+export function LoginScreen({ demoAvailable = false }: LoginScreenProps) {
   const { t } = useTranslation();
 
   function handleLogin() {
-    window.location.href = RAILWAY_BASE + "/api/auth/login";
+    window.location.href = "/api/auth/login";
   }
 
   function handleDemo() {
-    window.location.href = RAILWAY_BASE + "/api/auth/demo";
+    window.location.href = "/api/auth/demo";
   }
 
   return (
@@ -62,20 +68,29 @@ export function LoginScreen() {
           <p className="text-sm text-[#888] mt-2">{t("login.subtitle")}</p>
         </div>
 
-        <div className="mb-5 rounded-xl border border-blue-900/40 bg-blue-950/20 p-4 text-left">
-          <p className="text-sm font-semibold text-blue-400 mb-1.5">{t("login.demoNotice.heading")}</p>
-          <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.body")}</p>
-          <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.loginUnavailable")}</p>
-          <p className="text-xs leading-relaxed text-[#9ca3af] mb-2.5">{t("login.demoNotice.reason")}</p>
-          <a
-            href="https://github.com/Ulbjo/Spotify-Skip-tracker/blob/main/INSTALLATION.md"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors duration-150"
-          >
-            {t("login.demoNotice.installLink")}
-          </a>
-        </div>
+        {demoAvailable ? (
+          /* Offentlig demo-instans (DEMO_MODE=true): forklar demo-modus */
+          <div className="mb-5 rounded-xl border border-blue-900/40 bg-blue-950/20 p-4 text-left">
+            <p className="text-sm font-semibold text-blue-400 mb-1.5">{t("login.demoNotice.heading")}</p>
+            <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.body")}</p>
+            <p className="text-xs leading-relaxed text-[#9ca3af] mb-1">{t("login.demoNotice.loginUnavailable")}</p>
+            <p className="text-xs leading-relaxed text-[#9ca3af] mb-2.5">{t("login.demoNotice.reason")}</p>
+            <a
+              href="https://github.com/Ulbjo/Spotify-Skip-tracker/blob/main/INSTALLATION.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors duration-150"
+            >
+              {t("login.demoNotice.installLink")}
+            </a>
+          </div>
+        ) : (
+          /* Self-hosted: simple sign-in prompt */
+          <div className="mb-5 rounded-xl border border-neutral-800/60 bg-neutral-900/30 p-4 text-left">
+            <p className="text-sm font-semibold text-neutral-300 mb-1.5">{t("login.selfHostNotice.heading")}</p>
+            <p className="text-xs leading-relaxed text-[#9ca3af]">{t("login.selfHostNotice.body")}</p>
+          </div>
+        )}
 
         <button
           onClick={handleLogin}
@@ -86,13 +101,15 @@ export function LoginScreen() {
           {t("login.loginButton")}
         </button>
 
-        <button
-          onClick={handleDemo}
-          className="w-full flex items-center justify-center gap-3 rounded-xl py-3.5 text-sm font-semibold transition-all duration-150 active:scale-[0.98] mt-3"
-          style={{ background: "#ffffff12", color: "#aaa" }}
-        >
-          {t("login.demoButton")}
-        </button>
+        {demoAvailable && (
+          <button
+            onClick={handleDemo}
+            className="w-full flex items-center justify-center gap-3 rounded-xl py-3.5 text-sm font-semibold transition-all duration-150 active:scale-[0.98] mt-3"
+            style={{ background: "#ffffff12", color: "#aaa" }}
+          >
+            {t("login.demoButton")}
+          </button>
+        )}
 
         <p className="text-center text-xs text-[#555] mt-8">{t("login.footer")}</p>
       </div>

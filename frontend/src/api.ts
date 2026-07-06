@@ -1,14 +1,10 @@
 import type { StatsResponse, NowPlayingResponse, SmartSkipperResponse, JanitorCandidate, Insight, ListeningScore, AuthStatus } from "./types";
-import { API_BASE } from "./config";
-
-const BASE = API_BASE;
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  // credentials: 'include' er påkrevd for at nettleseren sender session-cookien
-  // på tvers av domener (Vercel → Railway). Uten dette vil aldri sesjonen
-  // følge med på noen av kall-ene, og auth-gaten vil alltid falle tilbake til
-  // "ikke autentisert" etter sideinnlasting.
-  const res = await fetch(BASE + path, {
+  // Alle kall bruker relativ adressering — frontend og backend deler alltid
+  // samme origin (Vite-proxy lokalt, Flask/Gunicorn på Railway).
+  // credentials: 'include' sikrer at session-cookien følger med på alle kall.
+  const res = await fetch(path, {
     credentials: "include",
     ...init,
   });

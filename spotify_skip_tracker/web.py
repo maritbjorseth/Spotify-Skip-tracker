@@ -148,8 +148,14 @@ def create_flask_app() -> Flask:
                 "authenticated": True,
                 "user_id": user_id,
                 "is_demo": _is_demo(),
+                "demo_available": DEMO_MODE,
             })
-        return jsonify({"authenticated": False, "user_id": None, "is_demo": False})
+        return jsonify({
+            "authenticated": False,
+            "user_id": None,
+            "is_demo": False,
+            "demo_available": DEMO_MODE,
+        })
 
     @app.route("/api/auth/demo")
     def auth_demo():

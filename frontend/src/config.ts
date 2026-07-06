@@ -1,12 +1,11 @@
 /**
- * API-basadressen til Railway-backenden.
+ * API-basadresse.
  *
- * I lokal utvikling (localhost / 127.0.0.1) brukes relativ adressering
- * slik at Vite-proxyen (eller dev-serveren) håndterer forespørslene.
- * I produksjon (Vercel) peker vi direkte til Railway-tjenesten.
+ * Frontend og backend serveres alltid fra samme origin:
+ *   - Lokal utvikling: Vite-proxyen videresender /api/* til Flask (port 5000).
+ *   - Produksjon (Railway): Flask/Gunicorn serverer både frontend/dist og /api/*.
+ *
+ * Relativ adressering ("") fungerer derfor i begge miljøer, og ingen
+ * cross-origin-oppsett (CORS, SameSite=None-cookies) er nødvendig.
  */
-export const API_BASE =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? ""
-    : "https://spotify-skip-tracker-production.up.railway.app";
+export const API_BASE = "";
