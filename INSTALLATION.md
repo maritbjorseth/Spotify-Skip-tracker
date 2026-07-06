@@ -16,15 +16,16 @@ This guide takes you from zero to a running dashboard. Every step is explained i
 3. [Create a Neon database](#3-create-a-neon-database)
 4. [Clone the repository](#4-clone-the-repository)
 5. [Create a Python virtual environment](#5-create-a-python-virtual-environment)
-6. [Install Python dependencies](#6-install-python-dependencies)
-7. [Create your environment file](#7-create-your-environment-file)
-8. [Fill in the environment variables](#8-fill-in-the-environment-variables)
-9. [Authenticate with Spotify](#9-authenticate-with-spotify)
-10. [Start the backend](#10-start-the-backend)
-11. [Install frontend dependencies](#11-install-frontend-dependencies)
-12. [Start the frontend](#12-start-the-frontend)
-13. [Log in and verify](#13-log-in-and-verify)
-14. [Deploy to production (optional)](#14-deploy-to-production-optional)
+6. [Activate the virtual environment](#6-activate-the-virtual-enviroment)
+7. [Install Python dependencies](#7-install-python-dependencies)
+8. [Create your environment file](#8-create-your-environment-file)
+9. [Fill in the environment variables](#9-fill-in-the-environment-variables)
+10. [Authenticate with Spotify](#10-authenticate-with-spotify)
+11. [Start the backend](#11-start-the-backend)
+12. [Install frontend dependencies](#12-install-frontend-dependencies)
+13. [Start the frontend](#13-start-the-frontend)
+14. [Log in and verify](#14-log-in-and-verify)
+15. [Deploy to production (optional)](#15-deploy-to-production-optional)
 
 ---
 
@@ -200,7 +201,7 @@ Copy this entire string. You will paste it into `.env.local` in step 8.
 Navigate to the folder where you want to store the project, then run:
 
 ```bash
-git clone https://github.com/your-username/spotify-skip-tracker.git
+git clone https://github.com/Ulbjo/spotify-skip-tracker.git
 ```
 
 > Replace `your-username` with the actual GitHub username or organisation that hosts this repository.
@@ -256,6 +257,15 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
+Note: If you receive the error “running scripts is disabled on this system” when activating the virtual environment in PowerShell, run the following command first:
+```
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+This only affects the current PowerShell session and does not permanently change your system’s execution policy. After running the command, activate the virtual environment again:
+```
+venv\Scripts\activate
+```
+
 **What you should see:** Your terminal prompt changes to show `(venv)` at the beginning:
 ```
 (venv) your-computer:spotify-skip-tracker you$
@@ -268,7 +278,7 @@ venv\Scripts\activate
 
 ---
 
-## 6. Install Python dependencies
+## 7. Install Python dependencies
 
 With the virtual environment active, install the required Python packages:
 
@@ -290,7 +300,7 @@ This may take 30–60 seconds.
 
 ---
 
-## 7. Create your environment file
+## 8. Create your environment file
 
 The project uses a file called `.env.local` to store secret credentials. A template is included in the repository.
 
@@ -320,7 +330,7 @@ ls .env.local
 
 ---
 
-## 8. Fill in the environment variables
+## 9. Fill in the environment variables
 
 Open `.env.local` in a text editor. You need to replace the placeholder values with your real credentials.
 
@@ -432,7 +442,7 @@ FRONTEND_URL=http://localhost:5173
 
 ---
 
-## 9. Authenticate with Spotify
+## 10. Authenticate with Spotify
 
 This step runs a one-time browser-based login that gives the tracker permission to read your Spotify playback history.
 
@@ -474,7 +484,7 @@ Your credentials are now saved in `~/.spotify_skip_tracker/credentials.json` on 
 
 ---
 
-## 10. Start the backend
+## 11. Start the backend
 
 Make sure `DATABASE_URL` is filled in `.env.local` before this step.
 
@@ -502,7 +512,7 @@ The terminal stays running. **Do not close it.** Open a second terminal window f
 
 ---
 
-## 11. Install frontend dependencies
+## 12. Install frontend dependencies
 
 Open a **second terminal window**. Navigate to the project folder, then into the `frontend` subfolder:
 
@@ -529,7 +539,7 @@ This may take 30–60 seconds.
 
 ---
 
-## 12. Start the frontend
+## 13. Start the frontend
 
 Still in the `frontend` folder, run:
 
@@ -557,7 +567,7 @@ The terminal stays running. **Do not close it.**
 
 ---
 
-## 13. Log in and verify
+## 14. Log in and verify
 
 Open your browser and go to:
 
@@ -608,7 +618,7 @@ Then open http://localhost:5173.
 
 ---
 
-## 14. Deploy to production (optional)
+## 15. Deploy to production (optional)
 
 For the tracker to run continuously — even when your laptop is off — you deploy the entire app (backend + frontend) to Railway. A single Railway service serves everything: the `Dockerfile` builds the React frontend and Flask serves it alongside the API on the same domain.
 
